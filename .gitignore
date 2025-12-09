@@ -21,7 +21,6 @@ desktop.ini
 .settings/
 
 # Build files
-amd/build/
 node_modules/
 package-lock.json
 yarn.lock
