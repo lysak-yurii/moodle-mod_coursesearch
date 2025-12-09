@@ -61,7 +61,9 @@ class course_searched extends \core\event\base {
      * @return string
      */
     public function get_description() {
-        return "The user with id '$this->userid' searched for '{$this->other['query']}' in the course with id '$this->courseid' using the course search with id '$this->objectid'.";
+        // Escape the query to prevent XSS in event descriptions
+        $query = isset($this->other['query']) ? s($this->other['query']) : '';
+        return "The user with id '$this->userid' searched for '$query' in the course with id '$this->courseid' using the course search with id '$this->objectid'.";
     }
 
     /**
@@ -70,8 +72,10 @@ class course_searched extends \core\event\base {
      * @return \moodle_url
      */
     public function get_url() {
+        // Clean the query parameter to prevent XSS - moodle_url will handle URL encoding
+        $query = isset($this->other['query']) ? clean_param($this->other['query'], PARAM_TEXT) : '';
         return new \moodle_url('/mod/coursesearch/view.php', 
-            array('id' => $this->contextinstanceid, 'query' => $this->other['query']));
+            array('id' => $this->contextinstanceid, 'query' => $query));
     }
 
     /**

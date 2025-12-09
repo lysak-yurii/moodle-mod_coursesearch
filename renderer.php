@@ -41,8 +41,8 @@ class mod_coursesearch_renderer extends plugin_renderer_base {
         
         $output = '';
         
-        // Get the placeholder text
-        $placeholder = !empty($coursesearch->placeholder) ? $coursesearch->placeholder : get_string('defaultplaceholder', 'coursesearch');
+        // Get the placeholder text and escape it to prevent XSS
+        $placeholder = !empty($coursesearch->placeholder) ? s($coursesearch->placeholder) : get_string('defaultplaceholder', 'coursesearch');
         
         // Start the container
         $output .= html_writer::start_div('coursesearch-container coursesearch-embedded');

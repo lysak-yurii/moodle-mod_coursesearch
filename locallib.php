@@ -157,7 +157,14 @@ function coursesearch_perform_search($query, $course, $filter = 'all') {
             
             // Try to get the module record with intro/description
             if (!empty($mod->modname)) {
-            $module_record = $DB->get_record($mod->modname, array('id' => $mod->instance), '*', IGNORE_MISSING);
+                // Validate module name to prevent SQL injection - must be alphanumeric with underscores only
+                $modname = clean_param($mod->modname, PARAM_PLUGIN);
+                if (empty($modname) || $modname !== $mod->modname) {
+                    // Invalid module name, skip this module
+                    continue;
+                }
+                $module_record = $DB->get_record($modname, array('id' => $mod->instance), '*', IGNORE_MISSING);
+            }
             
             // Most modules use 'intro' field for description
             if ($module_record && isset($module_record->intro)) {
@@ -206,15 +213,14 @@ function coursesearch_perform_search($query, $course, $filter = 'all') {
                     'snippet' => $snippet,
                     'cmid' => $mod->id
                 );
-                    continue; // Skip further checks for this module if we already found a match.
-                }
+                continue; // Skip further checks for this module if we already found a match.
             }
         }
         
         // Search in module content based on the module type (only if filter is 'all' or 'content')
         // For forums, we want to search content regardless of the filter when 'forums' filter is selected
-        if ($filter == 'all' || $filter == 'content' || ($filter == 'forums' && $mod->modname == 'forum'))
-        switch ($mod->modname) {
+        if ($filter == 'all' || $filter == 'content' || ($filter == 'forums' && $mod->modname == 'forum')) {
+            switch ($mod->modname) {
             case 'page':
                 // Search in page content
                 $page = $DB->get_record('page', array('id' => $mod->instance), 'id, name, content');
@@ -475,6 +481,7 @@ function coursesearch_perform_search($query, $course, $filter = 'all') {
                     }
                 }
                 break;
+            }
         }
     }
     
@@ -728,11 +735,6 @@ function coursesearch_mb_stripos($haystack, $needle) {
     // Convert both strings to lowercase using multibyte functions
     $haystack_lower = mb_strtolower($haystack, 'UTF-8');
     $needle_lower = mb_strtolower($needle, 'UTF-8');
-    
-    // Debug output for important searches
-    if (strlen($needle) > 10) {
-        error_log("Searching for: '" . $needle_lower . "' in text starting with: '" . substr($haystack_lower, 0, 50) . "...");
-    }
     
     // Use multibyte strpos for proper UTF-8 handling
     return mb_strpos($haystack_lower, $needle_lower, 0, 'UTF-8');

@@ -31,6 +31,9 @@ $course = $DB->get_record('course', array('id' => $id), '*', MUST_EXIST);
 require_course_login($course);
 $context = context_course::instance($course->id);
 
+// Check if user has capability to view coursesearch modules
+require_capability('mod/coursesearch:view', $context);
+
 // Note: course_module_instance_list_viewed is abstract in newer Moodle versions
 // We'll skip this event for now
 

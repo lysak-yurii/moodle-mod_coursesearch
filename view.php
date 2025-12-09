@@ -31,7 +31,12 @@ $id = optional_param('id', 0, PARAM_INT); // Course Module ID
 $cs = optional_param('cs', 0, PARAM_INT);  // CourseSearch instance ID
 $query = optional_param('query', '', PARAM_TEXT); // Search query
 $filter = optional_param('filter', 'all', PARAM_ALPHA); // Content filter (title, content, description)
-$searchscope = optional_param('searchscope', 'all', PARAM_ALPHA); // Search scope (all, sections, activities, resources, forums)
+
+// Validate filter parameter against whitelist to prevent injection
+$allowed_filters = array('all', 'title', 'content', 'description', 'sections', 'activities', 'resources', 'forums');
+if (!in_array($filter, $allowed_filters)) {
+    $filter = 'all'; // Default to 'all' if invalid filter provided
+}
 
 // Trim whitespace from the search query
 $query = trim($query);
@@ -149,7 +154,10 @@ if (!empty($query)) {
     } else {
         // Display the count of search results
         $count = count($results);
-        echo html_writer::div($count . ' ' . get_string('searchresults', 'coursesearch', s($query)), 'coursesearch-results-count');
+        $resultcountobj = new stdClass();
+        $resultcountobj->count = $count;
+        $resultcountobj->query = s($query);
+        echo html_writer::div(get_string('searchresultscount', 'coursesearch', $resultcountobj), 'coursesearch-results-count');
         
         echo html_writer::start_div('coursesearch-results');
         
@@ -158,6 +166,8 @@ if (!empty($query)) {
             
             // Process multilanguage tags in the result name
             $result_name = isset($result['name']) ? coursesearch_process_multilang($result['name']) : '';
+            // Strip any HTML tags from the result name for safety (names should be plain text)
+            $result_name = strip_tags($result_name);
             
             // Display the module icon and name
             // For sections, use a custom icon with appropriate alt text
@@ -206,7 +216,9 @@ if (!empty($query)) {
                         }
                         // Add highlight parameter if we have a query
                         if (!empty($query)) {
-                            $urlparams['highlight'] = urlencode($query);
+                            // Clean the query parameter to prevent XSS - urlencode will encode it for URL
+                            $cleanquery = clean_param($query, PARAM_TEXT);
+                            $urlparams['highlight'] = urlencode($cleanquery);
                         }
                         $moduleurl = new moodle_url('/course/view.php', $urlparams);
                         $moduleurl->set_anchor('module-' . $result['cmid']);
@@ -261,7 +273,9 @@ if (!empty($query)) {
                                         }
                                         // Add highlight parameter if we have a query
                                         if (!empty($query)) {
-                                            $urlparams['highlight'] = urlencode($query);
+                                            // Clean the query parameter to prevent XSS - urlencode will encode it for URL
+                                            $cleanquery = clean_param($query, PARAM_TEXT);
+                                            $urlparams['highlight'] = urlencode($cleanquery);
                                         }
                                         $moduleurl = new moodle_url('/course/view.php', $urlparams);
                                         $moduleurl->set_anchor('module-' . $cm->id);
@@ -294,7 +308,9 @@ if (!empty($query)) {
                     // Check if highlight parameter is already present
                     $params = $result['url']->params();
                     if (!isset($params['highlight'])) {
-                        $result['url']->param('highlight', urlencode($query));
+                        // Clean the query parameter to prevent XSS - moodle_url->param() will URL-encode it
+                        $cleanquery = clean_param($query, PARAM_TEXT);
+                        $result['url']->param('highlight', $cleanquery);
                     }
                 }
             }
@@ -305,7 +321,7 @@ if (!empty($query)) {
             // Display forum information if available
             if ($result['modname'] === 'forum' && isset($result['forum_name'])) {
                 $forum_name = coursesearch_process_multilang($result['forum_name']);
-                echo html_writer::div(get_string('inforum', 'coursesearch', $forum_name), 'coursesearch-result-forum');
+                echo html_writer::div(get_string('inforum', 'coursesearch', s($forum_name)), 'coursesearch-result-forum');
             }
             
             // Display the snippet with highlighted search term
@@ -317,7 +333,7 @@ if (!empty($query)) {
             }
             
             // Display what was matched (title, content, etc.)
-            $match_type = isset($result['match']) ? get_string('matchedin', 'coursesearch', $result['match']) : '';
+            $match_type = isset($result['match']) ? get_string('matchedin', 'coursesearch', s($result['match'])) : '';
             echo html_writer::div($match_type, 'coursesearch-result-match');
             
             echo html_writer::end_div(); // coursesearch-result
@@ -334,141 +350,137 @@ if (!empty($query)) {
     $js = "
     <script>
     (function() {
-        // Shared scroll function - optimized to search while walking instead of collecting all nodes first
-        function scrollToText(element, searchText) {
+        // Define scroll function that will be used on course pages
+        window.coursesearchScrollToText = function(element, searchText) {
             if (!element || !searchText) return false;
-            
-            var searchLower = searchText.toLowerCase();
             var walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT, null, false);
+            var textNodes = [];
             var node;
-            
-            // Search while walking - stop on first match for better performance
-            while (node = walker.nextNode()) {
-                var text = node.textContent;
-                var textLower = text.toLowerCase();
-                var index = textLower.indexOf(searchLower);
-                
+            while (node = walker.nextNode()) textNodes.push(node);
+            var searchLower = searchText.toLowerCase();
+            for (var i = 0; i < textNodes.length; i++) {
+                var text = textNodes[i].textContent.toLowerCase();
+                var index = text.indexOf(searchLower);
                 if (index !== -1) {
-                    try {
-                        var range = document.createRange();
-                        range.setStart(node, index);
-                        range.setEnd(node, index + searchText.length);
-                        var rect = range.getBoundingClientRect();
-                        window.scrollTo({top: window.scrollY + rect.top - 100, behavior: 'smooth'});
-                        
-                        // Highlight the matched text
-                        var span = document.createElement('span');
-                        span.style.backgroundColor = '#ffff99';
-                        span.style.padding = '2px';
+                    var range = document.createRange();
+                    var textNode = textNodes[i];
+                    var originalIndex = textNode.textContent.toLowerCase().indexOf(searchLower);
+                    if (originalIndex !== -1) {
                         try {
-                            range.surroundContents(span);
-                            // Remove highlight after 3 seconds
-                            setTimeout(function() {
-                                try {
-                                    if (span && span.parentNode) {
-                                        var parentNode = span.parentNode;
-                                        var textContent = span.textContent;
-                                        parentNode.replaceChild(document.createTextNode(textContent), span);
-                                        // Normalize to merge adjacent text nodes
-                                        if (parentNode && (parentNode.parentNode || document.body.contains(parentNode))) {
-                                            parentNode.normalize();
+                            range.setStart(textNode, originalIndex);
+                            range.setEnd(textNode, originalIndex + searchText.length);
+                            var rect = range.getBoundingClientRect();
+                            window.scrollTo({top: window.scrollY + rect.top - 100, behavior: 'smooth'});
+                            var span = document.createElement('span');
+                            span.style.backgroundColor = '#ffff99';
+                            span.style.padding = '2px';
+                            span.style.borderRadius = '2px';
+                            try {
+                                range.surroundContents(span);
+                                setTimeout(function() {
+                                    try {
+                                        if (span && span.parentNode) {
+                                            var parentNode = span.parentNode;
+                                            var textContent = span.textContent;
+                                            parentNode.replaceChild(document.createTextNode(textContent), span);
+                                            // Normalize to merge adjacent text nodes
+                                            // Check if parentNode still exists and is connected to document
+                                            if (parentNode && (parentNode.parentNode || document.body.contains(parentNode))) {
+                                                parentNode.normalize();
+                                            }
                                         }
+                                    } catch(e) {
+                                        // Ignore errors if nodes were already removed or modified
                                     }
-                                } catch(e) {
-                                    console.error('Error removing highlight:', e);
+                                }, 3000);
+                            } catch(e) {
+                                // If surroundContents fails (e.g., text is in a link), highlight the parent element
+                                var parent = textNode.parentElement;
+                                if (parent && parent !== element && parent.tagName !== 'BODY' && parent.tagName !== 'HTML') {
+                                    var originalBg = parent.style.backgroundColor;
+                                    var originalTransition = parent.style.transition;
+                                    parent.style.backgroundColor = '#ffff99';
+                                    parent.style.transition = 'background-color 0.3s';
+                                    setTimeout(function() {
+                                        parent.style.backgroundColor = originalBg;
+                                        setTimeout(function() {
+                                            parent.style.transition = originalTransition;
+                                        }, 300);
+                                    }, 3000);
                                 }
-                            }, 3000);
+                            }
+                            return true;
                         } catch(e) {
-                            console.error('Error highlighting text:', e);
-                        }
-                        return true;
-                    } catch(e) {
-                        // Fallback: scroll to element if range manipulation fails
-                        console.error('Error creating range for text:', e);
-                        try {
                             window.scrollTo({top: element.getBoundingClientRect().top + window.scrollY - 100, behavior: 'smooth'});
-                        } catch(scrollErr) {
-                            console.error('Error scrolling to element:', scrollErr);
+                            return true;
                         }
-                        return true;
                     }
                 }
             }
             return false;
-        }
+        };
         
-        // Make scrollToText available globally for course pages
-        window.coursesearchScrollToText = scrollToText;
-        
-        // Use event delegation for better performance - single handler for all links
-        function handleResultClick(e) {
-            var link = e.target.closest('.coursesearch-results a[href]');
-            if (!link) return;
-            
-            var href = link.getAttribute('href');
-            if (!href) return;
-            
-            try {
-                var url = new URL(href, window.location.origin);
-                var highlight = url.searchParams.get('highlight');
-                var hash = url.hash;
-                var moduleId = null;
+        // Intercept clicks on ALL result links - attach immediately and also on DOMContentLoaded
+        function attachClickHandlers() {
+            // Get all result links (course pages, page activities, forums, etc.)
+            var resultLinks = document.querySelectorAll('.coursesearch-results a[href]');
+            resultLinks.forEach(function(link) {
+                // Skip if already has handler (check for data attribute)
+                if (link.dataset.coursesearchHandler) return;
+                link.dataset.coursesearchHandler = 'true';
                 
-                if (hash) {
-                    var match = hash.match(/^#module-(\\d+)$/);
-                    if (match) moduleId = match[1];
-                }
-                
-                if (highlight && typeof sessionStorage !== 'undefined') {
-                    // Safely escape the highlight value using JSON.stringify before storing
-                    // This prevents XSS by properly escaping all special characters
+                link.addEventListener('click', function(e) {
+                    var href = this.getAttribute('href');
                     try {
-                        var safeHighlight = JSON.stringify(highlight);
-                        sessionStorage.setItem('coursesearch_highlight', safeHighlight);
-                        
-                        if (moduleId) {
-                            // Validate moduleId is numeric only to prevent XSS
-                            if (/^\\d+$/.test(moduleId)) {
-                                sessionStorage.setItem('coursesearch_moduleId', moduleId);
+                        var url = new URL(href, window.location.origin);
+                        var highlight = url.searchParams.get('highlight');
+                        var hash = url.hash;
+                        var moduleId = null;
+                        if (hash) {
+                            var match = hash.match(/^#module-(\\d+)$/);
+                            if (match) moduleId = match[1];
+                        }
+                        if (highlight && typeof sessionStorage !== 'undefined') {
+                            // Safely escape the highlight value using JSON.stringify before storing
+                            // This prevents XSS by properly escaping all special characters
+                            try {
+                                var safeHighlight = JSON.stringify(highlight);
+                                sessionStorage.setItem('coursesearch_highlight', safeHighlight);
+                                if (moduleId) {
+                                    // Validate moduleId is numeric only to prevent XSS
+                                    if (/^\\d+$/.test(moduleId)) {
+                                        sessionStorage.setItem('coursesearch_moduleId', moduleId);
+                                    }
+                                }
+                                sessionStorage.setItem('coursesearch_timestamp', Date.now().toString());
+                                sessionStorage.setItem('coursesearch_shouldScroll', 'true');
+                            } catch(err) {
+                                console.error('Error escaping highlight data:', err);
                             }
                         }
-                        sessionStorage.setItem('coursesearch_timestamp', Date.now().toString());
-                        sessionStorage.setItem('coursesearch_shouldScroll', 'true');
                     } catch(err) {
-                        console.error('Error escaping highlight data:', err);
+                        console.error('Error storing highlight data:', err);
                     }
-                }
-            } catch(err) {
-                console.error('Error storing highlight data:', err);
-            }
-        }
-        
-        // Attach event delegation handler
-        function attachClickHandler() {
-            var container = document.querySelector('.coursesearch-results');
-            if (container) {
-                container.addEventListener('click', handleResultClick);
-            }
+                });
+            });
         }
         
         // Attach immediately if DOM is ready, otherwise wait
         if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', attachClickHandler);
+            document.addEventListener('DOMContentLoaded', attachClickHandlers);
         } else {
-            attachClickHandler();
+            attachClickHandlers();
         }
         
         // Create a function that will execute on course pages
         // This function checks sessionStorage and scrolls to highlighted text
+        // We define it as a proper function instead of using eval()
         window.coursesearchInitScroll = function() {
             if (typeof sessionStorage === 'undefined') return;
-            
             var highlight = sessionStorage.getItem('coursesearch_highlight');
             var moduleId = sessionStorage.getItem('coursesearch_moduleId');
             var timestamp = sessionStorage.getItem('coursesearch_timestamp');
-            
             if (!highlight) return;
-            
             // Check if timestamp is recent (within 10 seconds)
             if (timestamp && Date.now() - parseInt(timestamp) > 10000) {
                 sessionStorage.removeItem('coursesearch_highlight');
@@ -476,11 +488,145 @@ if (!empty($query)) {
                 sessionStorage.removeItem('coursesearch_timestamp');
                 return;
             }
-            
             // Only run on course view pages
             if (window.location.pathname.indexOf('/course/view.php') === -1) return;
             
-            function initScroll() {
+            // Define scroll function (needed on course page)
+            // Improved version that handles text inside links and across node boundaries
+            function scrollToText(element, searchText) {
+                if (!element || !searchText) return false;
+                
+                // First, try to find text using a more robust method that handles links
+                var searchLower = searchText.toLowerCase().trim();
+                
+                // Get all text content and search for matches
+                var walker = document.createTreeWalker(
+                    element,
+                    NodeFilter.SHOW_TEXT,
+                    {
+                        acceptNode: function(node) {
+                            // Skip script and style nodes
+                            var parent = node.parentNode;
+                            if (parent && (parent.tagName === 'SCRIPT' || parent.tagName === 'STYLE')) {
+                                return NodeFilter.FILTER_REJECT;
+                            }
+                            return NodeFilter.FILTER_ACCEPT;
+                        }
+                    },
+                    false
+                );
+                
+                var textNodes = [];
+                var node;
+                while (node = walker.nextNode()) {
+                    textNodes.push(node);
+                }
+                
+                // Search through text nodes, handling text that might span multiple nodes
+                for (var i = 0; i < textNodes.length; i++) {
+                    var textNode = textNodes[i];
+                    var text = textNode.textContent;
+                    var textLower = text.toLowerCase();
+                    var index = textLower.indexOf(searchLower);
+                    
+                    if (index !== -1) {
+                        try {
+                            var range = document.createRange();
+                            range.setStart(textNode, index);
+                            range.setEnd(textNode, index + searchText.length);
+                            
+                            // Check if range is valid and doesn't span invalid boundaries
+                            try {
+                                var testRange = range.cloneRange();
+                                testRange.collapse(true);
+                            } catch(e) {
+                                // Range is invalid, try next node
+                                continue;
+                            }
+                            
+                            var rect = range.getBoundingClientRect();
+                            if (rect.width === 0 && rect.height === 0) {
+                                // Range is collapsed or invalid, try next
+                                continue;
+                            }
+                            
+                            // Scroll to the found text
+                            window.scrollTo({top: window.scrollY + rect.top - 100, behavior: 'smooth'});
+                            
+                            // Try to highlight, but handle cases where it might fail (e.g., text inside links)
+                            try {
+                                var span = document.createElement('span');
+                                span.style.backgroundColor = '#ffff99';
+                                span.style.padding = '2px';
+                                span.style.borderRadius = '2px';
+                                
+                                // Try to surround the range with a span
+                                try {
+                                    range.surroundContents(span);
+                                    
+                                    // Remove highlight after 3 seconds
+                                    setTimeout(function() {
+                                        if (span && span.parentNode) {
+                                            var parentNode = span.parentNode;
+                                            var textContent = span.textContent;
+                                            parentNode.replaceChild(document.createTextNode(textContent), span);
+                                            if (parentNode.parentNode) {
+                                                parentNode.normalize();
+                                            }
+                                        }
+                                    }, 3000);
+                                } catch(surroundError) {
+                                    // Can't surround (e.g., text spans link boundaries), highlight the parent element instead
+                                    var parent = textNode.parentNode;
+                                    if (parent && parent !== element && parent.tagName !== 'BODY' && parent.tagName !== 'HTML') {
+                                        var originalBg = parent.style.backgroundColor;
+                                        var originalTransition = parent.style.transition;
+                                        parent.style.backgroundColor = '#ffff99';
+                                        parent.style.transition = 'background-color 0.3s';
+                                        parent.style.borderRadius = '2px';
+                                        setTimeout(function() {
+                                            if (parent && parent.style) {
+                                                parent.style.backgroundColor = originalBg;
+                                                setTimeout(function() {
+                                                    parent.style.transition = originalTransition;
+                                                }, 300);
+                                            }
+                                        }, 3000);
+                                    }
+                                }
+                            } catch(e) {
+                                // If highlighting fails, at least we scrolled to the location
+                                console.log('Could not highlight text:', e);
+                            }
+                            
+                            return true;
+                        } catch(e) {
+                            // If range creation fails, try to scroll to the text node's parent
+                            try {
+                                var parent = textNode.parentNode;
+                                if (parent) {
+                                    var parentRect = parent.getBoundingClientRect();
+                                    window.scrollTo({top: window.scrollY + parentRect.top - 100, behavior: 'smooth'});
+                                    return true;
+                                }
+                            } catch(e2) {
+                                // Fallback: scroll to element
+                                window.scrollTo({top: element.getBoundingClientRect().top + window.scrollY - 100, behavior: 'smooth'});
+                                return true;
+                            }
+                        }
+                    }
+                }
+                return false;
+            }
+            
+            var highlightAttempted = false;
+            var observer = null;
+            
+            function initScroll(retryCount) {
+                retryCount = retryCount || 0;
+                var maxRetries = 15; // Increased retries for slow-loading content
+                
                 // Safely decode the highlight value that was stored using JSON.stringify
                 var searchText = '';
                 try {
@@ -497,81 +643,147 @@ if (!empty($query)) {
                     sessionStorage.removeItem('coursesearch_highlight');
                     sessionStorage.removeItem('coursesearch_moduleId');
                     sessionStorage.removeItem('coursesearch_timestamp');
+                    if (observer) observer.disconnect();
                     return;
                 }
-                
                 if (!searchText) {
-                    sessionStorage.removeItem('coursesearch_highlight');
-                    sessionStorage.removeItem('coursesearch_moduleId');
-                    sessionStorage.removeItem('coursesearch_timestamp');
+                    if (observer) observer.disconnect();
                     return;
-                }
-                
-                // Clean up sessionStorage helper
-                function cleanup() {
-                    sessionStorage.removeItem('coursesearch_highlight');
-                    sessionStorage.removeItem('coursesearch_moduleId');
-                    sessionStorage.removeItem('coursesearch_timestamp');
                 }
                 
                 var hash = window.location.hash;
                 var targetModuleId = moduleId || (hash ? hash.match(/^#module-(\\d+)$/) : null);
                 if (targetModuleId && !moduleId) targetModuleId = targetModuleId[1];
-                
                 // Validate moduleId is numeric only
                 if (targetModuleId && !/^\\d+$/.test(targetModuleId)) {
                     targetModuleId = null;
                 }
                 
+                var targetElement = null;
                 if (targetModuleId) {
-                    var el = document.getElementById('module-' + targetModuleId);
-                    if (el) {
-                        if (scrollToText(el, searchText)) {
-                            cleanup();
-                            return;
-                        }
-                        // Fallback: scroll to module if text not found
+                    targetElement = document.getElementById('module-' + targetModuleId);
+                }
+                
+                // If target element doesn't exist yet and we haven't exceeded retries, wait and retry
+                if (targetModuleId && !targetElement && retryCount < maxRetries) {
+                    setTimeout(function() {
+                        initScroll(retryCount + 1);
+                    }, 500); // Increased delay
+                    return;
+                }
+                
+                // Try to find and scroll to the text
+                var found = false;
+                if (targetElement) {
+                    found = scrollToText(targetElement, searchText);
+                    if (!found) {
+                        // Text not found in target element, scroll to element anyway
                         try {
-                            window.scrollTo({top: el.getBoundingClientRect().top + window.scrollY - 100, behavior: 'smooth'});
+                            window.scrollTo({top: targetElement.getBoundingClientRect().top + window.scrollY - 100, behavior: 'smooth'});
                         } catch(e) {
-                            console.error('Error scrolling to module:', e);
+                            // Element might not be ready yet
                         }
-                        cleanup();
-                    } else {
-                        cleanup();
                     }
                 } else {
-                    scrollToText(document.body, searchText);
-                    cleanup();
+                    // No specific target, search in whole page
+                    found = scrollToText(document.body, searchText);
+                }
+                
+                // If text not found and we haven't exceeded retries, try again (content might still be loading)
+                if (!found && retryCount < maxRetries) {
+                    setTimeout(function() {
+                        initScroll(retryCount + 1);
+                    }, 500); // Increased delay
+                    return;
+                }
+                
+                // Clean up sessionStorage after successful attempt
+                if (found) {
+                    sessionStorage.removeItem('coursesearch_highlight');
+                    sessionStorage.removeItem('coursesearch_moduleId');
+                    sessionStorage.removeItem('coursesearch_timestamp');
+                    if (observer) observer.disconnect();
+                    highlightAttempted = true;
+                } else if (retryCount >= maxRetries) {
+                    // Failed after all retries, but keep sessionStorage for page reload
+                    // Don't clean up - let user reload to try again
+                    if (observer) observer.disconnect();
+                    highlightAttempted = true;
                 }
             }
             
-            // Use requestAnimationFrame for smoother initialization
-            function init() {
-                if (document.readyState === 'loading') {
+            // Wait for both DOM and all resources (images, etc.) to be loaded
+            function startInitScroll() {
+                // Use MutationObserver to watch for dynamically added content
+                if (typeof MutationObserver !== 'undefined' && !observer) {
+                    observer = new MutationObserver(function(mutations) {
+                        if (!highlightAttempted) {
+                            // Content was added, try highlighting again
+                            setTimeout(function() {
+                                initScroll(0);
+                            }, 200);
+                        }
+                    });
+                    
+                    // Start observing when DOM is ready
+                    if (document.body) {
+                        observer.observe(document.body, {
+                            childList: true,
+                            subtree: true,
+                            characterData: true
+                        });
+                    }
+                }
+                
+                // Initial attempt after page load
+                function attemptHighlight() {
+                    setTimeout(function() {
+                        if (!highlightAttempted) {
+                            initScroll(0);
+                        }
+                    }, 800); // Longer initial delay to ensure content is ready
+                }
+                
+                if (document.readyState === 'complete') {
+                    // Page fully loaded, wait a bit more for dynamic content
+                    attemptHighlight();
+                } else if (document.readyState === 'loading') {
+                    // Wait for DOMContentLoaded first, then window.load
                     document.addEventListener('DOMContentLoaded', function() {
-                        setTimeout(initScroll, 300);
+                        window.addEventListener('load', function() {
+                            attemptHighlight();
+                        });
+                        // Also try after DOMContentLoaded in case load event is slow
+                        attemptHighlight();
                     });
                 } else {
-                    setTimeout(initScroll, 300);
+                    // DOM is ready but page might still be loading
+                    window.addEventListener('load', function() {
+                        attemptHighlight();
+                    });
+                    // Also try immediately in case load already fired
+                    attemptHighlight();
                 }
             }
-            init();
+            
+            startInitScroll();
         };
         
         // Also try to inject it into the next page by storing it
+        // The course page will need to check for this and execute it
         if (typeof sessionStorage !== 'undefined') {
             sessionStorage.setItem('coursesearch_shouldScroll', 'true');
         }
         
         // For immediate execution on this page, call the function directly
+        // This replaces the dangerous eval() approach
         if (window.location.pathname.indexOf('/course/view.php') !== -1) {
             if (document.readyState === 'loading') {
                 document.addEventListener('DOMContentLoaded', function() {
-                    setTimeout(window.coursesearchInitScroll, 300);
+                    setTimeout(window.coursesearchInitScroll, 500);
                 });
             } else {
-                setTimeout(window.coursesearchInitScroll, 300);
+                setTimeout(window.coursesearchInitScroll, 500);
             }
         }
     })();

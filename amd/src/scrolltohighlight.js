@@ -79,6 +79,7 @@ define(['jquery'], function($) {
                         const span = document.createElement('span');
                         span.style.backgroundColor = '#ffff99';
                         span.style.padding = '2px';
+                        span.style.borderRadius = '2px';
                         span.className = 'coursesearch-highlight-temp';
                         try {
                             range.surroundContents(span);
@@ -91,7 +92,20 @@ define(['jquery'], function($) {
                                 }
                             }, 3000);
                         } catch (e) {
-                            // If surroundContents fails, just scroll
+                            // If surroundContents fails (e.g., text is in a link), highlight the parent element
+                            const parent = textNode.parentElement;
+                            if (parent && parent !== element && parent.tagName !== 'BODY' && parent.tagName !== 'HTML') {
+                                const originalBg = parent.style.backgroundColor;
+                                const originalTransition = parent.style.transition;
+                                parent.style.backgroundColor = '#ffff99';
+                                parent.style.transition = 'background-color 0.3s';
+                                setTimeout(function() {
+                                    parent.style.backgroundColor = originalBg;
+                                    setTimeout(function() {
+                                        parent.style.transition = originalTransition;
+                                    }, 300);
+                                }, 3000);
+                            }
                         }
 
                         return true;
