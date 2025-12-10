@@ -107,7 +107,6 @@ When clicking on search results that link to course page content (labels, pages,
 
 - JavaScript only loads when needed (when `highlight` parameter is present)
 - AMD modules are lazy-loaded by Moodle
-- No database overhead for highlighting
 - Client-side highlighting only
 - Minimal impact on page load
 
@@ -124,9 +123,6 @@ When clicking on search results that link to course page content (labels, pages,
 - Try different search terms
 - Check if the content type is supported
 
-### Search results show HTML entities
-- This was fixed - if you see `&quot;` instead of `"`, purge Moodle caches
-
 ## Version
 
 Current version: **1.0.0** (Stable)
@@ -138,7 +134,7 @@ This plugin is licensed under the GNU GPL v3 or later.
 ## Credits
 
 Original plugin: Yurii Lysak (2025)
-Enhancements: HNEE (Hochschule fÃ¼r nachhaltige Entwicklung Eberswalde) - December 2025
+Enhancements: HNEE (Hochschule für nachhaltige Entwicklung Eberswalde) - December 2025
 
 ## Support
 
