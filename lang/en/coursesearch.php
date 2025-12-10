@@ -70,3 +70,7 @@ $string['coursesearch:view'] = 'View course search';
 // Error strings
 $string['missingidandcmid'] = 'Missing course module ID or course search ID';
 $string['nocourseinstances'] = 'There are no course search instances in this course';
+
+// Admin settings
+$string['enablehighlight'] = 'Enable scrolling and highlighting';
+$string['enablehighlight_desc'] = 'When enabled, clicking on search results will automatically scroll to and highlight the matched text on the course page.';

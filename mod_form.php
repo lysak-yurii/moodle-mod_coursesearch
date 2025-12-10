@@ -59,27 +59,6 @@ class mod_coursesearch_mod_form extends moodleform_mod {
         // Adding the standard "intro" and "introformat" fields.
         $this->standard_intro_elements();
 
-        // Search settings.
-        $mform->addElement('header', 'coursesearchsettings', get_string('coursesearchsettings', 'coursesearch'));
-
-        // Search scope options.
-        $searchoptions = array(
-            'course' => get_string('searchscope_course', 'coursesearch'),
-            'activities' => get_string('searchscope_activities', 'coursesearch'),
-            'resources' => get_string('searchscope_resources', 'coursesearch'),
-            'forums' => get_string('searchscope_forums', 'coursesearch'),
-            'all' => get_string('searchscope_all', 'coursesearch')
-        );
-        $mform->addElement('select', 'searchscope', get_string('searchscope', 'coursesearch'), $searchoptions);
-        $mform->setDefault('searchscope', 'all');
-        $mform->addHelpButton('searchscope', 'searchscope', 'coursesearch');
-
-        // Add placeholder text option.
-        $mform->addElement('text', 'placeholder', get_string('placeholder', 'coursesearch'), array('size' => '64'));
-        $mform->setType('placeholder', PARAM_TEXT);
-        $mform->setDefault('placeholder', get_string('defaultplaceholder', 'coursesearch'));
-        $mform->addHelpButton('placeholder', 'placeholder', 'coursesearch');
-
         // Add display options
         $mform->addElement('header', 'displayoptions', get_string('displayoptions', 'coursesearch'));
         

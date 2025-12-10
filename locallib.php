@@ -252,12 +252,13 @@ function coursesearch_perform_search($query, $course, $filter = 'all') {
                             'modname' => $mod->modname,
                             'icon' => $mod->get_icon_url(),
                             'match' => 'title',
-                            'snippet' => $chapter->title
+                            'snippet' => $chapter->title,
+                            'cmid' => $mod->id
                         );
                         // Skip content check for this chapter since we already found a match
                         continue;
                     }
-                    
+
                     // Then check if the chapter content matches the query
                     if (($filter == 'all' || $filter == 'content') && coursesearch_is_relevant($chapter->content, $query)) {
                         $snippet = coursesearch_extract_snippet($chapter->content, $query);
@@ -269,7 +270,8 @@ function coursesearch_perform_search($query, $course, $filter = 'all') {
                             'modname' => $mod->modname,
                             'icon' => $mod->get_icon_url(),
                             'match' => 'content',
-                            'snippet' => $snippet
+                            'snippet' => $snippet,
+                            'cmid' => $mod->id
                         );
                     }
                 }
@@ -432,6 +434,40 @@ function coursesearch_perform_search($query, $course, $filter = 'all') {
                 }
                 break;
                 
+            case 'folder':
+                // Search in folder files
+                $fs = get_file_storage();
+                $context = context_module::instance($mod->id);
+                $files = $fs->get_area_files($context->id, 'mod_folder', 'content', 0, 'filepath, filename', false);
+
+                foreach ($files as $file) {
+                    $filename = $file->get_filename();
+                    // Search in filename
+                    if (coursesearch_mb_stripos($filename, $query) !== false) {
+                        // Create URL to the folder with the file
+                        $fileurl = moodle_url::make_pluginfile_url(
+                            $context->id,
+                            'mod_folder',
+                            'content',
+                            0,
+                            $file->get_filepath(),
+                            $filename
+                        );
+
+                        $results[] = array(
+                            'type' => 'folder_file',
+                            'name' => $mod->name . ': ' . $filename,
+                            'url' => $fileurl,
+                            'modname' => 'folder',
+                            'icon' => $mod->get_icon_url(),
+                            'match' => 'title',
+                            'snippet' => $filename,
+                            'cmid' => $mod->id
+                        );
+                    }
+                }
+                break;
+
             case 'wiki':
                 // Search in wiki pages
                 $wikipages = $DB->get_records('wiki_pages', array('subwikiid' => $mod->instance), 'id, title, cachedcontent');
@@ -461,7 +497,7 @@ function coursesearch_perform_search($query, $course, $filter = 'all') {
                                 // Skip content check for this page since we already found a match
                                 continue;
                             }
-                            
+
                             // Then check if the page content matches
                             if (($filter == 'all' || $filter == 'content') && !empty($wikipage->cachedcontent) && coursesearch_is_relevant($wikipage->cachedcontent, $query)) {
                                 $snippet = coursesearch_extract_snippet($wikipage->cachedcontent, $query);
@@ -478,6 +514,175 @@ function coursesearch_perform_search($query, $course, $filter = 'all') {
                                 );
                             }
                         }
+                    }
+                }
+                break;
+
+            case 'glossary':
+                // Search in glossary entries
+                $glossary = $DB->get_record('glossary', array('id' => $mod->instance), 'id, name');
+                if ($glossary) {
+                    // Get all entries in this glossary
+                    $entries = $DB->get_records('glossary_entries', array('glossaryid' => $glossary->id), '', 'id, concept, definition');
+                    foreach ($entries as $entry) {
+                        // First check if the entry concept (term) matches
+                        if (($filter == 'all' || $filter == 'title') && coursesearch_mb_stripos($entry->concept, $query) !== false) {
+                            $entryurl = new moodle_url('/mod/glossary/showentry.php', array('eid' => $entry->id, 'displayformat' => 'dictionary'));
+                            $results[] = array(
+                                'type' => 'glossary_entry_title',
+                                'name' => $mod->name . ': ' . $entry->concept,
+                                'url' => $entryurl,
+                                'modname' => $mod->modname,
+                                'icon' => $mod->get_icon_url(),
+                                'match' => 'title',
+                                'snippet' => $entry->concept,
+                                'cmid' => $mod->id
+                            );
+                            // Skip definition check for this entry since we already found a match
+                            continue;
+                        }
+
+                        // Then check if the entry definition matches
+                        if (($filter == 'all' || $filter == 'content') && !empty($entry->definition) && coursesearch_is_relevant($entry->definition, $query)) {
+                            $snippet = coursesearch_extract_snippet($entry->definition, $query);
+                            $entryurl = new moodle_url('/mod/glossary/showentry.php', array('eid' => $entry->id, 'displayformat' => 'dictionary'));
+                            $results[] = array(
+                                'type' => 'glossary_entry_content',
+                                'name' => $mod->name . ': ' . $entry->concept,
+                                'url' => $entryurl,
+                                'modname' => $mod->modname,
+                                'icon' => $mod->get_icon_url(),
+                                'match' => 'content',
+                                'snippet' => $snippet,
+                                'cmid' => $mod->id
+                            );
+                        }
+                    }
+                }
+                break;
+
+            case 'data':
+                // Search in database entries
+                $database = $DB->get_record('data', array('id' => $mod->instance), 'id, name');
+                if ($database) {
+                    // Get all fields for this database
+                    $fields = $DB->get_records('data_fields', array('dataid' => $database->id), '', 'id, name, type');
+
+                    // Get all records in this database
+                    $records = $DB->get_records('data_records', array('dataid' => $database->id), '', 'id');
+
+                    foreach ($records as $record) {
+                        // Get all content for this record
+                        $contents = $DB->get_records('data_content', array('recordid' => $record->id), '', 'id, fieldid, content, content1, content2, content3, content4');
+
+                        $record_matched = false;
+                        $matched_content = '';
+                        $matched_field_name = '';
+
+                        foreach ($contents as $content) {
+                            // Skip if already matched this record
+                            if ($record_matched) {
+                                break;
+                            }
+
+                            // Get field info
+                            $field = isset($fields[$content->fieldid]) ? $fields[$content->fieldid] : null;
+                            $field_name = $field ? $field->name : '';
+
+                            // Search in main content
+                            if (!empty($content->content) && coursesearch_is_relevant($content->content, $query)) {
+                                $record_matched = true;
+                                $matched_content = $content->content;
+                                $matched_field_name = $field_name;
+                            }
+                            // Also check content1-4 fields (used by some field types)
+                            else if (!empty($content->content1) && coursesearch_is_relevant($content->content1, $query)) {
+                                $record_matched = true;
+                                $matched_content = $content->content1;
+                                $matched_field_name = $field_name;
+                            }
+                        }
+
+                        if ($record_matched) {
+                            $snippet = coursesearch_extract_snippet($matched_content, $query);
+                            $recordurl = new moodle_url('/mod/data/view.php', array('d' => $database->id, 'rid' => $record->id));
+
+                            // Try to get a meaningful name for the record
+                            $record_name = $mod->name;
+                            if (!empty($matched_field_name)) {
+                                $record_name .= ' (' . $matched_field_name . ')';
+                            }
+
+                            $results[] = array(
+                                'type' => 'data_entry',
+                                'name' => $record_name,
+                                'url' => $recordurl,
+                                'modname' => $mod->modname,
+                                'icon' => $mod->get_icon_url(),
+                                'match' => 'content',
+                                'snippet' => $snippet,
+                                'cmid' => $mod->id
+                            );
+                        }
+                    }
+                }
+                break;
+
+            case 'hvp':
+                // Search in H5P interactive content (mod_hvp plugin)
+                $hvp = $DB->get_record('hvp', array('id' => $mod->instance), 'id, name, json_content');
+                if ($hvp && !empty($hvp->json_content)) {
+                    // Extract all text content from the H5P JSON
+                    $h5p_text = coursesearch_extract_h5p_text($hvp->json_content);
+
+                    if (!empty($h5p_text) && coursesearch_is_relevant($h5p_text, $query)) {
+                        $snippet = coursesearch_extract_snippet($h5p_text, $query);
+                        $hvpurl = new moodle_url('/mod/hvp/view.php', array('id' => $mod->id));
+
+                        $results[] = array(
+                            'type' => 'hvp_content',
+                            'name' => $mod->name,
+                            'url' => $hvpurl,
+                            'modname' => $mod->modname,
+                            'icon' => $mod->get_icon_url(),
+                            'match' => 'content',
+                            'snippet' => $snippet,
+                            'cmid' => $mod->id
+                        );
+                    }
+                }
+                break;
+
+            case 'h5pactivity':
+                // Search in H5P activity (Moodle core h5pactivity)
+                // The content is stored in mdl_h5p table, linked via file system
+                $context = context_module::instance($mod->id);
+                $h5p_content = $DB->get_record_sql(
+                    "SELECT h.id, h.jsoncontent
+                     FROM {h5p} h
+                     JOIN {files} f ON f.contenthash = h.contenthash
+                     WHERE f.contextid = ? AND f.component = 'mod_h5pactivity' AND f.filearea = 'package'
+                     LIMIT 1",
+                    array($context->id)
+                );
+
+                if ($h5p_content && !empty($h5p_content->jsoncontent)) {
+                    $h5p_text = coursesearch_extract_h5p_text($h5p_content->jsoncontent);
+
+                    if (!empty($h5p_text) && coursesearch_is_relevant($h5p_text, $query)) {
+                        $snippet = coursesearch_extract_snippet($h5p_text, $query);
+                        $h5purl = new moodle_url('/mod/h5pactivity/view.php', array('id' => $mod->id));
+
+                        $results[] = array(
+                            'type' => 'h5pactivity_content',
+                            'name' => $mod->name,
+                            'url' => $h5purl,
+                            'modname' => $mod->modname,
+                            'icon' => $mod->get_icon_url(),
+                            'match' => 'content',
+                            'snippet' => $snippet,
+                            'cmid' => $mod->id
+                        );
                     }
                 }
                 break;
@@ -953,4 +1158,93 @@ function coursesearch_html_to_text($html) {
     return $text;
 }
 
+/**
+ * Extract searchable text content from H5P JSON
+ *
+ * H5P stores content in JSON format with text in various fields like 'text', 'label',
+ * 'title', 'description', 'question', 'answer', etc. This function recursively
+ * extracts all text content from the JSON structure.
+ *
+ * @param string $json_content The JSON content from H5P
+ * @return string Combined plain text from all text fields
+ */
+function coursesearch_extract_h5p_text($json_content) {
+    if (empty($json_content)) {
+        return '';
+    }
+
+    // Decode JSON
+    $data = json_decode($json_content, true);
+    if ($data === null) {
+        return '';
+    }
+
+    // Text fields commonly used in H5P content types
+    $text_fields = array(
+        'text', 'label', 'title', 'description', 'question', 'answer',
+        'tip', 'feedback', 'correct', 'incorrect', 'header', 'summary',
+        'introduction', 'explanation', 'hint', 'placeholder', 'alt',
+        'caption', 'credit', 'copyright', 'definition', 'term',
+        'statement', 'quote', 'author', 'source', 'taskDescription',
+        'endScreenTitle', 'endScreenSubtitle', 'retryButtonLabel',
+        'showSolutionsButtonLabel', 'checkAnswerButtonLabel',
+        'submitButtonLabel', 'continueButtonLabel', 'proceedButtonLabel',
+        // Accordion specific
+        'panels', 'content',
+        // Course Presentation specific
+        'slides', 'elements',
+        // Interactive Video specific
+        'interactiveVideo', 'video', 'interactions',
+        // Question Set specific
+        'questions', 'introPage', 'resultPage'
+    );
+
+    $extracted_text = array();
+    coursesearch_extract_h5p_text_recursive($data, $text_fields, $extracted_text);
+
+    // Join all extracted text with spaces
+    $combined_text = implode(' ', $extracted_text);
+
+    // Clean up the text
+    $combined_text = preg_replace('/\s+/', ' ', $combined_text);
+    $combined_text = trim($combined_text);
+
+    return $combined_text;
+}
+
+/**
+ * Recursively extract text from H5P data structure
+ *
+ * @param mixed $data The data to process (array or value)
+ * @param array $text_fields List of field names that contain text
+ * @param array &$extracted_text Reference to array collecting extracted text
+ */
+function coursesearch_extract_h5p_text_recursive($data, $text_fields, &$extracted_text) {
+    if (is_string($data)) {
+        // Check if string contains HTML
+        if (preg_match('/<[^>]+>/', $data)) {
+            // Extract text from HTML
+            $text = coursesearch_html_to_text($data);
+            if (!empty($text) && mb_strlen($text, 'UTF-8') > 2) {
+                $extracted_text[] = $text;
+            }
+        } else if (mb_strlen($data, 'UTF-8') > 2) {
+            // Plain text - add if it's meaningful (more than 2 chars)
+            $extracted_text[] = $data;
+        }
+    } else if (is_array($data)) {
+        foreach ($data as $key => $value) {
+            // If key is a known text field or is numeric (array index), process the value
+            if (is_numeric($key) || in_array($key, $text_fields)) {
+                coursesearch_extract_h5p_text_recursive($value, $text_fields, $extracted_text);
+            } else if (is_array($value)) {
+                // For other keys that contain arrays, still recurse
+                coursesearch_extract_h5p_text_recursive($value, $text_fields, $extracted_text);
+            } else if (is_string($value) && in_array($key, $text_fields)) {
+                // Direct text field
+                coursesearch_extract_h5p_text_recursive($value, $text_fields, $extracted_text);
+            }
+        }
+    }
+}
 

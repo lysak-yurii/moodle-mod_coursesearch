@@ -15,18 +15,21 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Course Search module version information
+ * Administration settings for the coursesearch module.
  *
  * @package    mod_coursesearch
- * @copyright  2025 Your Name
+ * @copyright  2025 Yurii Lysak
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version   = 2025121001;       // The current module version (Date: YYYYMMDDXX).
-$plugin->requires  = 2024042200;       // Requires this Moodle version (Moodle 4.4+).
-$plugin->component = 'mod_coursesearch'; // Full name of the plugin (used for diagnostics).
-$plugin->cron      = 0;
-$plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.0.0';          // Version 1.0.0 - includes search term highlighting
+if ($ADMIN->fulltree) {
+    // Enable/disable scrolling and highlighting feature.
+    $settings->add(new admin_setting_configcheckbox(
+        'mod_coursesearch/enablehighlight',
+        get_string('enablehighlight', 'coursesearch'),
+        get_string('enablehighlight_desc', 'coursesearch'),
+        1
+    ));
+}

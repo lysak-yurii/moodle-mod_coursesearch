@@ -72,3 +72,7 @@ $string['coursesearch:view'] = 'Kurssuche anzeigen';
 // Error strings
 $string['missingidandcmid'] = 'Fehlende Kursmodul-ID oder Kurssuche-ID';
 $string['nocourseinstances'] = 'Es gibt keine Kurssuche-Instanzen in diesem Kurs';
+
+// Admin settings
+$string['enablehighlight'] = 'Scrollen und Hervorheben aktivieren';
+$string['enablehighlight_desc'] = 'Wenn aktiviert, wird beim Klicken auf Suchergebnisse automatisch zum gefundenen Text gescrollt und dieser auf der Kursseite hervorgehoben.';

@@ -1,0 +1,78 @@
+<?php
+// This file is part of Moodle - http://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+
+/**
+ * Ukrainian language strings for coursesearch
+ *
+ * @package    mod_coursesearch
+ * @copyright  2025 Yurii Lysak
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+
+defined('MOODLE_INTERNAL') || die();
+
+$string['modulename'] = 'Пошук по курсу';
+$string['modulenameplural'] = 'Пошуки по курсах';
+$string['modulename_help'] = 'Модуль пошуку по курсу дозволяє викладачам додати панель пошуку до курсу, щоб студенти могли шукати вміст курсу.';
+$string['coursesearch:addinstance'] = 'Додати новий пошук по курсу';
+$string['coursesearch:view'] = 'Переглянути пошук по курсу';
+$string['pluginadministration'] = 'Адміністрування пошуку по курсу';
+$string['pluginname'] = 'Пошук по курсу';
+
+// Form strings
+$string['coursesearchsettings'] = 'Налаштування пошуку по курсу';
+$string['searchscope'] = 'Область пошуку';
+$string['searchscope_help'] = 'Визначте, який вміст має бути включено в результати пошуку.';
+$string['searchscope_course'] = 'Лише вміст курсу';
+$string['searchscope_activities'] = 'Лише активності';
+$string['searchscope_resources'] = 'Лише ресурси';
+$string['searchscope_forums'] = 'Лише форуми';
+$string['searchscope_all'] = 'Весь вміст курсу';
+$string['placeholder'] = 'Текст підказки';
+$string['placeholder_help'] = 'Текст, який з\'являється в полі пошуку до введення запиту користувачем.';
+$string['defaultplaceholder'] = 'Пошук по курсу...';
+
+// Display options
+$string['displayoptions'] = 'Параметри відображення';
+$string['embedded'] = 'Вбудувати в сторінку курсу';
+$string['embedded_help'] = 'Якщо увімкнено, панель пошуку буде вбудована безпосередньо на сторінці курсу, замість переходу на окрему сторінку.';
+$string['embeddedinfo'] = 'Відображати панель пошуку безпосередньо на сторінці курсу';
+
+// View page strings
+$string['search'] = 'Пошук';
+$string['searchresultsfor'] = 'Результати пошуку для "{$a}"';
+$string['searchresults'] = 'Результати пошуку для "{$a}"';
+$string['searchresultscount'] = 'Знайдено {$a->count} результатів для "{$a->query}"';
+$string['noresults'] = 'Не знайдено результатів для "{$a}"';
+$string['inforum'] = 'У форумі: {$a}';
+$string['matchedin'] = 'Знайдено в {$a}';
+$string['title'] = 'Назва';
+$string['content'] = 'Вміст';
+$string['description'] = 'Опис';
+$string['intro'] = 'вступ';
+$string['eventcoursesearched'] = 'Пошук по курсу виконано';
+
+// Capability strings
+$string['coursesearch:addinstance'] = 'Додати новий пошук по курсу';
+$string['coursesearch:view'] = 'Переглянути пошук по курсу';
+
+// Error strings
+$string['missingidandcmid'] = 'Відсутній ID модуля курсу або ID пошуку по курсу';
+$string['nocourseinstances'] = 'У цьому курсі немає екземплярів пошуку по курсу';
+
+// Admin settings
+$string['enablehighlight'] = 'Увімкнути прокрутку та підсвічування';
+$string['enablehighlight_desc'] = 'Якщо увімкнено, при натисканні на результати пошуку сторінка автоматично прокрутиться до знайденого тексту та підсвітить його на сторінці курсу.';

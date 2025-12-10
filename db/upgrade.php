@@ -67,14 +67,25 @@ function xmldb_coursesearch_upgrade($oldversion) {
     if ($oldversion < 2025040301) {
         $table = new xmldb_table('coursesearch');
         $field = new xmldb_field('embedded', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '1', 'placeholder');
-        
+
         // Add the field if it doesn't exist
         if (!$dbman->field_exists($table, $field)) {
             $dbman->add_field($table, $field);
         }
-        
+
         // Update the plugin version
         upgrade_mod_savepoint(true, 2025040301, 'coursesearch');
+    }
+
+    // Set default value for enablehighlight setting
+    if ($oldversion < 2025121001) {
+        // Set default value for highlighting feature (enabled by default)
+        $currentvalue = get_config('mod_coursesearch', 'enablehighlight');
+        if ($currentvalue === false) {
+            set_config('enablehighlight', 1, 'mod_coursesearch');
+        }
+
+        upgrade_mod_savepoint(true, 2025121001, 'coursesearch');
     }
 
     return true;

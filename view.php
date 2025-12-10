@@ -67,8 +67,8 @@ $PAGE->set_title(format_string($coursesearch->name));
 $PAGE->set_heading(format_string($course->fullname));
 $PAGE->set_context($context);
 
-// Get the placeholder text.
-$placeholder = !empty($coursesearch->placeholder) ? $coursesearch->placeholder : get_string('defaultplaceholder', 'coursesearch');
+// Get the placeholder text from language string.
+$placeholder = get_string('defaultplaceholder', 'coursesearch');
 
 // Output starts here.
 echo $OUTPUT->header();
@@ -104,12 +104,12 @@ foreach ($filter_options as $value => $label) {
         'value' => $value,
         'class' => 'mr-1'
     );
-    
+
     // Check the current filter option if it matches
     if ($filter === $value) {
         $attributes['checked'] = 'checked';
     }
-    
+
     echo html_writer::start_span('mr-3');
     echo html_writer::empty_tag('input', $attributes);
     echo html_writer::tag('label', $label, array('for' => 'filter_' . $value, 'class' => 'mr-2'));
@@ -119,7 +119,7 @@ foreach ($filter_options as $value => $label) {
 echo html_writer::end_div(); // coursesearch-filters
 
 echo html_writer::start_div('input-group');
-echo html_writer::empty_tag('input', array('type' => 'text', 'name' => 'query', 'value' => s($query), 'class' => 'form-control', 'placeholder' => $placeholder));
+echo html_writer::empty_tag('input', array('type' => 'text', 'name' => 'query', 'value' => $query, 'class' => 'form-control', 'placeholder' => $placeholder));
 echo html_writer::start_div('input-group-append');
 echo html_writer::tag('button', get_string('search'), array('type' => 'submit', 'class' => 'btn btn-primary'));
 echo html_writer::end_div(); // input-group-append
@@ -372,40 +372,43 @@ if (!empty($query)) {
                             var rect = range.getBoundingClientRect();
                             window.scrollTo({top: window.scrollY + rect.top - 100, behavior: 'smooth'});
                             var span = document.createElement('span');
-                            span.style.backgroundColor = '#ffff99';
-                            span.style.padding = '2px';
-                            span.style.borderRadius = '2px';
+                            span.style.setProperty('background-color', '#ffff99', 'important');
+                            span.style.setProperty('padding', '2px', 'important');
+                            span.style.setProperty('border-radius', '2px', 'important');
+                            span.style.setProperty('color', 'inherit', 'important');
+                            var highlighted = false;
                             try {
                                 range.surroundContents(span);
+                                highlighted = true;
                                 setTimeout(function() {
                                     try {
                                         if (span && span.parentNode) {
                                             var parentNode = span.parentNode;
                                             var textContent = span.textContent;
                                             parentNode.replaceChild(document.createTextNode(textContent), span);
-                                            // Normalize to merge adjacent text nodes
-                                            // Check if parentNode still exists and is connected to document
                                             if (parentNode && (parentNode.parentNode || document.body.contains(parentNode))) {
                                                 parentNode.normalize();
                                             }
                                         }
-                                    } catch(e) {
-                                        // Ignore errors if nodes were already removed or modified
-                                    }
+                                    } catch(e) {}
                                 }, 3000);
                             } catch(e) {
-                                // If surroundContents fails (e.g., text is in a link), highlight the parent element
+                                highlighted = false;
+                            }
+                            // Fallback: highlight parent element
+                            if (!highlighted) {
                                 var parent = textNode.parentElement;
-                                if (parent && parent !== element && parent.tagName !== 'BODY' && parent.tagName !== 'HTML') {
+                                var validTags = ['P','DIV','SPAN','A','LI','TD','TH','LABEL','H1','H2','H3','H4','H5','H6','STRONG','EM','B','I','U'];
+                                while (parent && parent !== element && parent !== document.body) {
+                                    if (validTags.indexOf(parent.tagName.toUpperCase()) !== -1) break;
+                                    parent = parent.parentElement;
+                                }
+                                if (parent && parent !== element && parent !== document.body) {
                                     var originalBg = parent.style.backgroundColor;
-                                    var originalTransition = parent.style.transition;
-                                    parent.style.backgroundColor = '#ffff99';
-                                    parent.style.transition = 'background-color 0.3s';
+                                    parent.style.setProperty('background-color', '#ffff99', 'important');
                                     setTimeout(function() {
-                                        parent.style.backgroundColor = originalBg;
-                                        setTimeout(function() {
-                                            parent.style.transition = originalTransition;
-                                        }, 300);
+                                        if (originalBg) { parent.style.backgroundColor = originalBg; }
+                                        else { parent.style.removeProperty('background-color'); }
                                     }, 3000);
                                 }
                             }
@@ -495,46 +498,111 @@ if (!empty($query)) {
             // Improved version that handles text inside links and across node boundaries
             function scrollToText(element, searchText) {
                 if (!element || !searchText) return false;
-                
+
                 // First, try to find text using a more robust method that handles links
                 var searchLower = searchText.toLowerCase().trim();
-                
-                // Get all text content and search for matches
+
+                // Get all text content and search for matches, skipping hidden elements
                 var walker = document.createTreeWalker(
                     element,
                     NodeFilter.SHOW_TEXT,
                     {
                         acceptNode: function(node) {
-                            // Skip script and style nodes
+                            // Skip empty text nodes
+                            if (!node.textContent.trim()) return NodeFilter.FILTER_REJECT;
+                            // Skip script and style nodes and hidden elements
                             var parent = node.parentNode;
-                            if (parent && (parent.tagName === 'SCRIPT' || parent.tagName === 'STYLE')) {
-                                return NodeFilter.FILTER_REJECT;
+                            while (parent && parent !== element) {
+                                if (parent.tagName === 'SCRIPT' || parent.tagName === 'STYLE') {
+                                    return NodeFilter.FILTER_REJECT;
+                                }
+                                var classList = parent.classList;
+                                if (classList && (classList.contains('sr-only') || classList.contains('visually-hidden') || classList.contains('hidden'))) {
+                                    return NodeFilter.FILTER_REJECT;
+                                }
+                                var style = window.getComputedStyle(parent);
+                                if (style.display === 'none' || style.visibility === 'hidden') {
+                                    return NodeFilter.FILTER_REJECT;
+                                }
+                                parent = parent.parentElement;
                             }
                             return NodeFilter.FILTER_ACCEPT;
                         }
                     },
                     false
                 );
-                
+
                 var textNodes = [];
                 var node;
                 while (node = walker.nextNode()) {
                     textNodes.push(node);
                 }
-                
-                // Search through text nodes, handling text that might span multiple nodes
+
+                // Build combined text to handle text spanning multiple nodes
+                var combinedText = '';
+                for (var i = 0; i < textNodes.length; i++) {
+                    combinedText += textNodes[i].textContent;
+                }
+                var combinedLower = combinedText.toLowerCase();
+                var combinedIndex = combinedLower.indexOf(searchLower);
+
+                // If text found in combined content (may span multiple nodes)
+                if (combinedIndex !== -1) {
+                    // Try to find any word from the search text in individual nodes
+                    var words = searchText.split(/\\s+/);
+                    var foundNodeIndex = -1;
+                    for (var i = 0; i < textNodes.length; i++) {
+                        var text = textNodes[i].textContent.toLowerCase();
+                        // Check if this node contains any of the search words (min 3 chars)
+                        for (var w = 0; w < words.length; w++) {
+                            if (words[w].length >= 3 && text.indexOf(words[w].toLowerCase()) !== -1) {
+                                foundNodeIndex = i;
+                                break;
+                            }
+                        }
+                        if (foundNodeIndex !== -1) break;
+                    }
+                    if (foundNodeIndex !== -1) {
+                        // Find a good parent to highlight
+                        var parent = textNodes[foundNodeIndex].parentElement;
+                        while (parent && parent !== element && parent !== document.body) {
+                            var tagName = parent.tagName.toUpperCase();
+                            if (['P', 'DIV', 'LI', 'TD', 'TH', 'BLOCKQUOTE', 'ARTICLE', 'SECTION'].indexOf(tagName) !== -1) {
+                                break;
+                            }
+                            parent = parent.parentElement;
+                        }
+                        if (parent && parent !== element && parent !== document.body) {
+                            // Scroll to element
+                            var rect = parent.getBoundingClientRect();
+                            var scrollY = window.scrollY + rect.top - 100;
+                            window.scrollTo({top: scrollY, behavior: 'smooth'});
+
+                            // Highlight the parent
+                            var originalBg = parent.style.backgroundColor;
+                            parent.style.setProperty('background-color', '#ffff99', 'important');
+                            setTimeout(function() {
+                                if (originalBg) { parent.style.setProperty('background-color', originalBg); }
+                                else { parent.style.removeProperty('background-color'); }
+                            }, 3000);
+                            return true;
+                        }
+                    }
+                }
+
+                // Search through text nodes for exact single-node match
                 for (var i = 0; i < textNodes.length; i++) {
                     var textNode = textNodes[i];
                     var text = textNode.textContent;
                     var textLower = text.toLowerCase();
                     var index = textLower.indexOf(searchLower);
-                    
+
                     if (index !== -1) {
                         try {
                             var range = document.createRange();
                             range.setStart(textNode, index);
                             range.setEnd(textNode, index + searchText.length);
-                            
+
                             // Check if range is valid and doesn't span invalid boundaries
                             try {
                                 var testRange = range.cloneRange();
@@ -543,62 +611,59 @@ if (!empty($query)) {
                                 // Range is invalid, try next node
                                 continue;
                             }
-                            
+
                             var rect = range.getBoundingClientRect();
                             if (rect.width === 0 && rect.height === 0) {
                                 // Range is collapsed or invalid, try next
                                 continue;
                             }
-                            
+
                             // Scroll to the found text
                             window.scrollTo({top: window.scrollY + rect.top - 100, behavior: 'smooth'});
-                            
+
                             // Try to highlight, but handle cases where it might fail (e.g., text inside links)
                             try {
                                 var span = document.createElement('span');
-                                span.style.backgroundColor = '#ffff99';
-                                span.style.padding = '2px';
-                                span.style.borderRadius = '2px';
-                                
-                                // Try to surround the range with a span
+                                span.style.setProperty('background-color', '#ffff99', 'important');
+                                span.style.setProperty('padding', '2px', 'important');
+                                span.style.setProperty('border-radius', '2px', 'important');
+                                span.style.setProperty('color', 'inherit', 'important');
+
+                                var highlighted = false;
                                 try {
                                     range.surroundContents(span);
-                                    
-                                    // Remove highlight after 3 seconds
+                                    highlighted = true;
                                     setTimeout(function() {
                                         if (span && span.parentNode) {
                                             var parentNode = span.parentNode;
-                                            var textContent = span.textContent;
-                                            parentNode.replaceChild(document.createTextNode(textContent), span);
-                                            if (parentNode.parentNode) {
-                                                parentNode.normalize();
-                                            }
+                                            parentNode.replaceChild(document.createTextNode(span.textContent), span);
+                                            if (parentNode.parentNode) { parentNode.normalize(); }
                                         }
                                     }, 3000);
                                 } catch(surroundError) {
-                                    // Can't surround (e.g., text spans link boundaries), highlight the parent element instead
+                                    highlighted = false;
+                                }
+
+                                if (!highlighted) {
                                     var parent = textNode.parentNode;
-                                    if (parent && parent !== element && parent.tagName !== 'BODY' && parent.tagName !== 'HTML') {
+                                    var validTags = ['P','DIV','SPAN','A','LI','TD','TH','LABEL','H1','H2','H3','H4','H5','H6','STRONG','EM','B','I','U'];
+                                    while (parent && parent !== element && parent !== document.body) {
+                                        if (validTags.indexOf(parent.tagName.toUpperCase()) !== -1) break;
+                                        parent = parent.parentElement;
+                                    }
+                                    if (parent && parent !== element && parent !== document.body) {
                                         var originalBg = parent.style.backgroundColor;
-                                        var originalTransition = parent.style.transition;
-                                        parent.style.backgroundColor = '#ffff99';
-                                        parent.style.transition = 'background-color 0.3s';
-                                        parent.style.borderRadius = '2px';
+                                        parent.style.setProperty('background-color', '#ffff99', 'important');
                                         setTimeout(function() {
-                                            if (parent && parent.style) {
-                                                parent.style.backgroundColor = originalBg;
-                                                setTimeout(function() {
-                                                    parent.style.transition = originalTransition;
-                                                }, 300);
-                                            }
+                                            if (originalBg) { parent.style.backgroundColor = originalBg; }
+                                            else { parent.style.removeProperty('background-color'); }
                                         }, 3000);
                                     }
                                 }
                             } catch(e) {
                                 // If highlighting fails, at least we scrolled to the location
-                                console.log('Could not highlight text:', e);
                             }
-                            
+
                             return true;
                         } catch(e) {
                             // If range creation fails, try to scroll to the text node's parent

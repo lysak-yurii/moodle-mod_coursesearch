@@ -1,32 +1,44 @@
 # Course Search Module for Moodle
 
-A comprehensive Moodle activity module that enables teachers to add a search bar to courses, allowing students to search through course content **with automatic highlighting of search terms**.
+A comprehensive Moodle activity module that enables teachers to add a search bar to courses, allowing students to search through course content with automatic highlighting of search terms.
 
 ## Features
 
 ### Core Search Functionality
-- **Flexible Search Scope**: Configure what content to include in search results:
-  - All Course content (sections, activities, resources)
-  - Forums only (discussions and posts)
+- **Comprehensive Search**: Searches through all course content types
+- **Search Filter**: Filter between "All content" or "Forums only" on the search page
+- **Embedded Mode**: Option to embed search bar directly in course page
 
-- **Display Options**:
-  - Embed search bar directly in course page
-  - Standalone search page
-
-- **Customizable**: Set custom placeholder text for the search input
-
-- **Comprehensive Search**: Searches through:
-  - Course sections (names and summaries)
-  - Activity and resource titles
-  - Descriptions and introductions
-  - Content (pages, labels, books, forums, wikis, lessons)
-
-### Search Term Highlighting (v1.0.0)
+### Search Term Highlighting
 - **Automatic Scrolling**: Automatically scrolls to matched content when clicking search results
 - **Visual Highlighting**: Highlights search terms with a yellow background for 3 seconds
 - **Smart Fallback**: If direct text highlighting fails (e.g., text inside links), highlights the parent element
-- **Seamless Integration**: Works across all content types including labels, pages, forums, and more
-- **No Configuration Needed**: Works out of the box after installation
+- **Works on Course Pages**: Highlighting works for labels, pages, sections, and other content displayed on the course page
+- **Accordion Support**: Automatically expands Bootstrap accordions/collapsible sections to reveal and highlight text inside
+
+### Admin Settings
+- **Enable/Disable Highlighting**: Global setting to turn scrolling and highlighting on or off (Site Administration > Plugins > Activity modules > Course Search)
+
+## Supported Content Types
+
+The search covers the following content types:
+
+### Course Structure
+- Course Sections (names and summaries)
+- Activity and resource titles
+- Descriptions and introductions
+
+### Activities & Resources
+- **Pages** (mod_page) - title and content
+- **Books** (mod_book) - chapter titles and content
+- **Labels** (mod_label) - content
+- **Forums** (mod_forum) - discussions and posts
+- **Wiki** (mod_wiki) - page titles and content
+- **Lessons** (mod_lesson) - page titles and content
+- **Glossary** (mod_glossary) - terms and definitions
+- **Database** (mod_data) - field content
+- **H5P Interactive Content** (mod_hvp) - text content from all H5P types (Accordion, Course Presentation, Quiz, etc.)
+- **Folders** (mod_folder) - file names
 
 ## Requirements
 
@@ -40,7 +52,7 @@ A comprehensive Moodle activity module that enables teachers to add a search bar
 
 1. Download `mod_coursesearch.zip`
 2. Log in to Moodle as administrator
-3. Navigate to: **Site administration → Plugins → Install plugins**
+3. Navigate to: **Site administration -> Plugins -> Install plugins**
 4. Click **"Choose a file"** and upload `mod_coursesearch.zip`
 5. Click **"Install plugin from the ZIP file"**
 6. Review the validation report and click **"Continue"**
@@ -51,7 +63,7 @@ A comprehensive Moodle activity module that enables teachers to add a search bar
 1. Extract the `mod_coursesearch.zip` file
 2. Upload the `coursesearch` folder to `/path/to/moodle/mod/`
 3. Set proper permissions: `chown -R www-data:www-data coursesearch`
-4. Visit **Site administration → Notifications**
+4. Visit **Site administration -> Notifications**
 5. Follow the upgrade prompts
 
 ## Usage
@@ -65,51 +77,55 @@ A comprehensive Moodle activity module that enables teachers to add a search bar
 5. Configure settings:
    - **Name**: Display name for the search activity
    - **Description**: Optional introduction text
-   - **Search scope**: Choose between "All content" or "Forums only"
    - **Embedded mode**: Enable to show search form inline on course page
-   - **Placeholder text**: Customize the search box placeholder
 6. Save and display
 
-### Searching with Highlighting
+### Supported Languages
 
-1. Open the Course Search activity
+- English
+- German
+- Ukrainian
+
+### Searching
+
+1. Open the Course Search activity (or use the embedded search bar)
 2. Enter search terms
-3. Optionally select a filter
+3. Select filter: "All" or "Forums only"
 4. Click **"Search"**
-5. **Click on any result** - the page will automatically:
-   - Navigate to the content
-   - Scroll to the matched text
-   - Highlight it with a yellow background for 3 seconds
+5. Click on any result to navigate to the content
 
-## Supported Content Types
+### Highlighting (Course Page Content)
 
-- Course Sections
-- Pages (mod_page)
-- Books and Chapters (mod_book)
-- Labels (mod_label)
-- Forums, Discussions, Posts (mod_forum)
-- Wiki Pages (mod_wiki)
-- Lesson Pages (mod_lesson)
-- All module descriptions
+When clicking on search results that link to course page content (labels, pages, sections):
+- The page automatically scrolls to the matched text
+- The text is highlighted with a yellow background for 3 seconds
+- Bootstrap accordions/collapsible sections are automatically expanded if the text is inside
+
+**Note**: Highlighting only works on course pages. Results linking to external pages (Book chapters, Wiki pages, Glossary entries, Database records, H5P activities) will navigate directly to the content without highlighting.
 
 ## Performance
 
-- JavaScript only loads on course pages (not site-wide)
+- JavaScript only loads when needed (when `highlight` parameter is present)
 - AMD modules are lazy-loaded by Moodle
-- No database overhead
+- No database overhead for highlighting
 - Client-side highlighting only
-- Minimal impact: ~3KB minified JavaScript
+- Minimal impact on page load
 
 ## Troubleshooting
 
 ### Highlighting doesn't work
 - Clear browser cache (Ctrl+Shift+Delete)
-- Purge Moodle caches: **Site administration → Development → Purge all caches**
+- Purge Moodle caches: **Site administration -> Development -> Purge all caches**
 - Ensure JavaScript is enabled
+- Note: Highlighting only works on course pages, not on Book/Wiki/Glossary/etc. pages
 
 ### No search results
 - Verify content is visible to the user
-- Try different search terms or filters
+- Try different search terms
+- Check if the content type is supported
+
+### Search results show HTML entities
+- This was fixed - if you see `&quot;` instead of `"`, purge Moodle caches
 
 ## Version
 
@@ -122,9 +138,8 @@ This plugin is licensed under the GNU GPL v3 or later.
 ## Credits
 
 Original plugin: Yurii Lysak (2025)
-Highlighting feature: HNEE (Hochschule für nachhaltige Entwicklung Eberswalde) - December 2025
+Enhancements: HNEE (Hochschule für nachhaltige Entwicklung Eberswalde) - December 2025
 
 ## Support
 
 For issues, feature requests, or contributions, please contact your Moodle administrator.
-

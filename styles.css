@@ -90,6 +90,16 @@
     border-radius: 2px;
 }
 
+/* Temporary highlight for search results - with !important to override theme styles */
+.coursesearch-highlight-temp,
+span.coursesearch-highlight-temp {
+    background-color: #ffff99 !important;
+    padding: 2px !important;
+    border-radius: 2px !important;
+    color: inherit !important;
+    display: inline !important;
+}
+
 /* Embedded search form styles */
 .coursesearch-embedded {
     margin: 10px 0;
