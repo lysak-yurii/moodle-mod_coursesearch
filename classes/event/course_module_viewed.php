@@ -18,7 +18,7 @@
  * The mod_coursesearch course module viewed event.
  *
  * @package    mod_coursesearch
- * @copyright  2025 Your Name
+ * @copyright  2025 Yurii Lysak
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -30,7 +30,7 @@ defined('MOODLE_INTERNAL') || die();
  * The mod_coursesearch course module viewed event class.
  *
  * @package    mod_coursesearch
- * @copyright  2025 Your Name
+ * @copyright  2025 Yurii Lysak
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class course_module_viewed extends \core\event\course_module_viewed {

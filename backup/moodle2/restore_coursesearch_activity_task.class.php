@@ -18,7 +18,7 @@
  * Restore task for the coursesearch activity module
  *
  * @package    mod_coursesearch
- * @copyright  2025 Your Name
+ * @copyright  2025 Yurii Lysak
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -30,7 +30,7 @@ require_once($CFG->dirroot . '/mod/coursesearch/backup/moodle2/restore_coursesea
  * Restore task for the coursesearch activity module
  *
  * @package    mod_coursesearch
- * @copyright  2025 Your Name
+ * @copyright  2025 Yurii Lysak
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class restore_coursesearch_activity_task extends restore_activity_task {

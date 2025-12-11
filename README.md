@@ -19,6 +19,23 @@ A comprehensive Moodle activity module that enables teachers to add a search bar
 ### Admin Settings
 - **Enable/Disable Highlighting**: Global setting to turn scrolling and highlighting on or off (Site Administration > Plugins > Activity modules > Course Search)
 
+## Screenshots
+
+### Search Interface
+![Search Interface](screenshots/search_interface.png)
+
+The main search interface allows users to search through course content with filtering options.
+
+### Embedded View
+![Embedded View](screenshots/embedded_view.png)
+
+The search bar can be embedded directly on the course page for quick access.
+
+### Scroll and Highlight Feature
+![Scroll and Highlight](screenshots/scrollhighlight.png)
+
+When clicking on search results, the page automatically scrolls to the matched content and highlights the search terms.
+
 ## Supported Content Types
 
 The search covers the following content types:
@@ -134,7 +151,7 @@ This plugin is licensed under the GNU GPL v3 or later.
 ## Credits
 
 Original plugin: Yurii Lysak (2025)
-Enhancements: HNEE (Hochschule für nachhaltige Entwicklung Eberswalde) - December 2025
+Enhancements: HNEE (Hochschule fï¿½r nachhaltige Entwicklung Eberswalde) - December 2025
 
 ## Support
 

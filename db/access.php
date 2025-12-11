@@ -18,7 +18,7 @@
  * Capability definitions for the coursesearch module
  *
  * @package    mod_coursesearch
- * @copyright  2025 Your Name
+ * @copyright  2025 Yurii Lysak
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 

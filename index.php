@@ -18,7 +18,7 @@
  * Display information about all the coursesearch modules in the requested course
  *
  * @package    mod_coursesearch
- * @copyright  2025 Your Name
+ * @copyright  2025 Yurii Lysak
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
