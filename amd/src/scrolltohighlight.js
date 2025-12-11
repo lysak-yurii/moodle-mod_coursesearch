@@ -24,7 +24,7 @@
 define(['jquery'], function($) {
     'use strict';
 
-    console.log('[CourseSearch] AMD module loaded');
+    // console.log('[CourseSearch] AMD module loaded');
 
     // Flag to prevent multiple executions
     let hasHighlighted = false;
@@ -39,7 +39,7 @@ define(['jquery'], function($) {
 
             // Find all collapsed sections (Bootstrap 4 uses .collapse:not(.show))
             const collapsedSections = document.querySelectorAll('.collapse:not(.show)');
-            console.log('[CourseSearch] Found', collapsedSections.length, 'collapsed sections');
+            // console.log('[CourseSearch] Found', collapsedSections.length, 'collapsed sections');
 
             let foundInCollapsed = null;
             let triggerButton = null;
@@ -50,7 +50,7 @@ define(['jquery'], function($) {
                 const textContent = section.textContent.toLowerCase();
 
                 if (textContent.indexOf(searchLower) !== -1) {
-                    console.log('[CourseSearch] Found text in collapsed section:', section.id);
+                    // console.log('[CourseSearch] Found text in collapsed section:', section.id);
                     foundInCollapsed = section;
 
                     // Find the trigger button for this collapse
@@ -72,11 +72,11 @@ define(['jquery'], function($) {
             }
 
             if (foundInCollapsed && triggerButton) {
-                console.log('[CourseSearch] Expanding accordion section');
+                // console.log('[CourseSearch] Expanding accordion section');
 
                 // Listen for the collapse to finish expanding
                 $(foundInCollapsed).one('shown.bs.collapse', function() {
-                    console.log('[CourseSearch] Accordion expanded, proceeding with highlight');
+                    // console.log('[CourseSearch] Accordion expanded, proceeding with highlight');
                     setTimeout(resolve, 100); // Small delay to ensure DOM is updated
                 });
 
@@ -89,7 +89,7 @@ define(['jquery'], function($) {
                 }, 1000);
             } else if (foundInCollapsed) {
                 // No trigger found, try to expand using Bootstrap's collapse API directly
-                console.log('[CourseSearch] No trigger found, trying direct collapse expansion');
+                // console.log('[CourseSearch] No trigger found, trying direct collapse expansion');
                 $(foundInCollapsed).collapse('show');
 
                 $(foundInCollapsed).one('shown.bs.collapse', function() {
@@ -111,7 +111,7 @@ define(['jquery'], function($) {
      * Find text within an element and scroll to it
      */
     function scrollToText(element, searchText) {
-        console.log('[CourseSearch] scrollToText called with:', searchText);
+        // console.log('[CourseSearch] scrollToText called with:', searchText);
         if (!element || !searchText) {
             return false;
         }
@@ -138,7 +138,7 @@ define(['jquery'], function($) {
                             style.display === 'none' ||
                             style.visibility === 'hidden' ||
                             (style.position === 'absolute' && style.clip === 'rect(0px, 0px, 0px, 0px)')) {
-                            console.log('[CourseSearch] Skipping hidden element:', parent);
+                            // console.log('[CourseSearch] Skipping hidden element:', parent);
                             return NodeFilter.FILTER_REJECT;
                         }
                         parent = parent.parentElement;
@@ -154,23 +154,23 @@ define(['jquery'], function($) {
         while (node = walker.nextNode()) {
             textNodes.push(node);
         }
-        console.log('[CourseSearch] Found', textNodes.length, 'visible text nodes');
+        // console.log('[CourseSearch] Found', textNodes.length, 'visible text nodes');
 
         // Debug: show content of each text node
         for (let i = 0; i < textNodes.length; i++) {
-            console.log('[CourseSearch] Node', i, ':', JSON.stringify(textNodes[i].textContent));
+            // console.log('[CourseSearch] Node', i, ':', JSON.stringify(textNodes[i].textContent));
         }
 
         // Search for the text (case-insensitive)
         const searchLower = searchText.toLowerCase();
-        console.log('[CourseSearch] Searching for (lowercase):', searchLower);
+        // console.log('[CourseSearch] Searching for (lowercase):', searchLower);
 
         // First, try to find exact match in a single text node
         for (let i = 0; i < textNodes.length; i++) {
             const text = textNodes[i].textContent.toLowerCase();
             const index = text.indexOf(searchLower);
             if (index !== -1) {
-                console.log('[CourseSearch] Found exact match in single text node');
+                // console.log('[CourseSearch] Found exact match in single text node');
                 // Continue with existing logic below
             }
         }
@@ -181,17 +181,17 @@ define(['jquery'], function($) {
         for (let i = 0; i < textNodes.length; i++) {
             combinedText += textNodes[i].textContent;
         }
-        console.log('[CourseSearch] Combined text:', JSON.stringify(combinedText));
+        // console.log('[CourseSearch] Combined text:', JSON.stringify(combinedText));
         // Normalize whitespace: replace &nbsp; (char 160) and other whitespace with regular space
         const normalizedCombined = combinedText.replace(/[\u00A0\s]+/g, ' ').toLowerCase();
         const normalizedSearch = searchLower.replace(/[\u00A0\s]+/g, ' ');
-        console.log('[CourseSearch] Normalized combined:', normalizedCombined);
-        console.log('[CourseSearch] Normalized search:', normalizedSearch);
+        // console.log('[CourseSearch] Normalized combined:', normalizedCombined);
+        // console.log('[CourseSearch] Normalized search:', normalizedSearch);
         const combinedIndex = normalizedCombined.indexOf(normalizedSearch);
-        console.log('[CourseSearch] Combined index:', combinedIndex);
+        // console.log('[CourseSearch] Combined index:', combinedIndex);
 
         if (combinedIndex !== -1) {
-            console.log('[CourseSearch] Text found in combined content at index', combinedIndex);
+            // console.log('[CourseSearch] Text found in combined content at index', combinedIndex);
 
             // Find which text node contains the start of the match by tracking character positions
             let charCount = 0;
@@ -203,7 +203,7 @@ define(['jquery'], function($) {
                 const nodeTextLower = nodeText.replace(/[\u00A0\s]+/g, ' ').toLowerCase();
                 if (nodeTextLower.indexOf(normalizedSearch) !== -1) {
                     foundNodeIndex = i;
-                    console.log('[CourseSearch] Found exact match in node', i, ':', nodeText.substring(0, 50));
+                    // console.log('[CourseSearch] Found exact match in node', i, ':', nodeText.substring(0, 50));
                     break;
                 }
             }
@@ -213,7 +213,7 @@ define(['jquery'], function($) {
             if (foundNodeIndex === -1) {
                 // Get the first word of the search to help locate the correct starting node
                 const firstWord = normalizedSearch.split(' ')[0];
-                console.log('[CourseSearch] First word of search:', firstWord);
+                // console.log('[CourseSearch] First word of search:', firstWord);
 
                 // Search for a node that contains the first word AND is at approximately the right position
                 charCount = 0;
@@ -239,8 +239,8 @@ define(['jquery'], function($) {
                         // Check if this node contains the first word
                         if (np.text.indexOf(firstWord) !== -1) {
                             foundNodeIndex = i;
-                            console.log('[CourseSearch] Found first word "' + firstWord + '" in node', i);
-                            console.log('[CourseSearch] Node text:', np.original.substring(0, 80));
+                            // console.log('[CourseSearch] Found first word "' + firstWord + '" in node', i);
+                            // console.log('[CourseSearch] Node text:', np.original.substring(0, 80));
                             break;
                         }
                     }
@@ -251,9 +251,9 @@ define(['jquery'], function($) {
                     for (let i = 0; i < nodePositions.length; i++) {
                         if (combinedIndex >= nodePositions[i].start && combinedIndex < nodePositions[i].end) {
                             foundNodeIndex = i;
-                            console.log('[CourseSearch] Fallback: Match starts in node', i);
-                            console.log('[CourseSearch] Node range:', nodePositions[i].start, '-', nodePositions[i].end);
-                            console.log('[CourseSearch] Node text:', textNodes[i].textContent.substring(0, 50));
+                            // console.log('[CourseSearch] Fallback: Match starts in node', i);
+                            // console.log('[CourseSearch] Node range:', nodePositions[i].start, '-', nodePositions[i].end);
+                            // console.log('[CourseSearch] Node text:', textNodes[i].textContent.substring(0, 50));
                             break;
                         }
                     }
@@ -261,20 +261,20 @@ define(['jquery'], function($) {
             }
 
             if (foundNodeIndex !== -1) {
-                console.log('[CourseSearch] Found matching word, will highlight parent element');
+                // console.log('[CourseSearch] Found matching word, will highlight parent element');
                 // Find a good parent to highlight
                 let parent = textNodes[foundNodeIndex].parentElement;
-                console.log('[CourseSearch] Starting parent:', parent ? parent.tagName : 'null');
+                // console.log('[CourseSearch] Starting parent:', parent ? parent.tagName : 'null');
                 while (parent && parent !== element && parent !== document.body) {
                     const tagName = parent.tagName.toUpperCase();
-                    console.log('[CourseSearch] Checking parent:', tagName);
+                    // console.log('[CourseSearch] Checking parent:', tagName);
                     if (['P', 'DIV', 'LI', 'TD', 'TH', 'BLOCKQUOTE', 'ARTICLE', 'SECTION'].includes(tagName)) {
                         break;
                     }
                     parent = parent.parentElement;
                 }
-                console.log('[CourseSearch] Final parent:', parent ? parent.tagName : 'null', 'element:', element ? element.tagName : 'null');
-                console.log('[CourseSearch] parent !== element:', parent !== element, 'parent !== body:', parent !== document.body);
+                // console.log('[CourseSearch] Final parent:', parent ? parent.tagName : 'null', 'element:', element ? element.tagName : 'null');
+                // console.log('[CourseSearch] parent !== element:', parent !== element, 'parent !== body:', parent !== document.body);
                 if (parent && parent !== element && parent !== document.body) {
                     // Scroll to element
                     const rect = parent.getBoundingClientRect();
@@ -282,18 +282,18 @@ define(['jquery'], function($) {
                     window.scrollTo({top: scrollY, behavior: 'smooth'});
 
                     // Highlight the parent
-                    console.log('[CourseSearch] Highlighting container:', parent.tagName, parent);
+                    // console.log('[CourseSearch] Highlighting container:', parent.tagName, parent);
                     const originalBg = parent.style.backgroundColor;
-                    console.log('[CourseSearch] Original background:', originalBg);
+                    // console.log('[CourseSearch] Original background:', originalBg);
                     parent.style.setProperty('background-color', '#ffff99', 'important');
-                    console.log('[CourseSearch] After setting background:', parent.style.backgroundColor);
+                    // console.log('[CourseSearch] After setting background:', parent.style.backgroundColor);
                     setTimeout(function() {
                         if (originalBg) { parent.style.setProperty('background-color', originalBg); }
                         else { parent.style.removeProperty('background-color'); }
                     }, 3000);
                     return true;
                 } else {
-                    console.log('[CourseSearch] Parent check failed, not highlighting');
+                    // console.log('[CourseSearch] Parent check failed, not highlighting');
                 }
             }
         }
@@ -336,7 +336,7 @@ define(['jquery'], function($) {
                         span.className = 'coursesearch-highlight-temp';
 
                         let highlighted = false;
-                        console.log('[CourseSearch] Found text, attempting to highlight');
+                        // console.log('[CourseSearch] Found text, attempting to highlight');
                         try {
                             // Check if range is valid for surroundContents
                             // It fails if the range partially selects a non-Text node
@@ -344,11 +344,11 @@ define(['jquery'], function($) {
                                 (range.startContainer.nodeType === Node.TEXT_NODE &&
                                  range.endContainer.nodeType === Node.TEXT_NODE);
 
-                            console.log('[CourseSearch] canSurround:', canSurround);
+                            // console.log('[CourseSearch] canSurround:', canSurround);
                             if (canSurround) {
                                 range.surroundContents(span);
                                 highlighted = true;
-                                console.log('[CourseSearch] Direct highlight SUCCESS');
+                                // console.log('[CourseSearch] Direct highlight SUCCESS');
                                 // Remove highlight after 3 seconds
                                 setTimeout(function() {
                                     if (span.parentNode) {
@@ -365,7 +365,7 @@ define(['jquery'], function($) {
 
                         // Fallback: highlight the parent element if direct highlighting failed
                         if (!highlighted) {
-                            console.log('[CourseSearch] Using fallback parent highlighting');
+                            // console.log('[CourseSearch] Using fallback parent highlighting');
                             // Find the best parent element to highlight
                             let parent = textNode.parentElement;
 
@@ -382,7 +382,7 @@ define(['jquery'], function($) {
                             }
 
                             if (parent && parent !== element && parent !== document.body && parent !== document.documentElement) {
-                                console.log('[CourseSearch] Highlighting parent:', parent.tagName, parent);
+                                // console.log('[CourseSearch] Highlighting parent:', parent.tagName, parent);
                                 // Save original styles
                                 const originalBg = parent.style.backgroundColor;
 
@@ -422,23 +422,23 @@ define(['jquery'], function($) {
      * Initialize scrolling to highlighted text
      */
     function init() {
-        console.log('[CourseSearch] init() called, hasHighlighted:', hasHighlighted);
+        // console.log('[CourseSearch] init() called, hasHighlighted:', hasHighlighted);
 
         // Prevent multiple executions
         if (hasHighlighted) {
-            console.log('[CourseSearch] Already highlighted, skipping');
+            // console.log('[CourseSearch] Already highlighted, skipping');
             return;
         }
 
         // Check for highlight parameter in URL
         const urlParams = new URLSearchParams(window.location.search);
         let highlightText = urlParams.get('highlight');
-        console.log('[CourseSearch] highlight from URL:', highlightText);
+        // console.log('[CourseSearch] highlight from URL:', highlightText);
 
         // If not in URL, check sessionStorage (set by coursesearch module)
         if (!highlightText && typeof sessionStorage !== 'undefined') {
             highlightText = sessionStorage.getItem('coursesearch_highlight');
-            console.log('[CourseSearch] highlight from sessionStorage:', highlightText);
+            // console.log('[CourseSearch] highlight from sessionStorage:', highlightText);
             if (highlightText) {
                 // Clear it after use
                 sessionStorage.removeItem('coursesearch_highlight');
@@ -446,7 +446,7 @@ define(['jquery'], function($) {
         }
 
         if (!highlightText) {
-            console.log('[CourseSearch] No highlight text found, exiting');
+            // console.log('[CourseSearch] No highlight text found, exiting');
             return;
         }
 
