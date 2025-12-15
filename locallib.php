@@ -958,8 +958,9 @@ function coursesearch_search_course_index($query, $course, $results) {
             // Check if this result is already in the results array.
             $duplicate = false;
             foreach ($results as $result) {
-                if (isset($result['type']) && $result['type'] === 'module' &&
-                    isset($result['name']) && $result['name'] === $cm->name) {
+                $ismoduletype = isset($result['type']) && $result['type'] === 'module';
+                $namematches = isset($result['name']) && $result['name'] === $cm->name;
+                if ($ismoduletype && $namematches) {
                     $duplicate = true;
                     break;
                 }
@@ -985,9 +986,11 @@ function coursesearch_search_course_index($query, $course, $results) {
         if (!empty($section->name) && stripos($section->name, $query) !== false) {
             // Check if this section is already in results.
             $duplicate = false;
+            $sectionname = get_string('section') . ': ' . $section->name;
             foreach ($results as $result) {
-                if (isset($result['type']) && $result['type'] === 'section_name' &&
-                    isset($result['name']) && $result['name'] === (get_string('section') . ': ' . $section->name)) {
+                $issectiontype = isset($result['type']) && $result['type'] === 'section_name';
+                $namematches = isset($result['name']) && $result['name'] === $sectionname;
+                if ($issectiontype && $namematches) {
                     $duplicate = true;
                     break;
                 }

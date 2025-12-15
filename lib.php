@@ -177,7 +177,6 @@ function coursesearch_get_coursemodule_info($coursemodule) {
         $info->content = format_module_intro('coursesearch', $coursesearch, $coursemodule->id, false);
     }
 
-
     // If the search bar is set to be embedded, tell the course renderer to display it inline.
     if (!empty($coursesearch->embedded)) {
         $info->content = $info->content ?? '';
