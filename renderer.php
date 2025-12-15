@@ -22,8 +22,6 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * Coursesearch module renderer class
  */
@@ -39,7 +37,8 @@ class mod_coursesearch_renderer extends plugin_renderer_base {
         $output = '';
 
         // Get the placeholder text and escape it to prevent XSS.
-        $placeholder = !empty($coursesearch->placeholder) ? s($coursesearch->placeholder) : get_string('defaultplaceholder', 'coursesearch');
+        $defaultplaceholder = get_string('defaultplaceholder', 'coursesearch');
+        $placeholder = !empty($coursesearch->placeholder) ? s($coursesearch->placeholder) : $defaultplaceholder;
 
         // Start the container.
         $output .= html_writer::start_div('coursesearch-container coursesearch-embedded');

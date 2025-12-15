@@ -80,7 +80,9 @@ if (!empty($coursesearch->intro)) {
 
 // Display the search form.
 echo html_writer::start_div('coursesearch-container');
-echo html_writer::start_tag('form', ['action' => new moodle_url('/mod/coursesearch/view.php', ['id' => $cm->id]), 'method' => 'get', 'class' => 'coursesearch-form']);
+$formurl = new moodle_url('/mod/coursesearch/view.php', ['id' => $cm->id]);
+$formattrs = ['action' => $formurl, 'method' => 'get', 'class' => 'coursesearch-form'];
+echo html_writer::start_tag('form', $formattrs);
 echo html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'id', 'value' => $cm->id]);
 
 // Add filter options above the search bar.
@@ -119,7 +121,14 @@ foreach ($filteroptions as $value => $label) {
 echo html_writer::end_div();
 
 echo html_writer::start_div('input-group');
-echo html_writer::empty_tag('input', ['type' => 'text', 'name' => 'query', 'value' => $query, 'class' => 'form-control', 'placeholder' => $placeholder]);
+$inputattrs = [
+    'type' => 'text',
+    'name' => 'query',
+    'value' => $query,
+    'class' => 'form-control',
+    'placeholder' => $placeholder,
+];
+echo html_writer::empty_tag('input', $inputattrs);
 echo html_writer::start_div('input-group-append');
 echo html_writer::tag('button', get_string('search'), ['type' => 'submit', 'class' => 'btn btn-primary']);
 echo html_writer::end_div();
@@ -204,7 +213,10 @@ if (!empty($query)) {
                         // Try to get section number from modinfo if available.
                         $modinfo = get_fast_modinfo($course);
                         $cmobj = $modinfo->get_cm($result['cmid']);
-                        $sectionnum = isset($cmobj->sectionnum) ? $cmobj->sectionnum : (isset($cmobj->section) ? $cmobj->section : null);
+                        $sectionnum = isset($cmobj->sectionnum) ? $cmobj->sectionnum : null;
+                        if ($sectionnum === null && isset($cmobj->section)) {
+                            $sectionnum = $cmobj->section;
+                        }
                         $urlparams = ['id' => $course->id];
                         if ($sectionnum !== null) {
                             $urlparams['section'] = $sectionnum;
@@ -230,10 +242,12 @@ if (!empty($query)) {
                             }
 
                             if ($sectionnumber !== null) {
-                                $result['url'] = new moodle_url('/course/view.php', ['id' => $course->id, 'section' => $sectionnumber]);
+                                $urlparams = ['id' => $course->id, 'section' => $sectionnumber];
+                                $result['url'] = new moodle_url('/course/view.php', $urlparams);
                             } else {
                                 // Try to find the section by name.
-                                $sections = $DB->get_records('course_sections', ['course' => $course->id], 'section', 'id, section, name');
+                                $sectionwhere = ['course' => $course->id];
+                                $sections = $DB->get_records('course_sections', $sectionwhere, 'section', 'id, section, name');
                                 foreach ($sections as $section) {
                                     // Clean up the section name for comparison.
                                     $cleansectionname = strip_tags(coursesearch_process_multilang($section->name));
@@ -242,9 +256,11 @@ if (!empty($query)) {
                                     // Remove "Section: " prefix for comparison.
                                     $cleanresultname = str_replace(get_string('section') . ': ', '', $cleanresultname);
 
-                                    if ($cleansectionname === $cleanresultname ||
-                                        stripos($cleansectionname, $cleanresultname) !== false) {
-                                        $result['url'] = new moodle_url('/course/view.php', ['id' => $course->id, 'section' => $section->section]);
+                                    $namesmatch = $cleansectionname === $cleanresultname;
+                                    $namecontains = stripos($cleansectionname, $cleanresultname) !== false;
+                                    if ($namesmatch || $namecontains) {
+                                        $urlparams = ['id' => $course->id, 'section' => $section->section];
+                                        $result['url'] = new moodle_url('/course/view.php', $urlparams);
                                         break;
                                     }
                                 }
@@ -256,12 +272,16 @@ if (!empty($query)) {
                                 $cleancmname = strip_tags(coursesearch_process_multilang($cmobj->name));
                                 $cleanresultname = strip_tags($resultname);
 
-                                if ($cleancmname === $cleanresultname ||
-                                    stripos($cleancmname, $cleanresultname) !== false) {
+                                $namesmatch = $cleancmname === $cleanresultname;
+                                $namecontains = stripos($cleancmname, $cleanresultname) !== false;
+                                if ($namesmatch || $namecontains) {
                                     // For labels and html modules, ensure we create a URL with anchor.
                                     if ($result['modname'] === 'label' || $result['modname'] === 'html') {
                                         // Include section parameter to ensure the correct section is displayed.
-                                        $sectionnum = isset($cmobj->sectionnum) ? $cmobj->sectionnum : (isset($cmobj->section) ? $cmobj->section : null);
+                                        $sectionnum = isset($cmobj->sectionnum) ? $cmobj->sectionnum : null;
+                                        if ($sectionnum === null && isset($cmobj->section)) {
+                                            $sectionnum = $cmobj->section;
+                                        }
                                         $urlparams = ['id' => $course->id];
                                         if ($sectionnum !== null) {
                                             $urlparams['section'] = $sectionnum;
@@ -297,9 +317,10 @@ if (!empty($query)) {
             if (isset($result['url']) && $result['url'] instanceof moodle_url && !empty($query)) {
                 $urlpath = $result['url']->get_path();
                 // Add highlight to course pages, page activities, and other module pages.
-                if (strpos($urlpath, '/course/view.php') !== false ||
-                    strpos($urlpath, '/mod/page/view.php') !== false ||
-                    strpos($urlpath, '/mod/') !== false) {
+                $iscourseview = strpos($urlpath, '/course/view.php') !== false;
+                $ispageview = strpos($urlpath, '/mod/page/view.php') !== false;
+                $ismodview = strpos($urlpath, '/mod/') !== false;
+                if ($iscourseview || $ispageview || $ismodview) {
                     // Check if highlight parameter is already present.
                     $params = $result['url']->params();
                     if (!isset($params['highlight'])) {

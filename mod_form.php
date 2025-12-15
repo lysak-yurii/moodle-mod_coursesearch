@@ -62,8 +62,9 @@ class mod_coursesearch_mod_form extends moodleform_mod {
         $mform->addElement('header', 'displayoptions', get_string('displayoptions', 'coursesearch'));
 
         // Embedding option.
-        $mform->addElement('advcheckbox', 'embedded', get_string('embedded', 'coursesearch'),
-            get_string('embeddedinfo', 'coursesearch'));
+        $embeddedlabel = get_string('embedded', 'coursesearch');
+        $embeddedinfo = get_string('embeddedinfo', 'coursesearch');
+        $mform->addElement('advcheckbox', 'embedded', $embeddedlabel, $embeddedinfo);
         $mform->setDefault('embedded', 1);
         $mform->addHelpButton('embedded', 'embedded', 'coursesearch');
 

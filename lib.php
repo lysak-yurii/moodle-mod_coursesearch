@@ -163,8 +163,9 @@ function coursesearch_delete_instance($id) {
 function coursesearch_get_coursemodule_info($coursemodule) {
     global $DB;
 
-    if (!$coursesearch = $DB->get_record('coursesearch', ['id' => $coursemodule->instance],
-            'id, name, intro, introformat, embedded')) {
+    $fields = 'id, name, intro, introformat, embedded';
+    $coursesearch = $DB->get_record('coursesearch', ['id' => $coursemodule->instance], $fields);
+    if (!$coursesearch) {
         return null;
     }
 

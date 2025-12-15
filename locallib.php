@@ -22,8 +22,6 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * Perform a course search based on the given query and filter
  *
@@ -52,10 +50,9 @@ function coursesearch_perform_search($query, $course, $filter = 'all') {
         $sections = $DB->get_records('course_sections', ['course' => $course->id], 'section', 'id, section, name, summary');
         foreach ($sections as $section) {
             // Search in section name - use case-insensitive comparison.
-            if (!empty($section->name) && (
-                stripos($section->name, $query) !== false ||
-                stripos(get_string('section') . ' ' . $section->section, $query) !== false
-            )) {
+            $namematches = !empty($section->name) && stripos($section->name, $query) !== false;
+            $nummatches = stripos(get_string('section') . ' ' . $section->section, $query) !== false;
+            if (!empty($section->name) && ($namematches || $nummatches)) {
                 // Create a direct URL to this section with explicit section parameter.
                 $sectionurl = new moodle_url('/course/view.php', ['id' => $course->id, 'section' => $section->section]);
 
@@ -245,7 +242,10 @@ function coursesearch_perform_search($query, $course, $filter = 'all') {
             } else if ($filter == 'sections' && $result['modname'] == 'section') {
                 $filteredresults[] = $result;
             } else if ($filter == 'activities') {
-                $activitymods = ['assign', 'quiz', 'choice', 'feedback', 'lesson', 'workshop', 'data', 'glossary', 'wiki', 'forum'];
+                $activitymods = [
+                    'assign', 'quiz', 'choice', 'feedback', 'lesson',
+                    'workshop', 'data', 'glossary', 'wiki', 'forum',
+                ];
                 if (in_array($result['modname'], $activitymods)) {
                     $filteredresults[] = $result;
                 }
@@ -686,9 +686,10 @@ function coursesearch_search_wiki($mod, $query, $filter) {
                 }
 
                 // Then check if the page content matches.
-                if (($filter == 'all' || $filter == 'content') &&
-                        !empty($wikipage->cachedcontent) &&
-                        coursesearch_is_relevant($wikipage->cachedcontent, $query)) {
+                $filterok = ($filter == 'all' || $filter == 'content');
+                $hascon = !empty($wikipage->cachedcontent);
+                $relevant = $hascon && coursesearch_is_relevant($wikipage->cachedcontent, $query);
+                if ($filterok && $relevant) {
                     $snippet = coursesearch_extract_snippet($wikipage->cachedcontent, $query);
                     $pageurl = new moodle_url('/mod/wiki/view.php', ['id' => $mod->id, 'pageid' => $wikipage->id]);
                     $results[] = [
@@ -744,9 +745,10 @@ function coursesearch_search_glossary($mod, $query, $filter) {
             }
 
             // Then check if the entry definition matches.
-            if (($filter == 'all' || $filter == 'content') &&
-                    !empty($entry->definition) &&
-                    coursesearch_is_relevant($entry->definition, $query)) {
+            $filterok = ($filter == 'all' || $filter == 'content');
+            $hasdef = !empty($entry->definition);
+            $relevant = $hasdef && coursesearch_is_relevant($entry->definition, $query);
+            if ($filterok && $relevant) {
                 $snippet = coursesearch_extract_snippet($entry->definition, $query);
                 $entryurl = new moodle_url('/mod/glossary/showentry.php', ['eid' => $entry->id, 'displayformat' => 'dictionary']);
                 $results[] = [
@@ -788,8 +790,8 @@ function coursesearch_search_database($mod, $query) {
 
         foreach ($records as $record) {
             // Get all content for this record.
-            $contents = $DB->get_records('data_content', ['recordid' => $record->id], '',
-                'id, fieldid, content, content1, content2, content3, content4');
+            $fields = 'id, fieldid, content, content1, content2, content3, content4';
+            $contents = $DB->get_records('data_content', ['recordid' => $record->id], '', $fields);
 
             $recordmatched = false;
             $matchedcontent = '';

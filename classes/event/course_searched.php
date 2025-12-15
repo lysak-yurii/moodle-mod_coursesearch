@@ -72,8 +72,8 @@ class course_searched extends \core\event\base {
     public function get_url() {
         // Clean the query parameter to prevent XSS - moodle_url will handle URL encoding.
         $query = isset($this->other['query']) ? clean_param($this->other['query'], PARAM_TEXT) : '';
-        return new \moodle_url('/mod/coursesearch/view.php',
-            ['id' => $this->contextinstanceid, 'query' => $query]);
+        $params = ['id' => $this->contextinstanceid, 'query' => $query];
+        return new \moodle_url('/mod/coursesearch/view.php', $params);
     }
 
     /**
