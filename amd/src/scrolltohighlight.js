@@ -377,11 +377,38 @@ define(['jquery'], function($) {
         let highlightText = urlParams.get('highlight');
 
         // If not in URL, check sessionStorage (set by coursesearch module).
+        let storedModuleId = null;
         if (!highlightText && typeof sessionStorage !== 'undefined') {
-            highlightText = sessionStorage.getItem('coursesearch_highlight');
-            if (highlightText) {
+            const storedHighlight = sessionStorage.getItem('coursesearch_highlight');
+            storedModuleId = sessionStorage.getItem('coursesearch_moduleId');
+            const timestamp = sessionStorage.getItem('coursesearch_timestamp');
+
+            // Check if timestamp is recent (within 10 seconds).
+            if (timestamp && Date.now() - parseInt(timestamp, 10) > 10000) {
+                // Data is too old, clear it.
+                sessionStorage.removeItem('coursesearch_highlight');
+                sessionStorage.removeItem('coursesearch_moduleId');
+                sessionStorage.removeItem('coursesearch_timestamp');
+                sessionStorage.removeItem('coursesearch_shouldScroll');
+                return;
+            }
+
+            if (storedHighlight) {
+                // The value was stored using JSON.stringify, so parse it back safely.
+                try {
+                    highlightText = JSON.parse(storedHighlight);
+                    if (typeof highlightText !== 'string') {
+                        highlightText = null;
+                    }
+                } catch (e) {
+                    // If JSON parsing fails, try using it directly (backwards compatibility).
+                    highlightText = storedHighlight;
+                }
                 // Clear it after use.
                 sessionStorage.removeItem('coursesearch_highlight');
+                sessionStorage.removeItem('coursesearch_moduleId');
+                sessionStorage.removeItem('coursesearch_timestamp');
+                sessionStorage.removeItem('coursesearch_shouldScroll');
             }
         }
 
@@ -404,29 +431,42 @@ define(['jquery'], function($) {
             setTimeout(function() {
                 // First, expand any accordion that contains the search text.
                 expandAccordionIfNeeded(searchText).then(function() {
-                    // Check if we have an anchor in the URL.
+                    // Check if we have a moduleId from sessionStorage first, then URL hash.
+                    let moduleId = storedModuleId;
                     const hash = window.location.hash;
-                    if (hash) {
+
+                    if (!moduleId && hash) {
                         // Extract module ID from hash (format: #module-123).
                         const match = hash.match(/^#module-(\d+)$/);
                         if (match) {
-                            const moduleId = match[1];
-                            const moduleElement = document.getElementById('module-' + moduleId);
+                            moduleId = match[1];
+                        }
+                    }
 
-                            if (moduleElement) {
-                                // Try to find and scroll to the text within this module.
-                                if (!scrollToText(moduleElement, searchText)) {
-                                    // If text not found, just scroll to the module.
+                    // Validate moduleId is numeric only.
+                    if (moduleId && !/^\d+$/.test(moduleId)) {
+                        moduleId = null;
+                    }
+
+                    if (moduleId) {
+                        const moduleElement = document.getElementById('module-' + moduleId);
+
+                        if (moduleElement) {
+                            // Try to find and scroll to the text within this module.
+                            if (!scrollToText(moduleElement, searchText)) {
+                                // If text not found in module, try searching in whole page.
+                                if (!scrollToText(document.body, searchText)) {
+                                    // If still not found, just scroll to the module.
                                     const elementTop = moduleElement.getBoundingClientRect().top + window.scrollY;
                                     window.scrollTo({top: elementTop - 100, behavior: 'smooth'});
                                 }
                             }
                         } else {
-                            // No specific module anchor, search in the whole page.
+                            // Module element not found, search in whole page.
                             scrollToText(document.body, searchText);
                         }
                     } else {
-                        // No anchor, search in the whole page.
+                        // No moduleId, search in the whole page.
                         scrollToText(document.body, searchText);
                     }
                 });
@@ -449,7 +489,19 @@ define(['jquery'], function($) {
         let highlightText = urlParams.get('highlight');
 
         if (!highlightText && typeof sessionStorage !== 'undefined') {
-            highlightText = sessionStorage.getItem('coursesearch_highlight');
+            const storedHighlight = sessionStorage.getItem('coursesearch_highlight');
+            if (storedHighlight) {
+                // The value may be JSON-encoded.
+                try {
+                    highlightText = JSON.parse(storedHighlight);
+                    if (typeof highlightText !== 'string') {
+                        highlightText = null;
+                    }
+                } catch (e) {
+                    // If JSON parsing fails, try using it directly.
+                    highlightText = storedHighlight;
+                }
+            }
         }
 
         if (highlightText) {

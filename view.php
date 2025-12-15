@@ -356,6 +356,9 @@ if (!empty($query)) {
         }
 
         echo html_writer::end_div();
+
+        // Load the resultlinks AMD module to handle click interception.
+        $PAGE->requires->js_call_amd('mod_coursesearch/resultlinks', 'init');
     }
 }
 
