@@ -283,28 +283,3 @@ function coursesearch_cm_info_dynamic(cm_info $cm) {
     // Hide the view link since the content is already embedded.
     $cm->set_no_view_link();
 }
-
-/**
- * Inject highlighting JavaScript on course pages where highlight parameter is present
- * This is called by Moodle before the footer is rendered on every page
- */
-function coursesearch_before_footer() {
-    global $PAGE;
-
-    // Check if highlighting is enabled in admin settings.
-    $enablehighlight = get_config('mod_coursesearch', 'enablehighlight');
-    if ($enablehighlight === '0') {
-        return;
-    }
-
-    // Only run on course view pages.
-    if (strpos($PAGE->pagetype, 'course-view') !== 0) {
-        return;
-    }
-
-    // Only load AMD module if there's a highlight parameter in the URL.
-    $highlight = optional_param('highlight', '', PARAM_TEXT);
-    if (!empty($highlight)) {
-        $PAGE->requires->js_call_amd('mod_coursesearch/scrolltohighlight', 'init');
-    }
-}
