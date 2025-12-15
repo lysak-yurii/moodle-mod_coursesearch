@@ -29,4 +29,4 @@ $plugin->requires  = 2024042200;       // Requires this Moodle version (Moodle 4
 $plugin->component = 'mod_coursesearch'; // Full name of the plugin (used for diagnostics).
 $plugin->cron      = 0;
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.0.0';          // Version 1.0.0 - includes search term highlighting
+$plugin->release   = '1.0.0';          // Version 1.0.0 - includes search term highlighting.

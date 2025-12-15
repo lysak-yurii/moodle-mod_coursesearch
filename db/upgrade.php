@@ -32,9 +32,9 @@ defined('MOODLE_INTERNAL') || die();
  */
 function xmldb_coursesearch_upgrade($oldversion) {
     global $DB;
-    
+
     $dbman = $DB->get_manager();
-    
+
     if ($oldversion < 2025040300) {
         // Define table coursesearch to be created.
         $table = new xmldb_table('coursesearch');
@@ -51,8 +51,8 @@ function xmldb_coursesearch_upgrade($oldversion) {
         $table->add_field('timemodified', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
 
         // Adding keys to table coursesearch.
-        $table->add_key('primary', XMLDB_KEY_PRIMARY, array('id'));
-        $table->add_key('course', XMLDB_KEY_FOREIGN, array('course'), 'course', array('id'));
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+        $table->add_key('course', XMLDB_KEY_FOREIGN, ['course'], 'course', ['id']);
 
         // Conditionally launch create table for coursesearch.
         if (!$dbman->table_exists($table)) {
@@ -62,24 +62,24 @@ function xmldb_coursesearch_upgrade($oldversion) {
         // Coursesearch savepoint reached.
         upgrade_mod_savepoint(true, 2025040300, 'coursesearch');
     }
-    
-    // Add the embedded field to existing installations if upgrading from a version without it
+
+    // Add the embedded field to existing installations if upgrading from a version without it.
     if ($oldversion < 2025040301) {
         $table = new xmldb_table('coursesearch');
         $field = new xmldb_field('embedded', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '1', 'placeholder');
 
-        // Add the field if it doesn't exist
+        // Add the field if it doesn't exist.
         if (!$dbman->field_exists($table, $field)) {
             $dbman->add_field($table, $field);
         }
 
-        // Update the plugin version
+        // Update the plugin version.
         upgrade_mod_savepoint(true, 2025040301, 'coursesearch');
     }
 
-    // Set default value for enablehighlight setting
+    // Set default value for enablehighlight setting.
     if ($oldversion < 2025121001) {
-        // Set default value for highlighting feature (enabled by default)
+        // Set default value for highlighting feature (enabled by default).
         $currentvalue = get_config('mod_coursesearch', 'enablehighlight');
         if ($currentvalue === false) {
             set_config('enablehighlight', 1, 'mod_coursesearch');

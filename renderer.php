@@ -28,7 +28,6 @@ defined('MOODLE_INTERNAL') || die();
  * Coursesearch module renderer class
  */
 class mod_coursesearch_renderer extends plugin_renderer_base {
-    
     /**
      * Renders the search form for embedded display
      *
@@ -37,45 +36,43 @@ class mod_coursesearch_renderer extends plugin_renderer_base {
      * @return string HTML content
      */
     public function render_embedded_search_form($coursesearch, $cm) {
-        global $COURSE;
-        
         $output = '';
-        
-        // Get the placeholder text and escape it to prevent XSS
+
+        // Get the placeholder text and escape it to prevent XSS.
         $placeholder = !empty($coursesearch->placeholder) ? s($coursesearch->placeholder) : get_string('defaultplaceholder', 'coursesearch');
-        
-        // Start the container
+
+        // Start the container.
         $output .= html_writer::start_div('coursesearch-container coursesearch-embedded');
-        
-        // Create the form
-        $formurl = new moodle_url('/mod/coursesearch/view.php', array('id' => $cm->id));
-        $output .= html_writer::start_tag('form', array('action' => $formurl, 'method' => 'get', 'class' => 'coursesearch-form'));
-        $output .= html_writer::empty_tag('input', array('type' => 'hidden', 'name' => 'id', 'value' => $cm->id));
-        
-        // Create the input group
+
+        // Create the form.
+        $formurl = new moodle_url('/mod/coursesearch/view.php', ['id' => $cm->id]);
+        $output .= html_writer::start_tag('form', ['action' => $formurl, 'method' => 'get', 'class' => 'coursesearch-form']);
+        $output .= html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'id', 'value' => $cm->id]);
+
+        // Create the input group.
         $output .= html_writer::start_div('input-group');
-        $output .= html_writer::empty_tag('input', array(
-            'type' => 'text', 
-            'name' => 'query', 
-            'value' => '', 
-            'class' => 'form-control', 
+        $output .= html_writer::empty_tag('input', [
+            'type' => 'text',
+            'name' => 'query',
+            'value' => '',
+            'class' => 'form-control',
             'placeholder' => $placeholder,
-            'aria-label' => get_string('search', 'coursesearch')
-        ));
-        
-        // Add the search button
+            'aria-label' => get_string('search', 'coursesearch'),
+        ]);
+
+        // Add the search button.
         $output .= html_writer::start_div('input-group-append');
-        $output .= html_writer::tag('button', get_string('search', 'coursesearch'), array(
-            'type' => 'submit', 
+        $output .= html_writer::tag('button', get_string('search', 'coursesearch'), [
+            'type' => 'submit',
             'class' => 'btn btn-primary',
-            'aria-label' => get_string('search', 'coursesearch')
-        ));
-        $output .= html_writer::end_div(); // input-group-append
-        
-        $output .= html_writer::end_div(); // input-group
+            'aria-label' => get_string('search', 'coursesearch'),
+        ]);
+        $output .= html_writer::end_div();
+
+        $output .= html_writer::end_div();
         $output .= html_writer::end_tag('form');
-        $output .= html_writer::end_div(); // coursesearch-container
-        
+        $output .= html_writer::end_div();
+
         return $output;
     }
 }

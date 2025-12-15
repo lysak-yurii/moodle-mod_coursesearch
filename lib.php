@@ -30,28 +30,39 @@ defined('MOODLE_INTERNAL') || die();
  * @return mixed True if module supports feature, false if not, null if doesn't know
  */
 function coursesearch_supports($feature) {
-    switch($feature) {
-        case FEATURE_MOD_ARCHETYPE:           return MOD_ARCHETYPE_RESOURCE;
-        case FEATURE_GROUPS:                  return false;
-        case FEATURE_GROUPINGS:               return false;
-        case FEATURE_MOD_INTRO:               return true;
-        case FEATURE_COMPLETION_TRACKS_VIEWS: return true;
-        case FEATURE_GRADE_HAS_GRADE:         return false;
-        case FEATURE_GRADE_OUTCOMES:          return false;
-        case FEATURE_BACKUP_MOODLE2:          return true;
-        case FEATURE_SHOW_DESCRIPTION:        return true;
-        case FEATURE_MOD_PURPOSE:             return MOD_PURPOSE_CONTENT;
-        default: return null;
+    switch ($feature) {
+        case FEATURE_MOD_ARCHETYPE:
+            return MOD_ARCHETYPE_RESOURCE;
+        case FEATURE_GROUPS:
+            return false;
+        case FEATURE_GROUPINGS:
+            return false;
+        case FEATURE_MOD_INTRO:
+            return true;
+        case FEATURE_COMPLETION_TRACKS_VIEWS:
+            return true;
+        case FEATURE_GRADE_HAS_GRADE:
+            return false;
+        case FEATURE_GRADE_OUTCOMES:
+            return false;
+        case FEATURE_BACKUP_MOODLE2:
+            return true;
+        case FEATURE_SHOW_DESCRIPTION:
+            return true;
+        case FEATURE_MOD_PURPOSE:
+            return MOD_PURPOSE_CONTENT;
+        default:
+            return null;
     }
 }
 
 /**
  * This function is used by the reset_course_userdata function in moodlelib.
- * @param $data the data submitted from the reset course.
+ * @param object $data the data submitted from the reset course.
  * @return array status array
  */
 function coursesearch_reset_userdata($data) {
-    return array();
+    return [];
 }
 
 /**
@@ -61,7 +72,7 @@ function coursesearch_reset_userdata($data) {
  * @return array
  */
 function coursesearch_get_view_actions() {
-    return array('view', 'search');
+    return ['view', 'search'];
 }
 
 /**
@@ -71,7 +82,7 @@ function coursesearch_get_view_actions() {
  * @return array
  */
 function coursesearch_get_post_actions() {
-    return array();
+    return [];
 }
 
 /**
@@ -82,20 +93,20 @@ function coursesearch_get_post_actions() {
  */
 function coursesearch_add_instance($data, $mform = null) {
     global $DB;
-    
+
     $cmid = $data->coursemodule;
-    
+
     $data->timemodified = time();
-    
-    // You might want to add more options here
+
+    // You might want to add more options here.
     $data->id = $DB->insert_record('coursesearch', $data);
-    
-    // We need to use context now, so we need to make sure all needed info is already in db
-    $DB->set_field('course_modules', 'instance', $data->id, array('id' => $cmid));
-    
-    $completiontimeexpected = !empty($data->completionexpected) ? $data->completionexpected : null;
-    \core_completion\api::update_completion_date_event($cmid, 'coursesearch', $data->id, $completiontimeexpected);
-    
+
+    // We need to use context now, so we need to make sure all needed info is already in db.
+    $DB->set_field('course_modules', 'instance', $data->id, ['id' => $cmid]);
+
+    $comptime = !empty($data->completionexpected) ? $data->completionexpected : null;
+    \core_completion\api::update_completion_date_event($cmid, 'coursesearch', $data->id, $comptime);
+
     return $data->id;
 }
 
@@ -107,17 +118,17 @@ function coursesearch_add_instance($data, $mform = null) {
  */
 function coursesearch_update_instance($data, $mform) {
     global $DB;
-    
+
     $cmid = $data->coursemodule;
-    
+
     $data->timemodified = time();
     $data->id = $data->instance;
-    
+
     $DB->update_record('coursesearch', $data);
-    
-    $completiontimeexpected = !empty($data->completionexpected) ? $data->completionexpected : null;
-    \core_completion\api::update_completion_date_event($cmid, 'coursesearch', $data->id, $completiontimeexpected);
-    
+
+    $comptime = !empty($data->completionexpected) ? $data->completionexpected : null;
+    \core_completion\api::update_completion_date_event($cmid, 'coursesearch', $data->id, $comptime);
+
     return true;
 }
 
@@ -128,16 +139,16 @@ function coursesearch_update_instance($data, $mform) {
  */
 function coursesearch_delete_instance($id) {
     global $DB;
-    
-    if (!$coursesearch = $DB->get_record('coursesearch', array('id' => $id))) {
+
+    if (!$coursesearch = $DB->get_record('coursesearch', ['id' => $id])) {
         return false;
     }
-    
+
     $cm = get_coursemodule_from_instance('coursesearch', $id);
     \core_completion\api::update_completion_date_event($cm->id, 'coursesearch', $id, null);
-    
-    $DB->delete_records('coursesearch', array('id' => $coursesearch->id));
-    
+
+    $DB->delete_records('coursesearch', ['id' => $coursesearch->id]);
+
     return true;
 }
 
@@ -150,35 +161,35 @@ function coursesearch_delete_instance($id) {
  * @return cached_cm_info info
  */
 function coursesearch_get_coursemodule_info($coursemodule) {
-    global $DB, $PAGE;
-    
-    if (!$coursesearch = $DB->get_record('coursesearch', array('id' => $coursemodule->instance),
+    global $DB;
+
+    if (!$coursesearch = $DB->get_record('coursesearch', ['id' => $coursemodule->instance],
             'id, name, intro, introformat, embedded')) {
         return null;
     }
-    
+
     $info = new cached_cm_info();
     $info->name = $coursesearch->name;
-    
+
     if ($coursemodule->showdescription) {
         // Convert intro to html. Do not filter cached version, filters run at display time.
         $info->content = format_module_intro('coursesearch', $coursesearch, $coursemodule->id, false);
     }
-    
-    
-    // If the search bar is set to be embedded, tell the course renderer to display it inline
+
+
+    // If the search bar is set to be embedded, tell the course renderer to display it inline.
     if (!empty($coursesearch->embedded)) {
         $info->content = $info->content ?? '';
-        
-        // Set a custom flag to indicate this module should be rendered inline
-        $info->customdata = array('embedded' => true);
-        
-        // This is the key part - tell Moodle to use our custom renderer
+
+        // Set a custom flag to indicate this module should be rendered inline.
+        $info->customdata = ['embedded' => true];
+
+        // This is the key part - tell Moodle to use our custom renderer.
         $info->content_items_online = true;
         $info->content_online = true;
         $info->onclick_online = true;
     }
-    
+
     return $info;
 }
 
@@ -191,19 +202,19 @@ function coursesearch_get_coursemodule_info($coursemodule) {
  * @param  stdClass $context    context object
  */
 function coursesearch_view($coursesearch, $course, $cm, $context) {
-    
+
     // Trigger course_module_viewed event.
-    $params = array(
+    $params = [
         'context' => $context,
-        'objectid' => $coursesearch->id
-    );
-    
+        'objectid' => $coursesearch->id,
+    ];
+
     $event = \mod_coursesearch\event\course_module_viewed::create($params);
     $event->add_record_snapshot('course_modules', $cm);
     $event->add_record_snapshot('course', $course);
     $event->add_record_snapshot('coursesearch', $coursesearch);
     $event->trigger();
-    
+
     // Completion.
     $completion = new completion_info($course);
     $completion->set_module_viewed($cm);
@@ -213,27 +224,26 @@ function coursesearch_view($coursesearch, $course, $cm, $context) {
  * Serves the coursesearch course format content.
  *
  * @param cm_info $cm Course module object
- * @param array $displayoptions Display options
  * @return string HTML to display
  */
 function coursesearch_cm_info_view(cm_info $cm) {
     global $CFG, $PAGE, $DB;
-    
-    // Only continue if the module is set to be embedded
+
+    // Only continue if the module is set to be embedded.
     if (empty($cm->customdata['embedded'])) {
         return '';
     }
-    
-    // Get the coursesearch record
-    $coursesearch = $DB->get_record('coursesearch', array('id' => $cm->instance), '*', MUST_EXIST);
-    
-    // Include renderer file
+
+    // Get the coursesearch record.
+    $coursesearch = $DB->get_record('coursesearch', ['id' => $cm->instance], '*', MUST_EXIST);
+
+    // Include renderer file.
     require_once($CFG->dirroot . '/mod/coursesearch/renderer.php');
-    
-    // Get the renderer
+
+    // Get the renderer.
     $renderer = $PAGE->get_renderer('mod_coursesearch');
-    
-    // Render the embedded search form
+
+    // Render the embedded search form.
     return $renderer->render_embedded_search_form($coursesearch, $cm);
 }
 
@@ -246,33 +256,33 @@ function coursesearch_cm_info_view(cm_info $cm) {
  */
 function coursesearch_cm_info_dynamic(cm_info $cm) {
     global $CFG, $DB, $PAGE;
-    
-    // Note: JavaScript for scrolling is now handled client-side via sessionStorage
-    // No need to load AMD modules here
-    
-    // Check if the module should be embedded
-    $coursesearch = $DB->get_record('coursesearch', array('id' => $cm->instance), 'embedded');
-    
+
+    // Note: JavaScript for scrolling is now handled client-side via sessionStorage.
+    // No need to load AMD modules here.
+
+    // Check if the module should be embedded.
+    $coursesearch = $DB->get_record('coursesearch', ['id' => $cm->instance], 'embedded');
+
     if (!$coursesearch || empty($coursesearch->embedded)) {
         return;
     }
-    
-    // Include the renderer
+
+    // Include the renderer.
     require_once($CFG->dirroot . '/mod/coursesearch/renderer.php');
-    
-    // Get the full coursesearch record
-    $fullcoursesearch = $DB->get_record('coursesearch', array('id' => $cm->instance), '*', MUST_EXIST);
-    
-    // Get the renderer
+
+    // Get the full coursesearch record.
+    $fullcoursesearch = $DB->get_record('coursesearch', ['id' => $cm->instance], '*', MUST_EXIST);
+
+    // Get the renderer.
     $renderer = $PAGE->get_renderer('mod_coursesearch');
-    
-    // Generate the embedded search form
+
+    // Generate the embedded search form.
     $content = $renderer->render_embedded_search_form($fullcoursesearch, $cm);
-    
-    // Set the content to be displayed in the course page
+
+    // Set the content to be displayed in the course page.
     $cm->set_content($content);
-    
-    // Hide the view link since the content is already embedded
+
+    // Hide the view link since the content is already embedded.
     $cm->set_no_view_link();
 }
 
@@ -283,21 +293,20 @@ function coursesearch_cm_info_dynamic(cm_info $cm) {
 function coursesearch_before_footer() {
     global $PAGE;
 
-    // Check if highlighting is enabled in admin settings
+    // Check if highlighting is enabled in admin settings.
     $enablehighlight = get_config('mod_coursesearch', 'enablehighlight');
     if ($enablehighlight === '0') {
         return;
     }
 
-    // Only run on course view pages
+    // Only run on course view pages.
     if (strpos($PAGE->pagetype, 'course-view') !== 0) {
         return;
     }
 
-    // Only load AMD module if there's a highlight parameter in the URL
+    // Only load AMD module if there's a highlight parameter in the URL.
     $highlight = optional_param('highlight', '', PARAM_TEXT);
     if (!empty($highlight)) {
         $PAGE->requires->js_call_amd('mod_coursesearch/scrolltohighlight', 'init');
     }
 }
-

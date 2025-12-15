@@ -24,20 +24,20 @@
 
 require_once('../../config.php');
 
-$id = required_param('id', PARAM_INT); // Course ID
+$id = required_param('id', PARAM_INT); // Course ID.
 
-$course = $DB->get_record('course', array('id' => $id), '*', MUST_EXIST);
+$course = $DB->get_record('course', ['id' => $id], '*', MUST_EXIST);
 
 require_course_login($course);
 $context = context_course::instance($course->id);
 
-// Check if user has capability to view coursesearch modules
+// Check if user has capability to view coursesearch modules.
 require_capability('mod/coursesearch:view', $context);
 
-// Note: course_module_instance_list_viewed is abstract in newer Moodle versions
-// We'll skip this event for now
+// Note: course_module_instance_list_viewed is abstract in newer Moodle versions.
+// We'll skip this event for now.
 
-$PAGE->set_url('/mod/coursesearch/index.php', array('id' => $course->id));
+$PAGE->set_url('/mod/coursesearch/index.php', ['id' => $course->id]);
 $PAGE->set_title(format_string($course->fullname));
 $PAGE->set_heading(format_string($course->fullname));
 $PAGE->set_context($context);
@@ -47,26 +47,26 @@ echo $OUTPUT->header();
 $modulenameplural = get_string('modulenameplural', 'coursesearch');
 echo $OUTPUT->heading($modulenameplural);
 
-if (! $coursesearches = get_all_instances_in_course('coursesearch', $course)) {
-    notice(get_string('nocourseinstances', 'coursesearch'), new moodle_url('/course/view.php', array('id' => $course->id)));
+if (!$coursesearches = get_all_instances_in_course('coursesearch', $course)) {
+    notice(get_string('nocourseinstances', 'coursesearch'), new moodle_url('/course/view.php', ['id' => $course->id]));
 }
 
 $table = new html_table();
 $table->attributes['class'] = 'generaltable mod_index';
 
-$table->head  = array(get_string('name'), get_string('description'));
-$table->align = array('left', 'left');
+$table->head  = [get_string('name'), get_string('description')];
+$table->align = ['left', 'left'];
 
 foreach ($coursesearches as $coursesearch) {
     $context = context_module::instance($coursesearch->coursemodule);
     $link = html_writer::link(
-        new moodle_url('/mod/coursesearch/view.php', array('id' => $coursesearch->coursemodule)),
-        format_string($coursesearch->name, true, array('context' => $context))
+        new moodle_url('/mod/coursesearch/view.php', ['id' => $coursesearch->coursemodule]),
+        format_string($coursesearch->name, true, ['context' => $context])
     );
-    
+
     $description = format_module_intro('coursesearch', $coursesearch, $coursesearch->coursemodule);
-    
-    $table->data[] = array($link, $description);
+
+    $table->data[] = [$link, $description];
 }
 
 echo html_writer::table($table);

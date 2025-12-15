@@ -24,8 +24,6 @@
 
 namespace mod_coursesearch\privacy;
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * Privacy provider implementation for the Course Search module.
  *
@@ -34,7 +32,6 @@ defined('MOODLE_INTERNAL') || die();
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class provider implements \core_privacy\local\metadata\null_provider {
-
     /**
      * Returns the reason why this plugin stores no data.
      *
@@ -44,4 +41,3 @@ class provider implements \core_privacy\local\metadata\null_provider {
         return 'privacy:metadata';
     }
 }
-

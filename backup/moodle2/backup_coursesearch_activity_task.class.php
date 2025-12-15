@@ -22,15 +22,12 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-defined('MOODLE_INTERNAL') || die;
-
 require_once($CFG->dirroot . '/mod/coursesearch/backup/moodle2/backup_coursesearch_stepslib.php');
 
 /**
  * Provides the steps to perform one complete backup of the Course Search instance
  */
 class backup_coursesearch_activity_task extends backup_activity_task {
-
     /**
      * No specific settings for this activity
      */
@@ -50,17 +47,17 @@ class backup_coursesearch_activity_task extends backup_activity_task {
      * @param string $content some HTML text that eventually contains URLs to the activity instance scripts
      * @return string the content with the URLs encoded
      */
-    static public function encode_content_links($content) {
+    public static function encode_content_links($content) {
         global $CFG;
 
         $base = preg_quote($CFG->wwwroot, "/");
 
-        // Link to the list of coursesearches
-        $search = "/(".$base."\/mod\/coursesearch\/index.php\?id\=)([0-9]+)/";
+        // Link to the list of coursesearches.
+        $search = "/(" . $base . "\/mod\/coursesearch\/index.php\?id\=)([0-9]+)/";
         $content = preg_replace($search, '$@COURSESEARCHINDEX*$2@$', $content);
 
-        // Link to coursesearch view by coursemodule id
-        $search = "/(".$base."\/mod\/coursesearch\/view.php\?id\=)([0-9]+)/";
+        // Link to coursesearch view by coursemodule id.
+        $search = "/(" . $base . "\/mod\/coursesearch\/view.php\?id\=)([0-9]+)/";
         $content = preg_replace($search, '$@COURSESEARCHVIEWBYID*$2@$', $content);
 
         return $content;

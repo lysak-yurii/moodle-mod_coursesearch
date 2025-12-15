@@ -30,7 +30,7 @@ $string['modulename_help'] = 'The course search module enables a teacher to add 
 $string['pluginname'] = 'Course Search';
 $string['pluginadministration'] = 'Course Search administration';
 
-// Form strings
+// Form strings.
 $string['coursesearchsettings'] = 'Course Search settings';
 $string['searchscope'] = 'Search scope';
 $string['searchscope_help'] = 'Define what content should be included in the search results.';
@@ -43,13 +43,13 @@ $string['placeholder'] = 'Placeholder text';
 $string['placeholder_help'] = 'The text that appears in the search box before a user enters a query.';
 $string['defaultplaceholder'] = 'Search this course...';
 
-// Display options
+// Display options.
 $string['displayoptions'] = 'Display options';
 $string['embedded'] = 'Embed in course page';
 $string['embedded_help'] = 'When enabled, the search bar will be embedded directly in the course page instead of requiring users to click through to a separate page.';
 $string['embeddedinfo'] = 'Display the search bar directly on the course page';
 
-// View page strings
+// View page strings.
 $string['search'] = 'Search';
 $string['searchresultsfor'] = 'Search results for "{$a}"';
 $string['searchresults'] = 'Search results for "{$a}"';
@@ -63,17 +63,17 @@ $string['description'] = 'Description';
 $string['intro'] = 'introduction';
 $string['eventcoursesearched'] = 'Course searched';
 
-// Capability strings
+// Capability strings.
 $string['coursesearch:addinstance'] = 'Add a new course search';
 $string['coursesearch:view'] = 'View course search';
 
-// Error strings
+// Error strings.
 $string['missingidandcmid'] = 'Missing course module ID or course search ID';
 $string['nocourseinstances'] = 'There are no course search instances in this course';
 
-// Admin settings
+// Admin settings.
 $string['enablehighlight'] = 'Enable scrolling and highlighting';
 $string['enablehighlight_desc'] = 'When enabled, clicking on search results will automatically scroll to and highlight the matched text on the course page.';
 
-// Privacy
+// Privacy.
 $string['privacy:metadata'] = 'The Course Search module does not store any personal user data. It only stores activity instance configuration such as name, description, search scope, and display options.';

@@ -22,13 +22,10 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * Structure step to restore one coursesearch activity
  */
 class restore_coursesearch_activity_structure_step extends restore_activity_structure_step {
-
     /**
      * Defines structure of path elements to be processed during the restore
      *
@@ -36,10 +33,10 @@ class restore_coursesearch_activity_structure_step extends restore_activity_stru
      */
     protected function define_structure() {
 
-        $paths = array();
+        $paths = [];
         $paths[] = new restore_path_element('coursesearch', '/activity/coursesearch');
 
-        // Return the paths wrapped into standard activity structure
+        // Return the paths wrapped into standard activity structure.
         return $this->prepare_activity_structure($paths);
     }
 
@@ -52,14 +49,13 @@ class restore_coursesearch_activity_structure_step extends restore_activity_stru
         global $DB;
 
         $data = (object)$data;
-        $oldid = $data->id;
         $data->course = $this->get_courseid();
 
         $data->timemodified = $this->apply_date_offset($data->timemodified);
 
-        // Insert the coursesearch record
+        // Insert the coursesearch record.
         $newitemid = $DB->insert_record('coursesearch', $data);
-        // Immediately after inserting "activity" record, call this
+        // Immediately after inserting "activity" record, call this.
         $this->apply_activity_instance($newitemid);
     }
 
@@ -67,7 +63,7 @@ class restore_coursesearch_activity_structure_step extends restore_activity_stru
      * Post-execution actions
      */
     protected function after_execute() {
-        // Add coursesearch related files, no need to match by itemname (just internally handled context)
+        // Add coursesearch related files, no need to match by itemname (just internally handled context).
         $this->add_related_files('mod_coursesearch', 'intro', null);
     }
 }

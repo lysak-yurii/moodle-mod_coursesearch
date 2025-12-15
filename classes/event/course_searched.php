@@ -24,8 +24,6 @@
 
 namespace mod_coursesearch\event;
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * The mod_coursesearch course searched event class.
  *
@@ -34,7 +32,6 @@ defined('MOODLE_INTERNAL') || die();
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class course_searched extends \core\event\base {
-
     /**
      * Init method.
      *
@@ -61,9 +58,10 @@ class course_searched extends \core\event\base {
      * @return string
      */
     public function get_description() {
-        // Escape the query to prevent XSS in event descriptions
+        // Escape the query to prevent XSS in event descriptions.
         $query = isset($this->other['query']) ? s($this->other['query']) : '';
-        return "The user with id '$this->userid' searched for '$query' in the course with id '$this->courseid' using the course search with id '$this->objectid'.";
+        return "The user with id '$this->userid' searched for '$query' in the course with id '$this->courseid' " .
+            "using the course search with id '$this->objectid'.";
     }
 
     /**
@@ -72,10 +70,10 @@ class course_searched extends \core\event\base {
      * @return \moodle_url
      */
     public function get_url() {
-        // Clean the query parameter to prevent XSS - moodle_url will handle URL encoding
+        // Clean the query parameter to prevent XSS - moodle_url will handle URL encoding.
         $query = isset($this->other['query']) ? clean_param($this->other['query'], PARAM_TEXT) : '';
-        return new \moodle_url('/mod/coursesearch/view.php', 
-            array('id' => $this->contextinstanceid, 'query' => $query));
+        return new \moodle_url('/mod/coursesearch/view.php',
+            ['id' => $this->contextinstanceid, 'query' => $query]);
     }
 
     /**
@@ -86,11 +84,11 @@ class course_searched extends \core\event\base {
      */
     protected function validate_data() {
         parent::validate_data();
-        
+
         if (!isset($this->other['query'])) {
             throw new \coding_exception('The \'query\' value must be set in other.');
         }
-        
+
         // Make sure this class is correctly used.
         if ($this->contextlevel != CONTEXT_MODULE) {
             throw new \coding_exception('Context level must be CONTEXT_MODULE.');

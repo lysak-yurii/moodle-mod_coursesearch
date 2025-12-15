@@ -22,13 +22,10 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-defined('MOODLE_INTERNAL') || die;
-
 /**
  * Define the complete coursesearch structure for backup, with file and id annotations
  */
 class backup_coursesearch_activity_structure_step extends backup_activity_structure_step {
-
     /**
      * Defines the backup structure of the module
      *
@@ -36,23 +33,17 @@ class backup_coursesearch_activity_structure_step extends backup_activity_struct
      */
     protected function define_structure() {
 
-        // To know if we are including userinfo
-        $userinfo = $this->get_setting_value('userinfo');
+        // Define the root element describing the coursesearch instance.
+        $coursesearch = new backup_nested_element('coursesearch', ['id'], [
+            'name', 'intro', 'introformat', 'searchscope', 'placeholder', 'timemodified']);
 
-        // Define the root element describing the coursesearch instance
-        $coursesearch = new backup_nested_element('coursesearch', array('id'), array(
-            'name', 'intro', 'introformat', 'searchscope', 'placeholder', 'timemodified'));
+        // Define sources.
+        $coursesearch->set_source_table('coursesearch', ['id' => backup::VAR_ACTIVITYID]);
 
-        // Define sources
-        $coursesearch->set_source_table('coursesearch', array('id' => backup::VAR_ACTIVITYID));
+        // Define file annotations.
+        $coursesearch->annotate_files('mod_coursesearch', 'intro', null);
 
-        // Define id annotations
-        // (none)
-
-        // Define file annotations
-        $coursesearch->annotate_files('mod_coursesearch', 'intro', null); // This file area hasn't itemid
-
-        // Return the root element (coursesearch), wrapped into standard activity structure
+        // Return the root element (coursesearch), wrapped into standard activity structure.
         return $this->prepare_activity_structure($coursesearch);
     }
 }

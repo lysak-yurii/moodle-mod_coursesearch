@@ -22,9 +22,9 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-defined('MOODLE_INTERNAL') || die;
+defined('MOODLE_INTERNAL') || die();
 
-require_once($CFG->dirroot.'/course/moodleform_mod.php');
+require_once($CFG->dirroot . '/course/moodleform_mod.php');
 
 /**
  * Module instance settings form
@@ -34,7 +34,6 @@ require_once($CFG->dirroot.'/course/moodleform_mod.php');
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class mod_coursesearch_mod_form extends moodleform_mod {
-
     /**
      * Defines forms elements
      */
@@ -47,7 +46,7 @@ class mod_coursesearch_mod_form extends moodleform_mod {
         $mform->addElement('header', 'general', get_string('general', 'form'));
 
         // Adding the standard "name" field.
-        $mform->addElement('text', 'name', get_string('name'), array('size' => '64'));
+        $mform->addElement('text', 'name', get_string('name'), ['size' => '64']);
         if (!empty($CFG->formatstringstriptags)) {
             $mform->setType('name', PARAM_TEXT);
         } else {
@@ -59,13 +58,13 @@ class mod_coursesearch_mod_form extends moodleform_mod {
         // Adding the standard "intro" and "introformat" fields.
         $this->standard_intro_elements();
 
-        // Add display options
+        // Add display options.
         $mform->addElement('header', 'displayoptions', get_string('displayoptions', 'coursesearch'));
-        
-        // Embedding option
-        $mform->addElement('advcheckbox', 'embedded', get_string('embedded', 'coursesearch'), 
+
+        // Embedding option.
+        $mform->addElement('advcheckbox', 'embedded', get_string('embedded', 'coursesearch'),
             get_string('embeddedinfo', 'coursesearch'));
-        $mform->setDefault('embedded', 1); // Embedded by default
+        $mform->setDefault('embedded', 1);
         $mform->addHelpButton('embedded', 'embedded', 'coursesearch');
 
         // Add standard elements.

@@ -24,8 +24,6 @@
 
 namespace mod_coursesearch\event;
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * The mod_coursesearch course module viewed event class.
  *
@@ -34,7 +32,6 @@ defined('MOODLE_INTERNAL') || die();
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class course_module_viewed extends \core\event\course_module_viewed {
-
     /**
      * Init method.
      *
@@ -52,7 +49,7 @@ class course_module_viewed extends \core\event\course_module_viewed {
      * @return \moodle_url
      */
     public function get_url() {
-        return new \moodle_url('/mod/coursesearch/view.php', array('id' => $this->contextinstanceid));
+        return new \moodle_url('/mod/coursesearch/view.php', ['id' => $this->contextinstanceid]);
     }
 
     /**
@@ -61,10 +58,10 @@ class course_module_viewed extends \core\event\course_module_viewed {
      * @return array
      */
     protected function get_legacy_logdata() {
-        return array($this->courseid, 'coursesearch', 'view', 'view.php?id=' . $this->contextinstanceid,
-            $this->objectid, $this->contextinstanceid);
+        return [$this->courseid, 'coursesearch', 'view', 'view.php?id=' . $this->contextinstanceid,
+            $this->objectid, $this->contextinstanceid];
     }
-    
+
     /**
      * Custom validation.
      *

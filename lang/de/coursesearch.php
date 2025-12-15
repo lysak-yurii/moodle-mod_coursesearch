@@ -32,7 +32,7 @@ $string['coursesearch:view'] = 'Kurssuche anzeigen';
 $string['pluginadministration'] = 'Kurssuche-Administration';
 $string['pluginname'] = 'Kurssuche';
 
-// Form strings
+// Form strings.
 $string['coursesearchsettings'] = 'Kurssuche-Einstellungen';
 $string['searchscope'] = 'Suchbereich';
 $string['searchscope_help'] = 'Definieren Sie, welche Inhalte in den Suchergebnissen enthalten sein sollen.';
@@ -45,13 +45,13 @@ $string['placeholder'] = 'Platzhaltertext';
 $string['placeholder_help'] = 'Der Text, der in der Suchbox erscheint, bevor ein Benutzer eine Anfrage eingibt.';
 $string['defaultplaceholder'] = 'Diesen Kurs durchsuchen...';
 
-// Display options
+// Display options.
 $string['displayoptions'] = 'Anzeigeoptionen';
 $string['embedded'] = 'In Kursseite einbetten';
 $string['embedded_help'] = 'Wenn aktiviert, wird die Suchleiste direkt in der Kursseite eingebettet, anstatt dass Benutzer auf eine separate Seite klicken müssen.';
 $string['embeddedinfo'] = 'Suchleiste direkt auf der Kursseite anzeigen';
 
-// View page strings
+// View page strings.
 $string['search'] = 'Suchen';
 $string['searchresultsfor'] = 'Suchergebnisse für "{$a}"';
 $string['searchresults'] = 'Suchergebnisse für "{$a}"';
@@ -65,17 +65,17 @@ $string['description'] = 'Beschreibung';
 $string['intro'] = 'Einleitung';
 $string['eventcoursesearched'] = 'Kurs durchsucht';
 
-// Capability strings
+// Capability strings.
 $string['coursesearch:addinstance'] = 'Eine neue Kurssuche hinzufügen';
 $string['coursesearch:view'] = 'Kurssuche anzeigen';
 
-// Error strings
+// Error strings.
 $string['missingidandcmid'] = 'Fehlende Kursmodul-ID oder Kurssuche-ID';
 $string['nocourseinstances'] = 'Es gibt keine Kurssuche-Instanzen in diesem Kurs';
 
-// Admin settings
+// Admin settings.
 $string['enablehighlight'] = 'Scrollen und Hervorheben aktivieren';
 $string['enablehighlight_desc'] = 'Wenn aktiviert, wird beim Klicken auf Suchergebnisse automatisch zum gefundenen Text gescrollt und dieser auf der Kursseite hervorgehoben.';
 
-// Privacy
+// Privacy.
 $string['privacy:metadata'] = 'Das Kurssuche-Modul speichert keine persönlichen Benutzerdaten. Es speichert nur Aktivitätsinstanz-Konfigurationen wie Name, Beschreibung, Suchbereich und Anzeigeoptionen.';
