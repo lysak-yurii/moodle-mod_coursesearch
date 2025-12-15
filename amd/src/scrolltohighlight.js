@@ -32,6 +32,8 @@ define(['jquery'], function($) {
     /**
      * Expand Bootstrap accordion/collapse if text is found inside a collapsed section
      * Returns a promise that resolves when accordion is expanded (or immediately if not needed)
+     * @param {string} searchText The search text to look for
+     * @return {Promise} Promise that resolves when accordion is expanded
      */
     function expandAccordionIfNeeded(searchText) {
         return new Promise(function(resolve) {
@@ -109,6 +111,9 @@ define(['jquery'], function($) {
 
     /**
      * Find text within an element and scroll to it
+     * @param {HTMLElement} element The element to search within
+     * @param {string} searchText The text to search for
+     * @return {boolean} True if text was found and scrolled to
      */
     function scrollToText(element, searchText) {
         // console.log('[CourseSearch] scrollToText called with:', searchText);
@@ -151,7 +156,7 @@ define(['jquery'], function($) {
 
         let node;
         const textNodes = [];
-        while (node = walker.nextNode()) {
+        while ((node = walker.nextNode()) !== null) {
             textNodes.push(node);
         }
         // console.log('[CourseSearch] Found', textNodes.length, 'visible text nodes');
@@ -268,13 +273,16 @@ define(['jquery'], function($) {
                 while (parent && parent !== element && parent !== document.body) {
                     const tagName = parent.tagName.toUpperCase();
                     // console.log('[CourseSearch] Checking parent:', tagName);
-                    if (['P', 'DIV', 'LI', 'TD', 'TH', 'BLOCKQUOTE', 'ARTICLE', 'SECTION'].includes(tagName)) {
+                    if (['P', 'DIV', 'LI', 'TD', 'TH', 'BLOCKQUOTE', 'ARTICLE', 'SECTION']
+                        .includes(tagName)) {
                         break;
                     }
                     parent = parent.parentElement;
                 }
-                // console.log('[CourseSearch] Final parent:', parent ? parent.tagName : 'null', 'element:', element ? element.tagName : 'null');
-                // console.log('[CourseSearch] parent !== element:', parent !== element, 'parent !== body:', parent !== document.body);
+                // console.log('[CourseSearch] Final parent:', parent ? parent.tagName : 'null',
+                //     'element:', element ? element.tagName : 'null');
+                // console.log('[CourseSearch] parent !== element:', parent !== element,
+                //     'parent !== body:', parent !== document.body);
                 if (parent && parent !== element && parent !== document.body) {
                     // Scroll to element
                     const rect = parent.getBoundingClientRect();
@@ -306,19 +314,19 @@ define(['jquery'], function($) {
                 // Found the text, now we need to scroll to it
                 const range = document.createRange();
                 const textNode = textNodes[i];
-                
+
                 // Find the actual position in the original text
                 const originalText = textNode.textContent;
                 const originalIndex = originalText.toLowerCase().indexOf(searchLower);
-                
+
                 if (originalIndex !== -1) {
                     try {
                         range.setStart(textNode, originalIndex);
                         range.setEnd(textNode, originalIndex + searchText.length);
-                        
+
                         // Get the bounding rectangle
                         const rect = range.getBoundingClientRect();
-                        
+
                         // Scroll to the position
                         const scrollY = window.scrollY + rect.top - 100; // 100px offset from top
                         window.scrollTo({
@@ -498,8 +506,10 @@ define(['jquery'], function($) {
         });
     }
 
-    // Auto-initialize on course view pages
-    // Check if we're on a course page and if highlight parameter exists
+    /**
+     * Auto-initialize on course view pages
+     * Check if we're on a course page and if highlight parameter exists
+     */
     function autoInit() {
         // Only run on course view pages
         if (window.location.pathname.indexOf('/course/view.php') === -1) {
