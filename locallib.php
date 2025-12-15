@@ -454,7 +454,7 @@ function coursesearch_perform_search($query, $course, $filter = 'all') {
                             0,
                             $file->get_filepath(),
                             $filename
-                        ];
+                        );
 
                         $results[] = [
                             'type' => 'folder_file',
@@ -665,8 +665,8 @@ function coursesearch_perform_search($query, $course, $filter = 'all') {
                      JOIN {files} f ON f.contenthash = h.contenthash
                      WHERE f.contextid = ? AND f.component = 'mod_h5pactivity' AND f.filearea = 'package'
                      LIMIT 1",
-                    [$context->id)
-                ];
+                    [$context->id]
+                );
 
                 if ($h5p_content && !empty($h5p_content->jsoncontent)) {
                     $h5p_text = coursesearch_extract_h5p_text($h5p_content->jsoncontent);
@@ -712,12 +712,12 @@ function coursesearch_perform_search($query, $course, $filter = 'all') {
             } else if ($filter == 'sections' && $result['modname'] == 'section') {
                 $filtered_results[] = $result;
             } else if ($filter == 'activities') {
-                $activity_mods = ['assign', 'quiz', 'choice', 'feedback', 'lesson', 'workshop', 'data', 'glossary', 'wiki', 'forum');
+                $activity_mods = ['assign', 'quiz', 'choice', 'feedback', 'lesson', 'workshop', 'data', 'glossary', 'wiki', 'forum'];
                 if (in_array($result['modname'], $activity_mods)) {
                     $filtered_results[] = $result;
                 }
             } else if ($filter == 'resources') {
-                $resource_mods = ['book', 'file', 'folder', 'imscp', 'label', 'page', 'resource', 'url');
+                $resource_mods = ['book', 'file', 'folder', 'imscp', 'label', 'page', 'resource', 'url'];
                 if (in_array($result['modname'], $resource_mods)) {
                     $filtered_results[] = $result;
                 }
@@ -840,7 +840,7 @@ function coursesearch_generate_anchored_url($baseurl, $modname, $contenttype, $i
     // For label and other inline content, we need to link to the course page with an anchor
     if ($modname === 'label' || $contenttype === 'text_field') {
         // Create a URL to the course page with an anchor to the specific module
-        $url = new moodle_url('/course/view.php', ['id' => $courseid));
+        $url = new moodle_url('/course/view.php', ['id' => $courseid]);
 
         // Use the correct anchor format based on Moodle's DOM structure
         // The format is 'module-{cmid}' where cmid is the course module ID
@@ -1198,8 +1198,8 @@ function coursesearch_extract_h5p_text($json_content) {
         // Interactive Video specific
         'interactiveVideo', 'video', 'interactions',
         // Question Set specific
-        'questions', 'introPage', 'resultPage'
-    );
+        'questions', 'introPage', 'resultPage',
+    ];
 
     $extracted_text = [];
     coursesearch_extract_h5p_text_recursive($data, $text_fields, $extracted_text);
