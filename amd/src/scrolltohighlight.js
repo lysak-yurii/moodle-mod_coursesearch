@@ -215,7 +215,7 @@ define(['jquery'], function($) {
         }
 
         const textNodes = getVisibleTextNodes(element);
-        const searchLower = searchText.toLowerCase().trim();
+        const searchLower = searchText.toLowerCase();
         const normalizedSearch = searchLower.replace(/[\u00A0\s]+/g, ' ');
 
         // Build combined text from all nodes.
@@ -239,27 +239,9 @@ define(['jquery'], function($) {
                 }
             }
 
-            // If no exact match in single node, try to find ANY word from search in nodes.
-            // This handles text spanning multiple HTML elements (e.g., text split across <a> and <span>).
+            // If no exact match in single node, find the node that contains the START of the match.
             if (foundNodeIndex === -1) {
-                const words = normalizedSearch.split(/\s+/);
-                for (let i = 0; i < textNodes.length; i++) {
-                    const nodeTextLower = textNodes[i].textContent.toLowerCase();
-                    // Check if this node contains any of the search words (minimum 3 chars).
-                    for (let w = 0; w < words.length; w++) {
-                        if (words[w].length >= 3 && nodeTextLower.indexOf(words[w]) !== -1) {
-                            foundNodeIndex = i;
-                            break;
-                        }
-                    }
-                    if (foundNodeIndex !== -1) {
-                        break;
-                    }
-                }
-            }
-
-            // If still not found, try position-based matching.
-            if (foundNodeIndex === -1) {
+                const firstWord = normalizedSearch.split(' ')[0];
                 let charCount = 0;
                 const nodePositions = [];
                 for (let i = 0; i < textNodes.length; i++) {
@@ -274,11 +256,24 @@ define(['jquery'], function($) {
                     charCount += normalizedNode.length;
                 }
 
-                // Find which node contains position combinedIndex.
+                // Try to find a node containing the first word at the right position.
                 for (let i = 0; i < nodePositions.length; i++) {
-                    if (combinedIndex >= nodePositions[i].start && combinedIndex < nodePositions[i].end) {
-                        foundNodeIndex = i;
-                        break;
+                    const np = nodePositions[i];
+                    if (np.end > combinedIndex && np.start <= combinedIndex + normalizedSearch.length) {
+                        if (np.text.indexOf(firstWord) !== -1) {
+                            foundNodeIndex = i;
+                            break;
+                        }
+                    }
+                }
+
+                // Fallback: find which node contains position combinedIndex.
+                if (foundNodeIndex === -1) {
+                    for (let i = 0; i < nodePositions.length; i++) {
+                        if (combinedIndex >= nodePositions[i].start && combinedIndex < nodePositions[i].end) {
+                            foundNodeIndex = i;
+                            break;
+                        }
                     }
                 }
             }
@@ -369,59 +364,6 @@ define(['jquery'], function($) {
     }
 
     /**
-     * Attempt to highlight text with retry logic for dynamically loaded content
-     * @param {string} searchText The text to search for
-     * @param {number} retryCount Current retry count
-     */
-    function attemptHighlight(searchText, retryCount) {
-        const maxRetries = 10;
-        retryCount = retryCount || 0;
-
-        // Check if we have an anchor in the URL.
-        const hash = window.location.hash;
-        let found = false;
-
-        if (hash) {
-            // Extract module ID from hash (format: #module-123).
-            const match = hash.match(/^#module-(\d+)$/);
-            if (match) {
-                const moduleId = match[1];
-                const moduleElement = document.getElementById('module-' + moduleId);
-
-                if (moduleElement) {
-                    // Try to find and scroll to the text within this module.
-                    found = scrollToText(moduleElement, searchText);
-                    if (!found && retryCount >= maxRetries) {
-                        // If text not found after all retries, just scroll to the module.
-                        const elementTop = moduleElement.getBoundingClientRect().top + window.scrollY;
-                        window.scrollTo({top: elementTop - 100, behavior: 'smooth'});
-                        found = true; // Consider it found since we scrolled to module.
-                    }
-                } else if (retryCount < maxRetries) {
-                    // Module element not found yet, retry.
-                    setTimeout(function() {
-                        attemptHighlight(searchText, retryCount + 1);
-                    }, 300);
-                    return;
-                }
-            } else {
-                // No specific module anchor, search in the whole page.
-                found = scrollToText(document.body, searchText);
-            }
-        } else {
-            // No anchor, search in the whole page.
-            found = scrollToText(document.body, searchText);
-        }
-
-        // If not found and we haven't exceeded retries, try again.
-        if (!found && retryCount < maxRetries) {
-            setTimeout(function() {
-                attemptHighlight(searchText, retryCount + 1);
-            }, 300);
-        }
-    }
-
-    /**
      * Initialize scrolling to highlighted text
      */
     function init() {
@@ -462,8 +404,31 @@ define(['jquery'], function($) {
             setTimeout(function() {
                 // First, expand any accordion that contains the search text.
                 expandAccordionIfNeeded(searchText).then(function() {
-                    // Attempt to highlight with retry logic.
-                    attemptHighlight(searchText, 0);
+                    // Check if we have an anchor in the URL.
+                    const hash = window.location.hash;
+                    if (hash) {
+                        // Extract module ID from hash (format: #module-123).
+                        const match = hash.match(/^#module-(\d+)$/);
+                        if (match) {
+                            const moduleId = match[1];
+                            const moduleElement = document.getElementById('module-' + moduleId);
+
+                            if (moduleElement) {
+                                // Try to find and scroll to the text within this module.
+                                if (!scrollToText(moduleElement, searchText)) {
+                                    // If text not found, just scroll to the module.
+                                    const elementTop = moduleElement.getBoundingClientRect().top + window.scrollY;
+                                    window.scrollTo({top: elementTop - 100, behavior: 'smooth'});
+                                }
+                            }
+                        } else {
+                            // No specific module anchor, search in the whole page.
+                            scrollToText(document.body, searchText);
+                        }
+                    } else {
+                        // No anchor, search in the whole page.
+                        scrollToText(document.body, searchText);
+                    }
                 });
             }, 500);
         });
