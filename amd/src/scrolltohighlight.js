@@ -528,7 +528,7 @@ define(['jquery'], function($) {
             init();
         }
     }
-    
+
     // Auto-initialize if highlight parameter is present
     // This allows the script to run even if not explicitly called
     if (document.readyState === 'loading') {
