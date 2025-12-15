@@ -76,3 +76,6 @@ $string['nocourseinstances'] = 'Es gibt keine Kurssuche-Instanzen in diesem Kurs
 // Admin settings
 $string['enablehighlight'] = 'Scrollen und Hervorheben aktivieren';
 $string['enablehighlight_desc'] = 'Wenn aktiviert, wird beim Klicken auf Suchergebnisse automatisch zum gefundenen Text gescrollt und dieser auf der Kursseite hervorgehoben.';
+
+// Privacy
+$string['privacy:metadata'] = 'Das Kurssuche-Modul speichert keine persönlichen Benutzerdaten. Es speichert nur Aktivitätsinstanz-Konfigurationen wie Name, Beschreibung, Suchbereich und Anzeigeoptionen.';
