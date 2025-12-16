@@ -34,14 +34,14 @@ namespace mod_coursesearch\local;
 class hook_callbacks {
 
     /**
-     * Callback for the before_standard_footer_html hook.
+     * Callback for the before_footer_html_generation hook.
      *
      * Injects highlighting JavaScript on course pages where highlight parameter is present.
      *
-     * @param \core\hook\output\before_standard_footer_html $hook The hook instance.
+     * @param \core\hook\output\before_footer_html_generation $hook The hook instance.
      * @return void
      */
-    public static function before_standard_footer_html(\core\hook\output\before_standard_footer_html $hook): void {
+    public static function before_footer_html_generation(\core\hook\output\before_footer_html_generation $hook): void {
         global $PAGE;
 
         // Check if highlighting is enabled in admin settings.

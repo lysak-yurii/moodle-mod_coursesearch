@@ -26,8 +26,8 @@ defined('MOODLE_INTERNAL') || die();
 
 $callbacks = [
     [
-        'hook' => \core\hook\output\before_standard_footer_html::class,
-        'callback' => [\mod_coursesearch\local\hook_callbacks::class, 'before_standard_footer_html'],
+        'hook' => \core\hook\output\before_footer_html_generation::class,
+        'callback' => [\mod_coursesearch\local\hook_callbacks::class, 'before_footer_html_generation'],
     ],
 ];
 

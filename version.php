@@ -24,7 +24,7 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version   = 2025121500;       // The current module version (Date: YYYYMMDDXX).
+$plugin->version   = 2025121601;       // The current module version (Date: YYYYMMDDXX).
 $plugin->requires  = 2024042200;       // Requires this Moodle version (Moodle 4.4+).
 $plugin->component = 'mod_coursesearch'; // Full name of the plugin (used for diagnostics).
 $plugin->cron      = 0;
