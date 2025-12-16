@@ -45,9 +45,11 @@ function coursesearch_perform_search($query, $course, $filter = 'all') {
 
     $results = [];
 
+    // Fetch sections ONCE - will be reused in coursesearch_search_course_index() to avoid duplicate query.
+    $sections = $DB->get_records('course_sections', ['course' => $course->id], 'section', 'id, section, name, summary');
+
     // Search course sections - only if not specifically looking for other content types.
     if ($filter == 'all' || $filter == 'sections') {
-        $sections = $DB->get_records('course_sections', ['course' => $course->id], 'section', 'id, section, name, summary');
         foreach ($sections as $section) {
             // Search in section name - use case-insensitive comparison.
             $namematches = !empty($section->name) && stripos($section->name, $query) !== false;
@@ -102,6 +104,9 @@ function coursesearch_perform_search($query, $course, $filter = 'all') {
     // Search course modules based on the scope.
     $modinfo = get_fast_modinfo($course);
 
+    // Bulk fetch all module records to avoid N+1 queries when searching descriptions.
+    $moduledata = coursesearch_bulk_fetch_module_data($modinfo);
+
     foreach ($modinfo->get_cms() as $mod) {
         // Skip if the module is not visible or the user can't access it.
         if (!$mod->uservisible) {
@@ -152,19 +157,8 @@ function coursesearch_perform_search($query, $course, $filter = 'all') {
         // Search in the module description/intro if available (only if filter is 'all' or 'description').
         $description = '';
         if ($filter == 'all' || $filter == 'description') {
-            // Get the module description from the appropriate table based on module type.
-            $modulerecord = null;
-
-            // Try to get the module record with intro/description.
-            if (!empty($mod->modname)) {
-                // Validate module name to prevent SQL injection - must be alphanumeric with underscores only.
-                $modname = clean_param($mod->modname, PARAM_PLUGIN);
-                if (empty($modname) || $modname !== $mod->modname) {
-                    // Invalid module name, skip this module.
-                    continue;
-                }
-                $modulerecord = $DB->get_record($modname, ['id' => $mod->instance], '*', IGNORE_MISSING);
-            }
+            // Get the module description from pre-fetched data (bulk loaded to avoid N+1 queries).
+            $modulerecord = $moduledata[$mod->modname][$mod->instance] ?? null;
 
             // Most modules use 'intro' field for description.
             if ($modulerecord && isset($modulerecord->intro)) {
@@ -223,8 +217,9 @@ function coursesearch_perform_search($query, $course, $filter = 'all') {
     }
 
     // Search for titles in the course index (unless we're filtering by content or description only).
+    // Pass pre-fetched sections and modinfo to avoid duplicate queries.
     if ($filter != 'content' && $filter != 'description') {
-        $results = coursesearch_search_course_index($query, $course, $results);
+        $results = coursesearch_search_course_index($query, $course, $results, $sections, $modinfo);
     }
 
     // Apply additional filtering based on the selected filter.
@@ -270,6 +265,48 @@ function coursesearch_perform_search($query, $course, $filter = 'all') {
     }
 
     return $results;
+}
+
+/**
+ * Bulk fetch module records grouped by module type for efficient lookup
+ *
+ * This function collects all module instances by type and fetches them in bulk
+ * to avoid N+1 query problems when searching module descriptions.
+ *
+ * @param course_modinfo $modinfo The course module info object
+ * @return array Associative array indexed by modname then instance id
+ */
+function coursesearch_bulk_fetch_module_data($modinfo) {
+    global $DB;
+
+    $moduledata = [];
+    $modulesbytype = [];
+
+    // Group module instances by type.
+    foreach ($modinfo->get_cms() as $mod) {
+        if (!$mod->uservisible) {
+            continue;
+        }
+        // Validate module name to prevent SQL injection.
+        $modname = clean_param($mod->modname, PARAM_PLUGIN);
+        if (empty($modname) || $modname !== $mod->modname) {
+            continue;
+        }
+        $modulesbytype[$modname][] = $mod->instance;
+    }
+
+    // Bulk fetch each module type.
+    foreach ($modulesbytype as $modname => $instances) {
+        // Check if table exists to avoid errors with missing plugins.
+        $dbman = $DB->get_manager();
+        if (!$dbman->table_exists($modname)) {
+            continue;
+        }
+        // Fetch all records for this module type in one query.
+        $moduledata[$modname] = $DB->get_records_list($modname, 'id', $instances);
+    }
+
+    return $moduledata;
 }
 
 /**
@@ -491,6 +528,9 @@ function coursesearch_search_lesson($mod, $query) {
 /**
  * Search in forum discussions and posts
  *
+ * Optimized to use a single JOIN query instead of N+1 queries.
+ * Forum name is cached once instead of being fetched per post.
+ *
  * @param cm_info $mod The course module
  * @param string $query The search query
  * @param string $filter The filter type
@@ -506,23 +546,60 @@ function coursesearch_search_forum($mod, $query, $filter) {
     $searchforumcontent = ($filter == 'all' || $filter == 'content' || $filter == 'forums');
     $searchforumsubjects = ($filter == 'all' || $filter == 'title' || $filter == 'forums');
 
-    // Search in forum discussions and posts.
-    $discussions = $DB->get_records('forum_discussions', ['forum' => $mod->instance]);
+    // Cache forum name ONCE (was previously queried multiple times per post).
+    $forum = $DB->get_record('forum', ['id' => $mod->instance], 'id, name');
+    $forumname = $forum ? $forum->name : $mod->name;
+
+    // Single JOIN query to fetch all discussions and posts at once.
+    // This replaces multiple queries: one for discussions + N queries for posts.
+    $sql = "SELECT d.id as discussionid, d.name as discussionname,
+                   p.id as postid, p.parent, p.subject, p.message
+            FROM {forum_discussions} d
+            JOIN {forum_posts} p ON p.discussion = d.id
+            WHERE d.forum = :forumid
+            ORDER BY d.id, p.parent, p.id";
+    $rows = $DB->get_records_sql($sql, ['forumid' => $mod->instance]);
+
+    // Organize data into structures for efficient processing.
+    $discussions = [];
+    $postsbydiscussion = [];
+    $firstposts = [];
+
+    foreach ($rows as $row) {
+        // Build discussion object if not seen yet.
+        if (!isset($discussions[$row->discussionid])) {
+            $discussions[$row->discussionid] = (object)[
+                'id' => $row->discussionid,
+                'name' => $row->discussionname,
+            ];
+        }
+
+        // Build post object.
+        $post = (object)[
+            'id' => $row->postid,
+            'parent' => $row->parent,
+            'subject' => $row->subject,
+            'message' => $row->message,
+            'discussion' => $row->discussionid,
+        ];
+        $postsbydiscussion[$row->discussionid][$row->postid] = $post;
+
+        // Track first posts (parent = 0) for each discussion.
+        if ($row->parent == 0) {
+            $firstposts[$row->discussionid] = $post;
+        }
+    }
 
     // Keep track of processed posts to avoid duplicates.
     $processedposts = [];
 
-    foreach ($discussions as $discussion) {
+    // Process discussions and posts with O(1) lookups.
+    foreach ($discussions as $discussionid => $discussion) {
         // First check if the discussion subject/topic name matches the query.
         if ($searchforumtitles && coursesearch_mb_stripos($discussion->name, $query) !== false) {
-            // Get the first post of the discussion to create a proper URL.
-            $firstpost = $DB->get_record('forum_posts', ['discussion' => $discussion->id, 'parent' => 0]);
-            if ($firstpost) {
+            // Use pre-fetched first post.
+            if (isset($firstposts[$discussionid])) {
                 $discussionurl = new moodle_url('/mod/forum/discuss.php', ['d' => $discussion->id]);
-
-                // Get forum name.
-                $forum = $DB->get_record('forum', ['id' => $mod->instance], 'name');
-                $forumname = $forum ? $forum->name : $mod->name;
 
                 $results[] = [
                     'type' => 'forum_discussion',
@@ -536,7 +613,7 @@ function coursesearch_search_forum($mod, $query, $filter) {
                 ];
 
                 // Mark the first post as processed to avoid duplicate results.
-                $processedposts[$firstpost->id] = true;
+                $processedposts[$firstposts[$discussionid]->id] = true;
             }
         }
 
@@ -545,8 +622,8 @@ function coursesearch_search_forum($mod, $query, $filter) {
             continue;
         }
 
-        // Check posts in this discussion.
-        $posts = $DB->get_records('forum_posts', ['discussion' => $discussion->id]);
+        // Check posts in this discussion (using pre-fetched data).
+        $posts = $postsbydiscussion[$discussionid] ?? [];
         foreach ($posts as $post) {
             // Skip if we've already processed this post.
             if (isset($processedposts[$post->id])) {
@@ -560,10 +637,6 @@ function coursesearch_search_forum($mod, $query, $filter) {
             if ($searchforumsubjects && coursesearch_mb_stripos($post->subject, $query) !== false) {
                 $posturl = new moodle_url('/mod/forum/discuss.php', ['d' => $discussion->id, 'p' => $post->id]);
                 $posturl->set_anchor('p' . $post->id);
-
-                // Get forum name.
-                $forum = $DB->get_record('forum', ['id' => $mod->instance], 'name');
-                $forumname = $forum ? $forum->name : $mod->name;
 
                 $results[] = [
                     'type' => 'forum_post',
@@ -583,10 +656,6 @@ function coursesearch_search_forum($mod, $query, $filter) {
                 $snippet = coursesearch_extract_snippet($post->message, $query);
                 $posturl = new moodle_url('/mod/forum/discuss.php', ['d' => $discussion->id, 'p' => $post->id]);
                 $posturl->set_anchor('p' . $post->id);
-
-                // Get forum name.
-                $forum = $DB->get_record('forum', ['id' => $mod->instance], 'name');
-                $forumname = $forum ? $forum->name : $mod->name;
 
                 $results[] = [
                     'type' => 'forum_post',
@@ -651,6 +720,8 @@ function coursesearch_search_folder($mod, $query) {
 /**
  * Search in wiki pages
  *
+ * Optimized to use a single JOIN query instead of nested loops with separate queries.
+ *
  * @param cm_info $mod The course module
  * @param string $query The search query
  * @param string $filter The filter type
@@ -660,50 +731,49 @@ function coursesearch_search_wiki($mod, $query, $filter) {
     global $DB;
 
     $results = [];
-    $wiki = $DB->get_record('wiki', ['id' => $mod->instance], 'id, name, firstpagetitle');
 
-    if ($wiki) {
-        // Get all subwikis for this wiki.
-        $subwikis = $DB->get_records('wiki_subwikis', ['wikiid' => $wiki->id], 'id');
-        foreach ($subwikis as $subwiki) {
-            // Get all pages in this subwiki.
-            $wikipages = $DB->get_records('wiki_pages', ['subwikiid' => $subwiki->id], '', 'id, title, cachedcontent');
-            foreach ($wikipages as $wikipage) {
-                // First check if the page title matches.
-                if (($filter == 'all' || $filter == 'title') && coursesearch_mb_stripos($wikipage->title, $query) !== false) {
-                    $pageurl = new moodle_url('/mod/wiki/view.php', ['id' => $mod->id, 'pageid' => $wikipage->id]);
-                    $results[] = [
-                        'type' => 'wiki_page_title',
-                        'name' => $mod->name . ': ' . $wikipage->title,
-                        'url' => $pageurl,
-                        'modname' => $mod->modname,
-                        'icon' => $mod->get_icon_url(),
-                        'match' => 'title',
-                        'snippet' => $wikipage->title,
-                        'cmid' => $mod->id,
-                    ];
-                    continue;
-                }
+    // Single JOIN query replaces 2 nested loops (subwikis -> pages).
+    // This fetches all wiki pages across all subwikis in one query.
+    $sql = "SELECT wp.id, wp.title, wp.cachedcontent
+            FROM {wiki_subwikis} ws
+            JOIN {wiki_pages} wp ON wp.subwikiid = ws.id
+            WHERE ws.wikiid = :wikiid";
+    $wikipages = $DB->get_records_sql($sql, ['wikiid' => $mod->instance]);
 
-                // Then check if the page content matches.
-                $filterok = ($filter == 'all' || $filter == 'content');
-                $hascon = !empty($wikipage->cachedcontent);
-                $relevant = $hascon && coursesearch_is_relevant($wikipage->cachedcontent, $query);
-                if ($filterok && $relevant) {
-                    $snippet = coursesearch_extract_snippet($wikipage->cachedcontent, $query);
-                    $pageurl = new moodle_url('/mod/wiki/view.php', ['id' => $mod->id, 'pageid' => $wikipage->id]);
-                    $results[] = [
-                        'type' => 'wiki_page_content',
-                        'name' => $mod->name . ': ' . $wikipage->title,
-                        'url' => $pageurl,
-                        'modname' => $mod->modname,
-                        'icon' => $mod->get_icon_url(),
-                        'match' => 'content',
-                        'snippet' => $snippet,
-                        'cmid' => $mod->id,
-                    ];
-                }
-            }
+    foreach ($wikipages as $wikipage) {
+        // First check if the page title matches.
+        if (($filter == 'all' || $filter == 'title') && coursesearch_mb_stripos($wikipage->title, $query) !== false) {
+            $pageurl = new moodle_url('/mod/wiki/view.php', ['id' => $mod->id, 'pageid' => $wikipage->id]);
+            $results[] = [
+                'type' => 'wiki_page_title',
+                'name' => $mod->name . ': ' . $wikipage->title,
+                'url' => $pageurl,
+                'modname' => $mod->modname,
+                'icon' => $mod->get_icon_url(),
+                'match' => 'title',
+                'snippet' => $wikipage->title,
+                'cmid' => $mod->id,
+            ];
+            continue;
+        }
+
+        // Then check if the page content matches.
+        $filterok = ($filter == 'all' || $filter == 'content');
+        $hascon = !empty($wikipage->cachedcontent);
+        $relevant = $hascon && coursesearch_is_relevant($wikipage->cachedcontent, $query);
+        if ($filterok && $relevant) {
+            $snippet = coursesearch_extract_snippet($wikipage->cachedcontent, $query);
+            $pageurl = new moodle_url('/mod/wiki/view.php', ['id' => $mod->id, 'pageid' => $wikipage->id]);
+            $results[] = [
+                'type' => 'wiki_page_content',
+                'name' => $mod->name . ': ' . $wikipage->title,
+                'url' => $pageurl,
+                'modname' => $mod->modname,
+                'icon' => $mod->get_icon_url(),
+                'match' => 'content',
+                'snippet' => $snippet,
+                'cmid' => $mod->id,
+            ];
         }
     }
 
@@ -771,6 +841,9 @@ function coursesearch_search_glossary($mod, $query, $filter) {
 /**
  * Search in database entries
  *
+ * Optimized to use a single JOIN query instead of N+1 queries (one per record).
+ * Content is fetched in bulk and grouped by record ID for efficient processing.
+ *
  * @param cm_info $mod The course module
  * @param string $query The search query
  * @return array The search results
@@ -779,68 +852,75 @@ function coursesearch_search_database($mod, $query) {
     global $DB;
 
     $results = [];
-    $database = $DB->get_record('data', ['id' => $mod->instance], 'id, name');
 
-    if ($database) {
-        // Get all fields for this database.
-        $fields = $DB->get_records('data_fields', ['dataid' => $database->id], '', 'id, name, type');
+    // Get all fields for this database (for field name lookups).
+    $fields = $DB->get_records('data_fields', ['dataid' => $mod->instance], '', 'id, name, type');
 
-        // Get all records in this database.
-        $records = $DB->get_records('data_records', ['dataid' => $database->id], '', 'id');
+    // Single JOIN query to fetch all records with their content at once.
+    // This replaces N+1 queries (one per record for content).
+    $sql = "SELECT r.id as recordid,
+                   c.id as contentid, c.fieldid, c.content, c.content1, c.content2, c.content3, c.content4
+            FROM {data_records} r
+            JOIN {data_content} c ON c.recordid = r.id
+            WHERE r.dataid = :dataid
+            ORDER BY r.id, c.id";
+    $rows = $DB->get_records_sql($sql, ['dataid' => $mod->instance]);
 
-        foreach ($records as $record) {
-            // Get all content for this record.
-            $fields = 'id, fieldid, content, content1, content2, content3, content4';
-            $contents = $DB->get_records('data_content', ['recordid' => $record->id], '', $fields);
+    // Group content by record ID for efficient processing.
+    $contentbyrecord = [];
+    foreach ($rows as $row) {
+        $contentbyrecord[$row->recordid][] = $row;
+    }
 
-            $recordmatched = false;
-            $matchedcontent = '';
-            $matchedfieldname = '';
+    // Process each record with O(1) lookups.
+    foreach ($contentbyrecord as $recordid => $contents) {
+        $recordmatched = false;
+        $matchedcontent = '';
+        $matchedfieldname = '';
 
-            foreach ($contents as $content) {
-                // Skip if already matched this record.
-                if ($recordmatched) {
-                    break;
-                }
-
-                // Get field info.
-                $field = isset($fields[$content->fieldid]) ? $fields[$content->fieldid] : null;
-                $fieldname = $field ? $field->name : '';
-
-                // Search in main content.
-                if (!empty($content->content) && coursesearch_is_relevant($content->content, $query)) {
-                    $recordmatched = true;
-                    $matchedcontent = $content->content;
-                    $matchedfieldname = $fieldname;
-                } else if (!empty($content->content1) && coursesearch_is_relevant($content->content1, $query)) {
-                    // Also check content1-4 fields (used by some field types).
-                    $recordmatched = true;
-                    $matchedcontent = $content->content1;
-                    $matchedfieldname = $fieldname;
-                }
-            }
-
+        foreach ($contents as $content) {
+            // Skip if already matched this record.
             if ($recordmatched) {
-                $snippet = coursesearch_extract_snippet($matchedcontent, $query);
-                $recordurl = new moodle_url('/mod/data/view.php', ['d' => $database->id, 'rid' => $record->id]);
-
-                // Try to get a meaningful name for the record.
-                $recordname = $mod->name;
-                if (!empty($matchedfieldname)) {
-                    $recordname .= ' (' . $matchedfieldname . ')';
-                }
-
-                $results[] = [
-                    'type' => 'data_entry',
-                    'name' => $recordname,
-                    'url' => $recordurl,
-                    'modname' => $mod->modname,
-                    'icon' => $mod->get_icon_url(),
-                    'match' => 'content',
-                    'snippet' => $snippet,
-                    'cmid' => $mod->id,
-                ];
+                break;
             }
+
+            // Get field info from pre-fetched fields.
+            $field = isset($fields[$content->fieldid]) ? $fields[$content->fieldid] : null;
+            $fieldname = $field ? $field->name : '';
+
+            // Search in main content.
+            if (!empty($content->content) && coursesearch_is_relevant($content->content, $query)) {
+                $recordmatched = true;
+                $matchedcontent = $content->content;
+                $matchedfieldname = $fieldname;
+            } else if (!empty($content->content1) && coursesearch_is_relevant($content->content1, $query)) {
+                // Also check content1-4 fields (used by some field types).
+                $recordmatched = true;
+                $matchedcontent = $content->content1;
+                $matchedfieldname = $fieldname;
+            }
+        }
+
+        if ($recordmatched) {
+            $snippet = coursesearch_extract_snippet($matchedcontent, $query);
+            $recordurl = new moodle_url('/mod/data/view.php', ['d' => $mod->instance, 'rid' => $recordid]);
+
+            // Try to get a meaningful name for the record.
+            $recordname = $mod->name;
+            if (!empty($matchedfieldname)) {
+                $recordname .= ' (' . $matchedfieldname . ')';
+            }
+
+            $results[] = [
+                'type' => 'data_entry',
+                'name' => $recordname,
+                'url' => $recordurl,
+                'modname' => $mod->modname,
+                'icon' => $mod->get_icon_url(),
+                'match' => 'content',
+                'snippet' => $snippet,
+                'cmid' => $mod->id,
+            ];
         }
     }
 
@@ -931,20 +1011,28 @@ function coursesearch_search_h5pactivity($mod, $query) {
 /**
  * Search for titles in the course index and add them to the results
  *
+ * Optimized to accept pre-fetched sections and modinfo to avoid duplicate queries.
+ *
  * @param string $query The search query
  * @param object $course The course object
  * @param array $results The current search results array
+ * @param array|null $sections Pre-fetched sections (optional, will query if not provided)
+ * @param course_modinfo|null $modinfo Pre-fetched modinfo (optional, will query if not provided)
  * @return array The updated search results
  */
-function coursesearch_search_course_index($query, $course, $results) {
+function coursesearch_search_course_index($query, $course, $results, $sections = null, $modinfo = null) {
     global $DB;
 
-    // Get all course modules.
-    $modinfo = get_fast_modinfo($course);
+    // Use pre-fetched modinfo or fetch if not provided.
+    if ($modinfo === null) {
+        $modinfo = get_fast_modinfo($course);
+    }
     $cms = $modinfo->get_cms();
 
-    // Get all sections.
-    $sections = $DB->get_records('course_sections', ['course' => $course->id], 'section', 'id, section, name, summary');
+    // Use pre-fetched sections or fetch if not provided (fallback for backwards compatibility).
+    if ($sections === null) {
+        $sections = $DB->get_records('course_sections', ['course' => $course->id], 'section', 'id, section, name, summary');
+    }
 
     // Search in the course index (course structure).
     foreach ($cms as $cm) {
