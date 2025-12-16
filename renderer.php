@@ -22,10 +22,47 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+use mod_coursesearch\output\search_form;
+use mod_coursesearch\output\search_results;
+use mod_coursesearch\output\module_index;
+
 /**
  * Coursesearch module renderer class
  */
 class mod_coursesearch_renderer extends plugin_renderer_base {
+    /**
+     * Renders the search form
+     *
+     * @param search_form $searchform The search form renderable
+     * @return string HTML content
+     */
+    protected function render_search_form(search_form $searchform): string {
+        $data = $searchform->export_for_template($this);
+        return $this->render_from_template('mod_coursesearch/search_form', $data);
+    }
+
+    /**
+     * Renders the search results
+     *
+     * @param search_results $results The search results renderable
+     * @return string HTML content
+     */
+    protected function render_search_results(search_results $results): string {
+        $data = $results->export_for_template($this);
+        return $this->render_from_template('mod_coursesearch/search_results', $data);
+    }
+
+    /**
+     * Renders the module index page
+     *
+     * @param module_index $index The module index renderable
+     * @return string HTML content
+     */
+    protected function render_module_index(module_index $index): string {
+        $data = $index->export_for_template($this);
+        return $this->render_from_template('mod_coursesearch/module_index', $data);
+    }
+
     /**
      * Renders the search form for embedded display
      *
@@ -33,45 +70,25 @@ class mod_coursesearch_renderer extends plugin_renderer_base {
      * @param object $cm The course module
      * @return string HTML content
      */
-    public function render_embedded_search_form($coursesearch, $cm) {
-        $output = '';
-
-        // Get the placeholder text and escape it to prevent XSS.
+    public function render_embedded_search_form($coursesearch, $cm): string {
+        // Get the placeholder text.
         $defaultplaceholder = get_string('defaultplaceholder', 'coursesearch');
-        $placeholder = !empty($coursesearch->placeholder) ? s($coursesearch->placeholder) : $defaultplaceholder;
+        $placeholder = !empty($coursesearch->placeholder) ? $coursesearch->placeholder : $defaultplaceholder;
 
-        // Start the container.
-        $output .= html_writer::start_div('coursesearch-container coursesearch-embedded');
-
-        // Create the form.
+        // Create the form URL.
         $formurl = new moodle_url('/mod/coursesearch/view.php', ['id' => $cm->id]);
-        $output .= html_writer::start_tag('form', ['action' => $formurl, 'method' => 'get', 'class' => 'coursesearch-form']);
-        $output .= html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'id', 'value' => $cm->id]);
 
-        // Create the input group.
-        $output .= html_writer::start_div('input-group');
-        $output .= html_writer::empty_tag('input', [
-            'type' => 'text',
-            'name' => 'query',
-            'value' => '',
-            'class' => 'form-control',
-            'placeholder' => $placeholder,
-            'aria-label' => get_string('search', 'coursesearch'),
-        ]);
+        // Create the search form renderable with embedded flag set to true.
+        $searchform = new search_form(
+            $formurl,
+            $cm->id,
+            $placeholder,
+            '', // No query for embedded form.
+            'all', // Default filter.
+            true, // Embedded = true.
+            [] // No filters for embedded form.
+        );
 
-        // Add the search button.
-        $output .= html_writer::start_div('input-group-append');
-        $output .= html_writer::tag('button', get_string('search', 'coursesearch'), [
-            'type' => 'submit',
-            'class' => 'btn btn-primary',
-            'aria-label' => get_string('search', 'coursesearch'),
-        ]);
-        $output .= html_writer::end_div();
-
-        $output .= html_writer::end_div();
-        $output .= html_writer::end_tag('form');
-        $output .= html_writer::end_div();
-
-        return $output;
+        return $this->render($searchform);
     }
 }

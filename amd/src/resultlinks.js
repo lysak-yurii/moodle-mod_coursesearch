@@ -60,11 +60,9 @@ define([], function() {
                         try {
                             const safeHighlight = JSON.stringify(highlight);
                             sessionStorage.setItem('coursesearch_highlight', safeHighlight);
-                            if (moduleId) {
-                                // Validate moduleId is numeric only to prevent XSS.
-                                if (/^\d+$/.test(moduleId)) {
-                                    sessionStorage.setItem('coursesearch_moduleId', moduleId);
-                                }
+                            // Validate moduleId is numeric only to prevent XSS.
+                            if (moduleId && /^\d+$/.test(moduleId)) {
+                                sessionStorage.setItem('coursesearch_moduleId', moduleId);
                             }
                             sessionStorage.setItem('coursesearch_timestamp', Date.now().toString());
                             sessionStorage.setItem('coursesearch_shouldScroll', 'true');
