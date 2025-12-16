@@ -32,6 +32,7 @@ namespace mod_coursesearch\local;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class hook_callbacks {
+
     /**
      * Callback for the before_footer_html_generation hook.
      *
@@ -61,3 +62,4 @@ class hook_callbacks {
         }
     }
 }
+

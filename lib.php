@@ -283,3 +283,4 @@ function coursesearch_cm_info_dynamic(cm_info $cm) {
     // Hide the view link since the content is already embedded.
     $cm->set_no_view_link();
 }
+

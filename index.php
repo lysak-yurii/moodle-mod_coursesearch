@@ -24,8 +24,6 @@
 
 require_once('../../config.php');
 
-use mod_coursesearch\output\module_index;
-
 $id = required_param('id', PARAM_INT); // Course ID.
 
 $course = $DB->get_record('course', ['id' => $id], '*', MUST_EXIST);
@@ -49,14 +47,27 @@ echo $OUTPUT->header();
 $modulenameplural = get_string('modulenameplural', 'coursesearch');
 echo $OUTPUT->heading($modulenameplural);
 
-$coursesearches = get_all_instances_in_course('coursesearch', $course);
-
-if (!$coursesearches) {
+if (!$coursesearches = get_all_instances_in_course('coursesearch', $course)) {
     notice(get_string('nocourseinstances', 'coursesearch'), new moodle_url('/course/view.php', ['id' => $course->id]));
 }
 
-// Create and render the module index.
-$index = new module_index($coursesearches);
-echo $OUTPUT->render($index);
+$table = new html_table();
+$table->attributes['class'] = 'generaltable mod_index';
 
+$table->head  = [get_string('name'), get_string('description')];
+$table->align = ['left', 'left'];
+
+foreach ($coursesearches as $coursesearch) {
+    $context = context_module::instance($coursesearch->coursemodule);
+    $link = html_writer::link(
+        new moodle_url('/mod/coursesearch/view.php', ['id' => $coursesearch->coursemodule]),
+        format_string($coursesearch->name, true, ['context' => $context])
+    );
+
+    $description = format_module_intro('coursesearch', $coursesearch, $coursesearch->coursemodule);
+
+    $table->data[] = [$link, $description];
+}
+
+echo html_writer::table($table);
 echo $OUTPUT->footer();
