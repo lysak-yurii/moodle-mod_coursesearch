@@ -30,7 +30,6 @@ use mod_coursesearch\output\module_index;
  * Coursesearch module renderer class
  */
 class mod_coursesearch_renderer extends plugin_renderer_base {
-
     /**
      * Renders the search form
      *

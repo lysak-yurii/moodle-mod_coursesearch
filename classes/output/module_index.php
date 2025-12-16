@@ -30,7 +30,6 @@ use context_module;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class module_index implements renderable, templatable {
-
     /** @var array Array of coursesearch instances */
     protected $instances;
 
@@ -69,4 +68,3 @@ class module_index implements renderable, templatable {
         ];
     }
 }
-

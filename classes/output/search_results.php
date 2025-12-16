@@ -28,7 +28,6 @@ use renderer_base;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class search_results implements renderable, templatable {
-
     /** @var string The search query */
     protected $query;
 
@@ -82,4 +81,3 @@ class search_results implements renderable, templatable {
         ];
     }
 }
-

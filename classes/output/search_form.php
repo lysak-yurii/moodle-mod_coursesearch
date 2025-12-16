@@ -29,7 +29,6 @@ use moodle_url;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class search_form implements renderable, templatable {
-
     /** @var moodle_url The form action URL */
     protected $formurl;
 
@@ -117,4 +116,3 @@ class search_form implements renderable, templatable {
         ];
     }
 }
-
