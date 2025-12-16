@@ -1,0 +1,91 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template mod_coursesearch/search_form
+
+    Course search form template.
+
+    Context variables required for this template:
+    * formurl - The form action URL
+    * cmid - The course module ID
+    * placeholder - The placeholder text for the search input
+    * query - The current search query (optional)
+    * embedded - Whether the form is embedded in the course page
+    * hasfilters - Whether there are filter options
+    * filters - Array of filter options with: value, label, id, checked
+
+    Example context (json):
+    {
+        "formurl": "/mod/coursesearch/view.php?id=123",
+        "cmid": 123,
+        "placeholder": "Search this course...",
+        "query": "",
+        "embedded": false,
+        "hasfilters": true,
+        "filters": [
+            {"value": "all", "label": "All course content", "id": "filter_all", "checked": true},
+            {"value": "forums", "label": "Forums only", "id": "filter_forums", "checked": false}
+        ],
+        "hasintro": true,
+        "intro": "<p>Search through this course content.</p>"
+    }
+}}
+{{#hasintro}}
+<div class="box generalbox py-3" id="intro">
+    {{{intro}}}
+</div>
+{{/hasintro}}
+
+<div class="coursesearch-container{{#embedded}} coursesearch-embedded{{/embedded}}">
+    <form action="{{formurl}}" method="get" class="coursesearch-form">
+        <input type="hidden" name="id" value="{{cmid}}">
+
+        {{#hasfilters}}
+        {{^embedded}}
+        <div class="coursesearch-filters mb-3">
+            <label class="mr-2">{{#str}} searchscope, mod_coursesearch {{/str}}:</label>
+            {{#filters}}
+            <span class="mr-3">
+                <input type="radio"
+                       name="filter"
+                       id="{{id}}"
+                       value="{{value}}"
+                       class="mr-1"
+                       {{#checked}}checked="checked"{{/checked}}>
+                <label for="{{id}}" class="mr-2">{{label}}</label>
+            </span>
+            {{/filters}}
+        </div>
+        {{/embedded}}
+        {{/hasfilters}}
+
+        <div class="input-group">
+            <input type="text"
+                   name="query"
+                   value="{{query}}"
+                   class="form-control"
+                   placeholder="{{placeholder}}"
+                   aria-label="{{#str}} search, mod_coursesearch {{/str}}">
+            <div class="input-group-append">
+                <button type="submit" class="btn btn-primary" aria-label="{{#str}} search, mod_coursesearch {{/str}}">
+                    {{#str}} search, mod_coursesearch {{/str}}
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+

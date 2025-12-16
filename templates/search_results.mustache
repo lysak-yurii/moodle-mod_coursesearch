@@ -1,0 +1,65 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template mod_coursesearch/search_results
+
+    Search results container template.
+
+    Context variables required for this template:
+    * query - The search query (escaped)
+    * hasresults - Whether there are any results
+    * noresults - Whether there are no results
+    * results - Array of result items
+    * count - Number of results
+    * resultscount - Formatted results count string
+    * noresultsmessage - Message to show when no results
+    * heading - The heading text
+
+    Example context (json):
+    {
+        "query": "introduction",
+        "hasresults": true,
+        "noresults": false,
+        "results": [],
+        "count": 5,
+        "resultscount": "5 results found for \"introduction\"",
+        "noresultsmessage": "",
+        "heading": "Search results for \"introduction\""
+    }
+}}
+<div class="coursesearch-results-container">
+    <h3 class="coursesearch-results-heading">{{{heading}}}</h3>
+
+    {{#noresults}}
+    <div class="coursesearch-no-results alert alert-info">
+        {{{noresultsmessage}}}
+    </div>
+    {{/noresults}}
+
+    {{#hasresults}}
+    <div class="coursesearch-results-count">
+        {{{resultscount}}}
+    </div>
+
+    <div class="coursesearch-results">
+        {{#results}}
+        {{> mod_coursesearch/search_result }}
+        {{/results}}
+    </div>
+    {{/hasresults}}
+</div>
+
