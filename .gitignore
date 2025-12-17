@@ -31,6 +31,9 @@ yarn.lock
 *.log
 *.cache
 
+# Windows "Mark of the Web" artifacts
+*Zone.Identifier*
+
 # Moodle specific
 config.php
 *.local
