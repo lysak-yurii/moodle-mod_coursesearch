@@ -49,8 +49,26 @@ class hook_callbacks {
             return;
         }
 
-        // Only run on course view pages.
-        if (strpos($PAGE->pagetype, 'course-view') !== 0) {
+        // Run on course view pages and supported module pages.
+        // Note: H5P (hvp, h5pactivity) is NOT supported - content is rendered in iframe.
+        $supportedpagetypes = [
+            'course-view',
+            'mod-page-view',
+            'mod-book-view',
+            'mod-lesson-view',
+            'mod-wiki-view',
+            'mod-forum-discuss',
+            'mod-glossary-showentry',
+            'mod-data-view',
+        ];
+        $issupported = false;
+        foreach ($supportedpagetypes as $type) {
+            if (strpos($PAGE->pagetype, $type) === 0) {
+                $issupported = true;
+                break;
+            }
+        }
+        if (!$issupported) {
             return;
         }
 

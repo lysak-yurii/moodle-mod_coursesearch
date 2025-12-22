@@ -13,7 +13,7 @@ A comprehensive Moodle activity module that enables teachers to add a search bar
 - **Automatic Scrolling**: Automatically scrolls to matched content when clicking search results
 - **Visual Highlighting**: Highlights search terms with a yellow background for 3 seconds
 - **Smart Fallback**: If direct text highlighting fails (e.g., text inside links), highlights the parent element
-- **Works on Course Pages**: Highlighting works for labels, pages, sections, and other content displayed on the course page
+- **Wide Activity Support**: Highlighting works on Pages, Books, Lessons, Wiki, Forums, Glossary, Database, and Labels
 - **Accordion Support**: Automatically expands Bootstrap accordions/collapsible sections to reveal and highlight text inside
 
 ### Admin Settings
@@ -46,16 +46,19 @@ The search covers the following content types:
 - Descriptions and introductions
 
 ### Activities & Resources
-- **Pages** (mod_page) - title and content
-- **Books** (mod_book) - chapter titles and content
-- **Labels** (mod_label) - content
-- **Forums** (mod_forum) - discussions and posts
-- **Wiki** (mod_wiki) - page titles and content
-- **Lessons** (mod_lesson) - page titles and content
-- **Glossary** (mod_glossary) - terms and definitions
-- **Database** (mod_data) - field content
-- **H5P Interactive Content** (mod_hvp) - text content from all H5P types (Accordion, Course Presentation, Quiz, etc.)
-- **Folders** (mod_folder) - file names
+
+| Activity | Searchable Content | Highlighting |
+|----------|-------------------|--------------|
+| **Pages** (mod_page) | Title and content | Yes |
+| **Books** (mod_book) | Chapter titles and content | Yes |
+| **Labels** (mod_label) | Content | Yes |
+| **Forums** (mod_forum) | Discussions and posts | Yes |
+| **Wiki** (mod_wiki) | Page titles and content | Yes |
+| **Lessons** (mod_lesson) | Page titles and content | Yes |
+| **Glossary** (mod_glossary) | Terms and definitions | Yes |
+| **Database** (mod_data) | Field content | Yes |
+| **H5P** (mod_hvp, mod_h5pactivity) | Text from all H5P types | No |
+| **Folders** (mod_folder) | File names | No |
 
 ## Requirements
 
@@ -111,14 +114,24 @@ The search covers the following content types:
 4. Click **"Search"**
 5. Click on any result to navigate to the content
 
-### Highlighting (Course Page Content)
+### Highlighting
 
-When clicking on search results that link to course page content (labels, pages, sections):
-- The page automatically scrolls to the matched text
-- The text is highlighted with a yellow background for 3 seconds
-- Bootstrap accordions/collapsible sections are automatically expanded if the text is inside
+When clicking on search results, the plugin automatically:
+- Scrolls to the matched text
+- Highlights the text with a yellow background for 3 seconds
+- Expands Bootstrap accordions/collapsible sections if needed
 
-**Note**: Highlighting only works on course pages. Results linking to external pages (Book chapters, Wiki pages, Glossary entries, Database records, H5P activities) will navigate directly to the content without highlighting.
+**Highlighting works on:**
+- Course page (Labels, Sections)
+- Pages, Books, Lessons
+- Wiki pages
+- Forum discussions and posts
+- Glossary entries
+- Database records
+
+**Highlighting does NOT work on:**
+- H5P activities (content is rendered in an iframe)
+- Folder files (links to file downloads)
 
 ## Performance
 
@@ -133,7 +146,8 @@ When clicking on search results that link to course page content (labels, pages,
 - Clear browser cache (Ctrl+Shift+Delete)
 - Purge Moodle caches: **Site administration -> Development -> Purge all caches**
 - Ensure JavaScript is enabled
-- Note: Highlighting only works on course pages, not on Book/Wiki/Glossary/etc. pages
+- Check if highlighting is enabled in admin settings
+- Note: Highlighting does NOT work on H5P activities (iframe limitation) or Folder files (file downloads)
 
 ### No search results
 - Verify content is visible to the user
@@ -142,7 +156,7 @@ When clicking on search results that link to course page content (labels, pages,
 
 ## Version
 
-Current version: **1.0.0** (Stable)
+Current version: **1.1.0** (Stable)
 
 ## License
 
@@ -151,7 +165,10 @@ This plugin is licensed under the GNU GPL v3 or later.
 ## Credits
 
 Original plugin: Yurii Lysak (2025)
-Enhancements: HNEE (Hochschule für nachhaltige Entwicklung Eberswalde) - December 2025
+
+Enhancements (December 2025):
+- Extended highlighting support to Pages, Books, Lessons, Wiki, Forums, Glossary, and Database activities
+- HNEE (Hochschule für nachhaltige Entwicklung Eberswalde)
 
 ## Support
 

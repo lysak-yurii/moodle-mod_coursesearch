@@ -387,14 +387,19 @@ function coursesearch_search_page($mod, $query) {
 
     if ($page && coursesearch_is_relevant($page->content, $query)) {
         $snippet = coursesearch_extract_snippet($page->content, $query);
+        $pageurl = new moodle_url('/mod/page/view.php', ['id' => $mod->id]);
+        if (!empty($query)) {
+            $pageurl->param('highlight', $query);
+        }
         $results[] = [
             'type' => 'page_content',
             'name' => $mod->name,
-            'url' => $mod->url,
+            'url' => $pageurl,
             'modname' => $mod->modname,
             'icon' => $mod->get_icon_url(),
             'match' => 'content',
             'snippet' => $snippet,
+            'cmid' => $mod->id,
         ];
     }
 
@@ -419,6 +424,9 @@ function coursesearch_search_book($mod, $query, $filter) {
         // First check if the chapter title matches the query.
         if (($filter == 'all' || $filter == 'title') && coursesearch_mb_stripos($chapter->title, $query) !== false) {
             $chapterurl = new moodle_url('/mod/book/view.php', ['id' => $mod->id, 'chapterid' => $chapter->id]);
+            if (!empty($query)) {
+                $chapterurl->param('highlight', $query);
+            }
             $results[] = [
                 'type' => 'book_title',
                 'name' => $mod->name . ': ' . $chapter->title,
@@ -436,6 +444,9 @@ function coursesearch_search_book($mod, $query, $filter) {
         if (($filter == 'all' || $filter == 'content') && coursesearch_is_relevant($chapter->content, $query)) {
             $snippet = coursesearch_extract_snippet($chapter->content, $query);
             $chapterurl = new moodle_url('/mod/book/view.php', ['id' => $mod->id, 'chapterid' => $chapter->id]);
+            if (!empty($query)) {
+                $chapterurl->param('highlight', $query);
+            }
             $results[] = [
                 'type' => 'book_content',
                 'name' => $mod->name . ': ' . $chapter->title,
@@ -510,6 +521,9 @@ function coursesearch_search_lesson($mod, $query) {
         if (coursesearch_is_relevant($page->contents, $query)) {
             $snippet = coursesearch_extract_snippet($page->contents, $query);
             $pageurl = new moodle_url('/mod/lesson/view.php', ['id' => $mod->id, 'pageid' => $page->id]);
+            if (!empty($query)) {
+                $pageurl->param('highlight', $query);
+            }
             $results[] = [
                 'type' => 'lesson_content',
                 'name' => $mod->name . ': ' . $page->title,
@@ -518,6 +532,7 @@ function coursesearch_search_lesson($mod, $query) {
                 'icon' => $mod->get_icon_url(),
                 'match' => 'content',
                 'snippet' => $snippet,
+                'cmid' => $mod->id,
             ];
         }
     }
@@ -600,6 +615,9 @@ function coursesearch_search_forum($mod, $query, $filter) {
             // Use pre-fetched first post.
             if (isset($firstposts[$discussionid])) {
                 $discussionurl = new moodle_url('/mod/forum/discuss.php', ['d' => $discussion->id]);
+                if (!empty($query)) {
+                    $discussionurl->param('highlight', $query);
+                }
 
                 $results[] = [
                     'type' => 'forum_discussion',
@@ -610,6 +628,7 @@ function coursesearch_search_forum($mod, $query, $filter) {
                     'match' => 'title',
                     'snippet' => $discussion->name,
                     'forum_name' => $forumname,
+                    'cmid' => $mod->id,
                 ];
 
                 // Mark the first post as processed to avoid duplicate results.
@@ -636,6 +655,9 @@ function coursesearch_search_forum($mod, $query, $filter) {
             // Check post subject (for replies).
             if ($searchforumsubjects && coursesearch_mb_stripos($post->subject, $query) !== false) {
                 $posturl = new moodle_url('/mod/forum/discuss.php', ['d' => $discussion->id, 'p' => $post->id]);
+                if (!empty($query)) {
+                    $posturl->param('highlight', $query);
+                }
                 $posturl->set_anchor('p' . $post->id);
 
                 $results[] = [
@@ -647,6 +669,7 @@ function coursesearch_search_forum($mod, $query, $filter) {
                     'match' => 'title',
                     'snippet' => $post->subject,
                     'forum_name' => $forumname,
+                    'cmid' => $mod->id,
                 ];
                 continue;
             }
@@ -655,6 +678,9 @@ function coursesearch_search_forum($mod, $query, $filter) {
             if ($searchforumcontent && coursesearch_is_relevant($post->message, $query)) {
                 $snippet = coursesearch_extract_snippet($post->message, $query);
                 $posturl = new moodle_url('/mod/forum/discuss.php', ['d' => $discussion->id, 'p' => $post->id]);
+                if (!empty($query)) {
+                    $posturl->param('highlight', $query);
+                }
                 $posturl->set_anchor('p' . $post->id);
 
                 $results[] = [
@@ -666,6 +692,7 @@ function coursesearch_search_forum($mod, $query, $filter) {
                     'match' => 'content',
                     'snippet' => $snippet,
                     'forum_name' => $forumname,
+                    'cmid' => $mod->id,
                 ];
             }
         }
@@ -744,6 +771,9 @@ function coursesearch_search_wiki($mod, $query, $filter) {
         // First check if the page title matches.
         if (($filter == 'all' || $filter == 'title') && coursesearch_mb_stripos($wikipage->title, $query) !== false) {
             $pageurl = new moodle_url('/mod/wiki/view.php', ['id' => $mod->id, 'pageid' => $wikipage->id]);
+            if (!empty($query)) {
+                $pageurl->param('highlight', $query);
+            }
             $results[] = [
                 'type' => 'wiki_page_title',
                 'name' => $mod->name . ': ' . $wikipage->title,
@@ -764,6 +794,9 @@ function coursesearch_search_wiki($mod, $query, $filter) {
         if ($filterok && $relevant) {
             $snippet = coursesearch_extract_snippet($wikipage->cachedcontent, $query);
             $pageurl = new moodle_url('/mod/wiki/view.php', ['id' => $mod->id, 'pageid' => $wikipage->id]);
+            if (!empty($query)) {
+                $pageurl->param('highlight', $query);
+            }
             $results[] = [
                 'type' => 'wiki_page_content',
                 'name' => $mod->name . ': ' . $wikipage->title,
@@ -801,6 +834,9 @@ function coursesearch_search_glossary($mod, $query, $filter) {
             // First check if the entry concept (term) matches.
             if (($filter == 'all' || $filter == 'title') && coursesearch_mb_stripos($entry->concept, $query) !== false) {
                 $entryurl = new moodle_url('/mod/glossary/showentry.php', ['eid' => $entry->id, 'displayformat' => 'dictionary']);
+                if (!empty($query)) {
+                    $entryurl->param('highlight', $query);
+                }
                 $results[] = [
                     'type' => 'glossary_entry_title',
                     'name' => $mod->name . ': ' . $entry->concept,
@@ -821,6 +857,9 @@ function coursesearch_search_glossary($mod, $query, $filter) {
             if ($filterok && $relevant) {
                 $snippet = coursesearch_extract_snippet($entry->definition, $query);
                 $entryurl = new moodle_url('/mod/glossary/showentry.php', ['eid' => $entry->id, 'displayformat' => 'dictionary']);
+                if (!empty($query)) {
+                    $entryurl->param('highlight', $query);
+                }
                 $results[] = [
                     'type' => 'glossary_entry_content',
                     'name' => $mod->name . ': ' . $entry->concept,
@@ -904,6 +943,9 @@ function coursesearch_search_database($mod, $query) {
         if ($recordmatched) {
             $snippet = coursesearch_extract_snippet($matchedcontent, $query);
             $recordurl = new moodle_url('/mod/data/view.php', ['d' => $mod->instance, 'rid' => $recordid]);
+            if (!empty($query)) {
+                $recordurl->param('highlight', $query);
+            }
 
             // Try to get a meaningful name for the record.
             $recordname = $mod->name;
@@ -946,6 +988,7 @@ function coursesearch_search_hvp($mod, $query) {
 
         if (!empty($h5ptext) && coursesearch_is_relevant($h5ptext, $query)) {
             $snippet = coursesearch_extract_snippet($h5ptext, $query);
+            // Note: H5P content is rendered in iframe, highlighting not possible.
             $hvpurl = new moodle_url('/mod/hvp/view.php', ['id' => $mod->id]);
 
             $results[] = [
@@ -990,6 +1033,7 @@ function coursesearch_search_h5pactivity($mod, $query) {
 
         if (!empty($h5ptext) && coursesearch_is_relevant($h5ptext, $query)) {
             $snippet = coursesearch_extract_snippet($h5ptext, $query);
+            // Note: H5P content is rendered in iframe, highlighting not possible.
             $h5purl = new moodle_url('/mod/h5pactivity/view.php', ['id' => $mod->id]);
 
             $results[] = [

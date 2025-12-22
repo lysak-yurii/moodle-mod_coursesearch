@@ -475,12 +475,27 @@ define(['jquery'], function($) {
     }
 
     /**
-     * Auto-initialize on course view pages
-     * Check if we're on a course page and if highlight parameter exists
+     * Auto-initialize on course view pages and module pages
+     * Check if we're on a supported page and if highlight parameter exists
      */
     function autoInit() {
-        // Only run on course view pages.
-        if (window.location.pathname.indexOf('/course/view.php') === -1) {
+        // Run on course view pages and specific module pages.
+        const pathname = window.location.pathname;
+        // Note: H5P (hvp, h5pactivity) is NOT supported - content is rendered in iframe.
+        const supportedPaths = [
+            '/course/view.php',
+            '/mod/page/view.php',
+            '/mod/book/view.php',
+            '/mod/lesson/view.php',
+            '/mod/wiki/view.php',
+            '/mod/forum/discuss.php',
+            '/mod/glossary/showentry.php',
+            '/mod/data/view.php'
+        ];
+        const isSupported = supportedPaths.some(function(path) {
+            return pathname.indexOf(path) !== -1;
+        });
+        if (!isSupported) {
             return;
         }
 
