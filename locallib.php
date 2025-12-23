@@ -23,6 +23,88 @@
  */
 
 /**
+ * Get parent section info for a subsection.
+ *
+ * In Moodle 4.x, subsections are stored as regular sections with component='mod_subsection'.
+ * The parent relationship is:
+ * - Subsection (course_sections) has itemid pointing to mdl_subsection.id
+ * - Subsection module (course_modules) has instance = mdl_subsection.id
+ * - Subsection module's section field points to parent section's row ID
+ *
+ * @param object $section The section record (must have component, itemid fields)
+ * @param int $courseid The course ID
+ * @param array $allsections All sections in the course, indexed by section row ID
+ * @return array|null Array with parent section info or null if not a subsection
+ */
+function coursesearch_get_parent_section_info($section, $courseid, $allsections) {
+    global $DB;
+
+    // Check if this is a subsection (component = 'mod_subsection').
+    if (empty($section->component) || $section->component !== 'mod_subsection') {
+        return null; // Not a subsection.
+    }
+
+    // Find the subsection module that links to this section.
+    // The subsection module's instance = section's itemid.
+    $subsectionmodule = $DB->get_record_sql(
+        "SELECT cm.id, cm.section as parent_section_id
+         FROM {course_modules} cm
+         JOIN {modules} m ON m.id = cm.module
+         WHERE cm.course = :courseid
+           AND m.name = 'subsection'
+           AND cm.instance = :itemid",
+        ['courseid' => $courseid, 'itemid' => $section->itemid]
+    );
+
+    if (!$subsectionmodule) {
+        return null; // Could not find parent relationship.
+    }
+
+    // Find the parent section by its row ID.
+    $parentsectionid = $subsectionmodule->parent_section_id;
+    foreach ($allsections as $s) {
+        if ($s->id == $parentsectionid) {
+            return [
+                'parent_section_number' => $s->section,
+                'parent_section_name' => !empty($s->name) ? $s->name : get_string('section') . ' ' . $s->section,
+                'parent_section_id' => $s->id,
+            ];
+        }
+    }
+
+    return null;
+}
+
+/**
+ * Get section info (number and name) for a course module
+ *
+ * @param cm_info $mod The course module
+ * @param array $sections Pre-fetched sections indexed by section number
+ * @return array Array with 'section_number' and 'section_name' keys
+ */
+function coursesearch_get_section_info($mod, $sections) {
+    $sectionnum = isset($mod->sectionnum) ? $mod->sectionnum : (isset($mod->section) ? $mod->section : 0);
+
+    // Find section name from pre-fetched sections.
+    $sectionname = '';
+    foreach ($sections as $section) {
+        if ($section->section == $sectionnum) {
+            $sectionname = !empty($section->name) ? $section->name : get_string('section') . ' ' . $section->section;
+            break;
+        }
+    }
+
+    if (empty($sectionname)) {
+        $sectionname = get_string('section') . ' ' . $sectionnum;
+    }
+
+    return [
+        'section_number' => $sectionnum,
+        'section_name' => $sectionname,
+    ];
+}
+
+/**
  * Perform a course search based on the given query and filter
  *
  * @param string $query The search query
@@ -46,11 +128,21 @@ function coursesearch_perform_search($query, $course, $filter = 'all') {
     $results = [];
 
     // Fetch sections ONCE - will be reused in coursesearch_search_course_index() to avoid duplicate query.
-    $sections = $DB->get_records('course_sections', ['course' => $course->id], 'section', 'id, section, name, summary');
+    // Include component and itemid to detect subsections and find their parent sections.
+    $sections = $DB->get_records(
+        'course_sections',
+        ['course' => $course->id],
+        'section',
+        'id, section, name, summary, component, itemid'
+    );
 
     // Search course sections - only if not specifically looking for other content types.
     if ($filter == 'all' || $filter == 'sections') {
         foreach ($sections as $section) {
+            // Check if this section is a subsection and get its parent info.
+            $parentinfo = coursesearch_get_parent_section_info($section, $course->id, $sections);
+            $issubsection = ($parentinfo !== null);
+
             // Search in section name - use case-insensitive comparison.
             $namematches = !empty($section->name) && stripos($section->name, $query) !== false;
             $nummatches = stripos(get_string('section') . ' ' . $section->section, $query) !== false;
@@ -58,45 +150,92 @@ function coursesearch_perform_search($query, $course, $filter = 'all') {
                 // Create a direct URL to this section with explicit section parameter.
                 $sectionurl = new moodle_url('/course/view.php', ['id' => $course->id, 'section' => $section->section]);
 
-                $results[] = [
+                $result = [
                     'type' => 'section_name',
-                    'name' => get_string('section') . ': ' . $section->name,
+                    'name' => ($issubsection ? '' : get_string('section') . ': ') . $section->name,
                     'url' => $sectionurl,
-                    'modname' => 'section',
+                    'modname' => $issubsection ? 'subsection' : 'section',
                     'icon' => new moodle_url('/pix/i/section.png'),
                     'match' => 'title',
                     'snippet' => coursesearch_extract_snippet($section->name, $query),
                     'section_number' => $section->section,
+                    'section_name' => $section->name,
+                    'is_subsection' => $issubsection,
                 ];
+
+                // Add parent section info for subsections.
+                if ($issubsection) {
+                    $result['parent_section_number'] = $parentinfo['parent_section_number'];
+                    $result['parent_section_name'] = $parentinfo['parent_section_name'];
+                }
+
+                $results[] = $result;
             }
 
             // Search in section summary - use case-insensitive comparison with relevance check.
             if (!empty($section->summary) && coursesearch_is_relevant($section->summary, $query)) {
                 $sectionurl = new moodle_url('/course/view.php', ['id' => $course->id, 'section' => $section->section]);
                 $sectionname = $section->name ? $section->name : get_string('section') . ' ' . $section->section;
-                $results[] = [
+
+                $result = [
                     'type' => 'section_summary',
-                    'name' => get_string('section') . ': ' . $sectionname,
+                    'name' => ($issubsection ? '' : get_string('section') . ': ') . $sectionname,
                     'url' => $sectionurl,
-                    'modname' => 'section',
+                    'modname' => $issubsection ? 'subsection' : 'section',
                     'icon' => new moodle_url('/pix/i/section.png'),
                     'match' => 'description or content',
                     'snippet' => coursesearch_extract_snippet($section->summary, $query),
+                    'section_number' => $section->section,
+                    'section_name' => $sectionname,
+                    'is_subsection' => $issubsection,
                 ];
+
+                // Add parent section info for subsections.
+                if ($issubsection) {
+                    $result['parent_section_number'] = $parentinfo['parent_section_number'];
+                    $result['parent_section_name'] = $parentinfo['parent_section_name'];
+                }
+
+                $results[] = $result;
             }
 
             // If section has no name but number matches the query.
             if (empty($section->name) && (stripos(get_string('section') . ' ' . $section->section, $query) !== false)) {
                 $sectionurl = new moodle_url('/course/view.php', ['id' => $course->id, 'section' => $section->section]);
-                $results[] = [
+                $sectionname = get_string('section') . ' ' . $section->section;
+
+                $result = [
                     'type' => 'section_number',
-                    'name' => get_string('section') . ' ' . $section->section,
+                    'name' => $sectionname,
                     'url' => $sectionurl,
-                    'modname' => 'section',
+                    'modname' => $issubsection ? 'subsection' : 'section',
                     'icon' => new moodle_url('/pix/i/section.png'),
                     'match' => 'title',
-                    'snippet' => get_string('section') . ' ' . $section->section,
+                    'snippet' => $sectionname,
+                    'section_number' => $section->section,
+                    'section_name' => $sectionname,
+                    'is_subsection' => $issubsection,
                 ];
+
+                // Add parent section info for subsections.
+                if ($issubsection) {
+                    $result['parent_section_number'] = $parentinfo['parent_section_number'];
+                    $result['parent_section_name'] = $parentinfo['parent_section_name'];
+                }
+
+                $results[] = $result;
+            }
+        }
+    }
+
+    // Build a map of subsection numbers to their parent section info.
+    // This allows us to properly group module results that are inside subsections.
+    $subsectionparents = [];
+    foreach ($sections as $section) {
+        if (!empty($section->component) && $section->component === 'mod_subsection') {
+            $parentinfo = coursesearch_get_parent_section_info($section, $course->id, $sections);
+            if ($parentinfo) {
+                $subsectionparents[$section->section] = $parentinfo;
             }
         }
     }
@@ -110,6 +249,13 @@ function coursesearch_perform_search($query, $course, $filter = 'all') {
     foreach ($modinfo->get_cms() as $mod) {
         // Skip if the module is not visible or the user can't access it.
         if (!$mod->uservisible) {
+            continue;
+        }
+
+        // Skip subsection modules - they are nested sections in Moodle 4.x and are
+        // already found by the section search. Including them here causes duplicates
+        // with wrong URLs (they get grouped under parent section instead of their own).
+        if ($mod->modname === 'subsection') {
             continue;
         }
 
@@ -141,7 +287,8 @@ function coursesearch_perform_search($query, $course, $filter = 'all') {
                 $moduleurl = $mod->url;
             }
 
-            $results[] = [
+            $sectioninfo = coursesearch_get_section_info($mod, $sections);
+            $result = [
                 'type' => 'module',
                 'name' => $mod->name,
                 'url' => $moduleurl,
@@ -150,7 +297,20 @@ function coursesearch_perform_search($query, $course, $filter = 'all') {
                 'match' => 'title',
                 'snippet' => $mod->name,
                 'cmid' => $mod->id,
+                'section_number' => $sectioninfo['section_number'],
+                'section_name' => $sectioninfo['section_name'],
+                'is_subsection' => false,
             ];
+
+            // Check if module is inside a subsection.
+            if (isset($subsectionparents[$sectioninfo['section_number']])) {
+                $parentinfo = $subsectionparents[$sectioninfo['section_number']];
+                $result['is_subsection'] = true;
+                $result['parent_section_number'] = $parentinfo['parent_section_number'];
+                $result['parent_section_name'] = $parentinfo['parent_section_name'];
+            }
+
+            $results[] = $result;
             continue;
         }
 
@@ -194,7 +354,8 @@ function coursesearch_perform_search($query, $course, $filter = 'all') {
                 }
 
                 $snippet = coursesearch_extract_snippet($description, $query);
-                $results[] = [
+                $sectioninfo = coursesearch_get_section_info($mod, $sections);
+                $result = [
                     'type' => 'module_description',
                     'name' => $mod->name,
                     'url' => $moduleurl,
@@ -203,7 +364,20 @@ function coursesearch_perform_search($query, $course, $filter = 'all') {
                     'match' => 'description or content',
                     'snippet' => $snippet,
                     'cmid' => $mod->id,
+                    'section_number' => $sectioninfo['section_number'],
+                    'section_name' => $sectioninfo['section_name'],
+                    'is_subsection' => false,
                 ];
+
+                // Check if module is inside a subsection.
+                if (isset($subsectionparents[$sectioninfo['section_number']])) {
+                    $parentinfo = $subsectionparents[$sectioninfo['section_number']];
+                    $result['is_subsection'] = true;
+                    $result['parent_section_number'] = $parentinfo['parent_section_number'];
+                    $result['parent_section_name'] = $parentinfo['parent_section_name'];
+                }
+
+                $results[] = $result;
                 continue;
             }
         }
@@ -211,8 +385,30 @@ function coursesearch_perform_search($query, $course, $filter = 'all') {
         // Search in module content based on the module type (only if filter is 'all' or 'content').
         // For forums, we want to search content regardless of the filter when 'forums' filter is selected.
         if ($filter == 'all' || $filter == 'content' || ($filter == 'forums' && $mod->modname == 'forum')) {
-            $contentresults = coursesearch_search_module_content($mod, $query, $course, $filter);
+            $contentresults = coursesearch_search_module_content($mod, $query, $course, $filter, $sections);
             $results = array_merge($results, $contentresults);
+        }
+    }
+
+    // Additional fallback: Direct database search for all labels in the course.
+    // This ensures we don't miss any labels that might not be in modinfo or are being filtered out.
+    // Only search if filter allows content search.
+    if ($filter == 'all' || $filter == 'content') {
+        $labelresults = coursesearch_search_all_labels_direct($query, $course, $sections, $modinfo);
+        // Merge results, avoiding duplicates by cmid.
+        $existingcmids = [];
+        foreach ($results as $result) {
+            if (isset($result['cmid'])) {
+                $existingcmids[$result['cmid']] = true;
+            }
+        }
+        foreach ($labelresults as $labelresult) {
+            if (!isset($labelresult['cmid']) || !isset($existingcmids[$labelresult['cmid']])) {
+                $results[] = $labelresult;
+                if (isset($labelresult['cmid'])) {
+                    $existingcmids[$labelresult['cmid']] = true;
+                }
+            }
         }
     }
 
@@ -221,6 +417,31 @@ function coursesearch_perform_search($query, $course, $filter = 'all') {
     if ($filter != 'content' && $filter != 'description') {
         $results = coursesearch_search_course_index($query, $course, $results, $sections, $modinfo);
     }
+
+    // Post-process all results to add subsection parent info for modules inside subsections.
+    // This catches results from coursesearch_search_module_content and coursesearch_search_course_index.
+    // We need to process ALL results, even if is_subsection is already set, because results from
+    // different search functions might not have been processed yet.
+    foreach ($results as &$result) {
+        // Skip section/subsection results themselves - they already have parent info set.
+        $modname = $result['modname'] ?? '';
+        if ($modname === 'section' || $modname === 'subsection') {
+            continue;
+        }
+
+        // Check if this result's section is a subsection.
+        $sectionnumber = isset($result['section_number']) ? (int)$result['section_number'] : 0;
+        if ($sectionnumber > 0 && isset($subsectionparents[$sectionnumber])) {
+            $parentinfo = $subsectionparents[$sectionnumber];
+            $result['is_subsection'] = true;
+            $result['parent_section_number'] = $parentinfo['parent_section_number'];
+            $result['parent_section_name'] = $parentinfo['parent_section_name'];
+        } else {
+            // Ensure is_subsection is set to false if not in a subsection.
+            $result['is_subsection'] = false;
+        }
+    }
+    unset($result); // Break reference.
 
     // Apply additional filtering based on the selected filter.
     if ($filter != 'all') {
@@ -316,9 +537,10 @@ function coursesearch_bulk_fetch_module_data($modinfo) {
  * @param string $query The search query
  * @param object $course The course object
  * @param string $filter The filter type
+ * @param array $sections Pre-fetched sections for section info lookup
  * @return array The search results for this module
  */
-function coursesearch_search_module_content($mod, $query, $course, $filter) {
+function coursesearch_search_module_content($mod, $query, $course, $filter, $sections = []) {
     global $DB;
 
     $results = [];
@@ -367,6 +589,17 @@ function coursesearch_search_module_content($mod, $query, $course, $filter) {
         case 'h5pactivity':
             $results = coursesearch_search_h5pactivity($mod, $query);
             break;
+    }
+
+    // Add section info to all results from content search.
+    if (!empty($results) && !empty($sections)) {
+        $sectioninfo = coursesearch_get_section_info($mod, $sections);
+        foreach ($results as &$result) {
+            if (!isset($result['section_number'])) {
+                $result['section_number'] = $sectioninfo['section_number'];
+                $result['section_name'] = $sectioninfo['section_name'];
+            }
+        }
     }
 
     return $results;
@@ -477,28 +710,133 @@ function coursesearch_search_label($mod, $query, $course) {
     $results = [];
     $label = $DB->get_record('label', ['id' => $mod->instance], 'id, name, intro');
 
-    if ($label && coursesearch_is_relevant($label->intro, $query)) {
-        $snippet = coursesearch_extract_snippet($label->intro, $query);
-        $sectionnum = isset($mod->sectionnum) ? $mod->sectionnum : (isset($mod->section) ? $mod->section : null);
-        $urlparams = ['id' => $course->id];
-        if ($sectionnum !== null) {
-            $urlparams['section'] = $sectionnum;
+    if ($label) {
+        // Use the standard relevance check which handles HTML conversion and multilang processing.
+        $isrelevant = coursesearch_is_relevant($label->intro, $query);
+        // Additional fallback: also check raw HTML content (case-insensitive) in case HTML conversion missed it.
+        if (!$isrelevant && !empty($label->intro) && !empty($query)) {
+            $contentlower = mb_strtolower($label->intro, 'UTF-8');
+            $querylower = mb_strtolower(trim($query), 'UTF-8');
+            if (mb_strpos($contentlower, $querylower) !== false) {
+                $isrelevant = true;
+            }
         }
-        if (!empty($query)) {
-            $urlparams['highlight'] = urlencode($query);
+
+        if ($isrelevant) {
+            $snippet = coursesearch_extract_snippet($label->intro, $query);
+            $sectionnum = isset($mod->sectionnum) ? $mod->sectionnum : (isset($mod->section) ? $mod->section : null);
+            $urlparams = ['id' => $course->id];
+            if ($sectionnum !== null) {
+                $urlparams['section'] = $sectionnum;
+            }
+            if (!empty($query)) {
+                $urlparams['highlight'] = urlencode($query);
+            }
+            $moduleurl = new moodle_url('/course/view.php', $urlparams);
+            $moduleurl->set_anchor('module-' . $mod->id);
+            $results[] = [
+                'type' => 'label_content',
+                'name' => $mod->name,
+                'url' => $moduleurl,
+                'modname' => $mod->modname,
+                'icon' => $mod->get_icon_url(),
+                'match' => 'content',
+                'snippet' => $snippet,
+                'cmid' => $mod->id,
+            ];
         }
-        $moduleurl = new moodle_url('/course/view.php', $urlparams);
-        $moduleurl->set_anchor('module-' . $mod->id);
-        $results[] = [
-            'type' => 'label_content',
-            'name' => $mod->name,
-            'url' => $moduleurl,
-            'modname' => $mod->modname,
-            'icon' => $mod->get_icon_url(),
-            'match' => 'content',
-            'snippet' => $snippet,
-            'cmid' => $mod->id,
-        ];
+    }
+
+    return $results;
+}
+
+/**
+ * Direct database search for all labels in a course
+ * This is a fallback to ensure we don't miss any labels that might not be in modinfo
+ *
+ * @param string $query The search query
+ * @param object $course The course object
+ * @param array $sections Pre-fetched sections
+ * @param course_modinfo $modinfo The course modinfo
+ * @return array Search results for matching labels
+ */
+function coursesearch_search_all_labels_direct($query, $course, $sections, $modinfo) {
+    global $DB;
+
+    $results = [];
+
+    // Get all course modules for labels in this course.
+    $sql = "SELECT cm.id as cmid, cm.instance, cm.section, l.name, l.intro
+            FROM {course_modules} cm
+            JOIN {modules} m ON m.id = cm.module AND m.name = 'label'
+            JOIN {label} l ON l.id = cm.instance
+            WHERE cm.course = :courseid
+              AND cm.visible = 1
+              AND cm.deletioninprogress = 0";
+
+    $labelmodules = $DB->get_records_sql($sql, ['courseid' => $course->id]);
+
+    foreach ($labelmodules as $labelmod) {
+        // Simple check: does the query appear in the intro field (case-insensitive, raw HTML check).
+        $isrelevant = false;
+        if (!empty($labelmod->intro)) {
+            $querylower = mb_strtolower(trim($query), 'UTF-8');
+            $introlower = mb_strtolower($labelmod->intro, 'UTF-8');
+            // Direct substring check in raw HTML - this should catch everything.
+            if (mb_strpos($introlower, $querylower) !== false) {
+                $isrelevant = true;
+            }
+        }
+
+        if ($isrelevant) {
+            // Get section info.
+            $sectioninfo = ['section_number' => 0, 'section_name' => ''];
+            foreach ($sections as $section) {
+                if ($section->id == $labelmod->section) {
+                    $sectioninfo['section_number'] = $section->section;
+                    $sectionname = !empty($section->name) ? $section->name : get_string('section') . ' ' . $section->section;
+                    $sectioninfo['section_name'] = $sectionname;
+                    break;
+                }
+            }
+
+            // Create URL.
+            $urlparams = ['id' => $course->id];
+            if ($sectioninfo['section_number'] > 0) {
+                $urlparams['section'] = $sectioninfo['section_number'];
+            }
+            if (!empty($query)) {
+                $urlparams['highlight'] = urlencode($query);
+            }
+            $moduleurl = new moodle_url('/course/view.php', $urlparams);
+            $moduleurl->set_anchor('module-' . $labelmod->cmid);
+
+            $snippet = coursesearch_extract_snippet($labelmod->intro, $query);
+
+            // Get icon URL from modinfo if available.
+            $iconurl = '';
+            try {
+                $cm = $modinfo->get_cm($labelmod->cmid);
+                $iconurl = $cm->get_icon_url();
+            } catch (Exception $e) {
+                // If cm not found in modinfo, use default label icon.
+                $iconurl = new moodle_url('/mod/label/icon.png');
+            }
+
+            $results[] = [
+                'type' => 'label_content',
+                'name' => $labelmod->name,
+                'url' => $moduleurl,
+                'modname' => 'label',
+                'icon' => $iconurl,
+                'match' => 'content',
+                'snippet' => $snippet,
+                'cmid' => $labelmod->cmid,
+                'section_number' => $sectioninfo['section_number'],
+                'section_name' => $sectioninfo['section_name'],
+                'is_subsection' => false,
+            ];
+        }
     }
 
     return $results;
@@ -1078,10 +1416,16 @@ function coursesearch_search_course_index($query, $course, $results, $sections =
         $sections = $DB->get_records('course_sections', ['course' => $course->id], 'section', 'id, section, name, summary');
     }
 
-    // Search in the course index (course structure).
+    // Search in the course index (course structure) - modules only.
+    // Note: Sections are already searched in coursesearch_perform_search, so we skip them here.
     foreach ($cms as $cm) {
         // Skip if not visible.
         if (!$cm->uservisible) {
+            continue;
+        }
+
+        // Skip subsection modules - they are nested sections found by section search.
+        if ($cm->modname === 'subsection') {
             continue;
         }
 
@@ -1100,45 +1444,18 @@ function coursesearch_search_course_index($query, $course, $results, $sections =
 
             // If not a duplicate, add it to results.
             if (!$duplicate) {
+                $sectioninfo = coursesearch_get_section_info($cm, $sections);
                 $results[] = [
                     'type' => 'course_index_title',
                     'name' => $cm->name,
                     'url' => $cm->url,
                     'modname' => $cm->modname,
                     'icon' => $cm->get_icon_url(),
-                    'match' => 'title in course index',
+                    'match' => 'title',
                     'snippet' => $cm->name,
-                ];
-            }
-        }
-    }
-
-    // Also search section titles that appear in the course index.
-    foreach ($sections as $section) {
-        if (!empty($section->name) && stripos($section->name, $query) !== false) {
-            // Check if this section is already in results.
-            $duplicate = false;
-            $sectionname = get_string('section') . ': ' . $section->name;
-            foreach ($results as $result) {
-                $issectiontype = isset($result['type']) && $result['type'] === 'section_name';
-                $namematches = isset($result['name']) && $result['name'] === $sectionname;
-                if ($issectiontype && $namematches) {
-                    $duplicate = true;
-                    break;
-                }
-            }
-
-            // If not a duplicate, add it.
-            if (!$duplicate) {
-                $sectionurl = new moodle_url('/course/view.php', ['id' => $course->id, 'section' => $section->section]);
-                $results[] = [
-                    'type' => 'course_index_section',
-                    'name' => get_string('section') . ': ' . $section->name,
-                    'url' => $sectionurl,
-                    'modname' => 'section',
-                    'icon' => new moodle_url('/pix/i/section.png'),
-                    'match' => 'title in course index',
-                    'snippet' => $section->name,
+                    'cmid' => $cm->id,
+                    'section_number' => $sectioninfo['section_number'],
+                    'section_name' => $sectioninfo['section_name'],
                 ];
             }
         }

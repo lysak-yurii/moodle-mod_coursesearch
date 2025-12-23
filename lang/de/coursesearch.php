@@ -76,6 +76,19 @@ $string['nocourseinstances'] = 'Es gibt keine Kurssuche-Instanzen in diesem Kurs
 // Admin settings.
 $string['enablehighlight'] = 'Scrollen und Hervorheben aktivieren';
 $string['enablehighlight_desc'] = 'Wenn aktiviert, wird beim Klicken auf Suchergebnisse automatisch zum gefundenen Text gescrollt und dieser auf der Kursseite hervorgehoben.';
+$string['resultsperpage'] = 'Ergebnisse pro Seite';
+$string['resultsperpage_desc'] = 'Die Anzahl der Suchergebnisse, die pro Seite angezeigt werden.';
+
+// Pagination strings.
+$string['pagination'] = 'Suchergebnis-Paginierung';
+$string['previous'] = 'Zurück';
+$string['next'] = 'Weiter';
+$string['searchresultsrange'] = 'Zeige Abschnitte {$a->start}-{$a->end} von {$a->total}';
+
+// Section grouping strings.
+$string['sectionmatch'] = 'Abschnitts-Treffer';
+$string['subsectionmatch'] = 'Unterabschnitts-Treffer';
+$string['generalsection'] = 'Allgemein';
 
 // Privacy.
 $string['privacy:metadata'] = 'Das Kurssuche-Modul speichert keine persönlichen Benutzerdaten. Es speichert nur Aktivitätsinstanz-Konfigurationen wie Name, Beschreibung, Suchbereich und Anzeigeoptionen.';

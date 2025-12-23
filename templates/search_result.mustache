@@ -17,7 +17,8 @@
 {{!
     @template mod_coursesearch/search_result
 
-    Single search result item template.
+    Single search result item template (module/activity results only).
+    Section results are handled in the group header, not here.
 
     Context variables required for this template:
     * name - The result name/title
@@ -25,54 +26,57 @@
     * modname - The module name
     * iconurl - The icon URL
     * iconalt - Alt text for the icon
-    * snippet - The content snippet with highlighting (optional)
-    * hassnippet - Whether there is a snippet
+    * snippet - The content snippet with highlighting (only shown for non-title matches)
+    * hassnippet - Whether to show the snippet
     * matchtype - What was matched (optional)
     * hasmatchtype - Whether there is match type info
     * forumname - The forum name (optional)
     * hasforumname - Whether this is a forum result with forum name
-    * issection - Whether this is a section result
     * isforum - Whether this is a forum result
 
     Example context (json):
     {
-        "name": "Introduction to Course",
-        "url": "/mod/page/view.php?id=456",
+        "name": "Introduction to the course",
+        "url": "http://example.com/mod/page/view.php?id=123",
         "modname": "page",
-        "iconurl": "/theme/image.php/boost/page/icon",
-        "iconalt": "page",
-        "snippet": "This is the <span class=\"highlight\">introduction</span> to the course.",
+        "iconurl": "http://example.com/theme/image.php/boost/core/1/f/pdf-24",
+        "iconalt": "Page",
+        "snippet": "This is a brief <mark>snippet</mark> of content...",
         "hassnippet": true,
         "matchtype": "content",
         "hasmatchtype": true,
-        "forumname": null,
+        "forumname": "General discussion",
         "hasforumname": false,
-        "issection": false,
         "isforum": false
     }
 }}
 <div class="coursesearch-result">
-    <div class="coursesearch-result-title">
+    <div class="coursesearch-result-icon">
+        {{#iconurl}}
         <img src="{{iconurl}}" alt="{{iconalt}}" class="icon">
-        <a href="{{url}}">{{name}}</a>
+        {{/iconurl}}
     </div>
+    <div class="coursesearch-result-content">
+        <div class="coursesearch-result-title">
+            <a href="{{url}}">{{name}}</a>
+        </div>
 
-    {{#hasforumname}}
-    <div class="coursesearch-result-forum">
-        {{#str}} inforum, mod_coursesearch, {{forumname}} {{/str}}
-    </div>
-    {{/hasforumname}}
+        {{#hasforumname}}
+        <div class="coursesearch-result-forum">
+            {{#str}} inforum, mod_coursesearch, {{forumname}} {{/str}}
+        </div>
+        {{/hasforumname}}
 
-    {{#hassnippet}}
-    <div class="coursesearch-result-snippet">
-        {{{snippet}}}
-    </div>
-    {{/hassnippet}}
+        {{#hassnippet}}
+        <div class="coursesearch-result-snippet">
+            {{{snippet}}}
+        </div>
+        {{/hassnippet}}
 
-    {{#hasmatchtype}}
-    <div class="coursesearch-result-match">
-        {{#str}} matchedin, mod_coursesearch, {{matchtype}} {{/str}}
+        {{#hasmatchtype}}
+        <div class="coursesearch-result-match">
+            {{#str}} matchedin, mod_coursesearch, {{matchtype}} {{/str}}
+        </div>
+        {{/hasmatchtype}}
     </div>
-    {{/hasmatchtype}}
 </div>
-

@@ -17,28 +17,78 @@
 {{!
     @template mod_coursesearch/search_results
 
-    Search results container template.
+    Search results container template with grouping by section and pagination.
 
     Context variables required for this template:
     * query - The search query (escaped)
     * hasresults - Whether there are any results
     * noresults - Whether there are no results
-    * results - Array of result items
-    * count - Number of results
+    * groups - Array of section groups
+    * hasgroups - Whether there are any groups
+    * count - Total number of results
     * resultscount - Formatted results count string
+    * resultsrange - Formatted string showing current range
     * noresultsmessage - Message to show when no results
     * heading - The heading text
+    * pagination - Pagination data object
+    * haspagination - Whether pagination should be shown
+    * showingrange - Whether to show the range indicator
 
     Example context (json):
     {
         "query": "introduction",
         "hasresults": true,
         "noresults": false,
-        "results": [],
-        "count": 5,
-        "resultscount": "5 results found for \"introduction\"",
-        "noresultsmessage": "",
-        "heading": "Search results for \"introduction\""
+        "count": 15,
+        "resultscount": "15 results found",
+        "resultsrange": "Showing 1-10",
+        "showingrange": true,
+        "heading": "Search results",
+        "groups": [
+            {
+                "section_number": 1,
+                "section_name": "Week 1",
+                "section_url": "http://example.com/course/view.php?id=5&section=1",
+                "section_matched": true,
+                "hassectionsnippet": true,
+                "section_snippet": "This is a brief <mark>introduction</mark> to the course",
+                "hasresults": true,
+                "resultcount": 3,
+                "results": [
+                    {
+                        "name": "Course Introduction",
+                        "url": "http://example.com/mod/page/view.php?id=123",
+                        "modname": "page",
+                        "iconurl": "http://example.com/theme/image.php/boost/core/1/f/pdf-24",
+                        "iconalt": "Page",
+                        "snippet": "Welcome to this <mark>introduction</mark>",
+                        "hassnippet": true
+                    }
+                ],
+                "hassubsections": false
+            }
+        ],
+        "haspagination": true,
+        "pagination": {
+            "hasprevious": false,
+            "hasnext": true,
+            "previousurl": "http://example.com/mod/coursesearch/view.php?id=5&q=intro&page=0",
+            "nexturl": "http://example.com/mod/coursesearch/view.php?id=5&q=intro&page=2",
+            "pages": [
+                {
+                    "page": 1,
+                    "url": "http://example.com/mod/coursesearch/view.php?id=5&q=intro&page=1",
+                    "iscurrent": true,
+                    "isellipsis": false
+                },
+                {
+                    "page": 2,
+                    "url": "http://example.com/mod/coursesearch/view.php?id=5&q=intro&page=2",
+                    "iscurrent": false,
+                    "isellipsis": false
+                }
+            ]
+        }
     }
 }}
 <div class="coursesearch-results-container">
@@ -51,15 +101,144 @@
     {{/noresults}}
 
     {{#hasresults}}
-    <div class="coursesearch-results-count">
-        {{{resultscount}}}
+    <div class="coursesearch-results-summary">
+        <span class="coursesearch-results-count">{{{resultscount}}}</span>
+        {{#showingrange}}
+        <span class="coursesearch-results-range">({{{resultsrange}}})</span>
+        {{/showingrange}}
     </div>
 
-    <div class="coursesearch-results">
-        {{#results}}
-        {{> mod_coursesearch/search_result }}
-        {{/results}}
+    <div class="coursesearch-results-grouped">
+        {{#groups}}
+        <div class="coursesearch-section-group {{#section_matched}}coursesearch-section-matched{{/section_matched}}" data-section="{{section_number}}">
+            <div class="coursesearch-section-header">
+                <h4 class="coursesearch-section-title">
+                    <span class="coursesearch-section-icon">
+                        <i class="icon fa fa-folder-o fa-fw" aria-hidden="true"></i>
+                    </span>
+                    {{#section_url}}
+                    <a href="{{section_url}}">{{section_name}}</a>
+                    {{/section_url}}
+                    {{^section_url}}
+                    {{section_name}}
+                    {{/section_url}}
+                    {{#section_matched}}
+                    <span class="badge badge-info ml-2">{{#str}} sectionmatch, coursesearch {{/str}}</span>
+                    {{/section_matched}}
+                    {{#hasresults}}
+                    <span class="coursesearch-section-count badge badge-secondary ml-auto">{{resultcount}}</span>
+                    {{/hasresults}}
+                </h4>
+                {{#hassectionsnippet}}
+                <div class="coursesearch-section-snippet">
+                    {{{section_snippet}}}
+                </div>
+                {{/hassectionsnippet}}
+            </div>
+            {{#hasresults}}
+            <div class="coursesearch-section-results">
+                {{#results}}
+                {{> mod_coursesearch/search_result }}
+                {{/results}}
+            </div>
+            {{/hasresults}}
+
+            {{! Nested subsections }}
+            {{#hassubsections}}
+            <div class="coursesearch-subsections">
+                {{#subsections}}
+                <div class="coursesearch-subsection {{#section_matched}}coursesearch-subsection-matched{{/section_matched}}" data-section="{{section_number}}">
+                    <div class="coursesearch-subsection-header">
+                        <h5 class="coursesearch-subsection-title">
+                            <span class="coursesearch-subsection-icon">
+                                <i class="icon fa fa-folder fa-fw" aria-hidden="true"></i>
+                            </span>
+                            {{#section_url}}
+                            <a href="{{section_url}}">{{section_name}}</a>
+                            {{/section_url}}
+                            {{^section_url}}
+                            {{section_name}}
+                            {{/section_url}}
+                            {{#section_matched}}
+                            <span class="badge badge-primary ml-2">{{#str}} subsectionmatch, coursesearch {{/str}}</span>
+                            {{/section_matched}}
+                            {{#hasresults}}
+                            <span class="coursesearch-subsection-count badge badge-secondary ml-auto">{{resultcount}}</span>
+                            {{/hasresults}}
+                        </h5>
+                        {{#hassectionsnippet}}
+                        <div class="coursesearch-subsection-snippet">
+                            {{{section_snippet}}}
+                        </div>
+                        {{/hassectionsnippet}}
+                    </div>
+                    {{#hasresults}}
+                    <div class="coursesearch-subsection-results">
+                        {{#results}}
+                        {{> mod_coursesearch/search_result }}
+                        {{/results}}
+                    </div>
+                    {{/hasresults}}
+                </div>
+                {{/subsections}}
+            </div>
+            {{/hassubsections}}
+        </div>
+        {{/groups}}
     </div>
+
+    {{#haspagination}}
+    <nav class="coursesearch-pagination" aria-label="{{#str}} pagination, coursesearch {{/str}}">
+        <ul class="pagination justify-content-center">
+            {{#pagination.hasprevious}}
+            <li class="page-item">
+                <a class="page-link" href="{{pagination.previousurl}}" aria-label="{{#str}} previous, coursesearch {{/str}}">
+                    <span aria-hidden="true">&laquo;</span>
+                    <span class="sr-only">{{#str}} previous, coursesearch {{/str}}</span>
+                </a>
+            </li>
+            {{/pagination.hasprevious}}
+            {{^pagination.hasprevious}}
+            <li class="page-item disabled">
+                <span class="page-link" aria-hidden="true">&laquo;</span>
+            </li>
+            {{/pagination.hasprevious}}
+
+            {{#pagination.pages}}
+            {{#isellipsis}}
+            <li class="page-item disabled">
+                <span class="page-link">...</span>
+            </li>
+            {{/isellipsis}}
+            {{^isellipsis}}
+            {{#iscurrent}}
+            <li class="page-item active" aria-current="page">
+                <span class="page-link">{{page}}</span>
+            </li>
+            {{/iscurrent}}
+            {{^iscurrent}}
+            <li class="page-item">
+                <a class="page-link" href="{{url}}">{{page}}</a>
+            </li>
+            {{/iscurrent}}
+            {{/isellipsis}}
+            {{/pagination.pages}}
+
+            {{#pagination.hasnext}}
+            <li class="page-item">
+                <a class="page-link" href="{{pagination.nexturl}}" aria-label="{{#str}} next, coursesearch {{/str}}">
+                    <span aria-hidden="true">&raquo;</span>
+                    <span class="sr-only">{{#str}} next, coursesearch {{/str}}</span>
+                </a>
+            </li>
+            {{/pagination.hasnext}}
+            {{^pagination.hasnext}}
+            <li class="page-item disabled">
+                <span class="page-link" aria-hidden="true">&raquo;</span>
+            </li>
+            {{/pagination.hasnext}}
+        </ul>
+    </nav>
+    {{/haspagination}}
     {{/hasresults}}
 </div>
-

@@ -74,6 +74,19 @@ $string['nocourseinstances'] = 'There are no course search instances in this cou
 // Admin settings.
 $string['enablehighlight'] = 'Enable scrolling and highlighting';
 $string['enablehighlight_desc'] = 'When enabled, clicking on search results will automatically scroll to and highlight the matched text on the course page.';
+$string['resultsperpage'] = 'Results per page';
+$string['resultsperpage_desc'] = 'The number of search results to display per page.';
+
+// Pagination strings.
+$string['pagination'] = 'Search results pagination';
+$string['previous'] = 'Previous';
+$string['next'] = 'Next';
+$string['searchresultsrange'] = 'Showing sections {$a->start}-{$a->end} of {$a->total}';
+
+// Section grouping strings.
+$string['sectionmatch'] = 'Section match';
+$string['subsectionmatch'] = 'Subsection match';
+$string['generalsection'] = 'General';
 
 // Privacy.
 $string['privacy:metadata'] = 'The Course Search module does not store any personal user data. It only stores activity instance configuration such as name, description, search scope, and display options.';

@@ -8,6 +8,8 @@ A comprehensive Moodle activity module that enables teachers to add a search bar
 - **Comprehensive Search**: Searches through all course content types
 - **Search Filter**: Filter between "All content" or "Forums only" on the search page
 - **Embedded Mode**: Option to embed search bar directly in course page
+- **Results Grouping**: Search results are automatically grouped by course sections for better organization
+- **Pagination**: Large result sets are paginated for improved performance and usability
 
 ### Search Term Highlighting
 - **Automatic Scrolling**: Automatically scrolls to matched content when clicking search results
@@ -112,7 +114,9 @@ The search covers the following content types:
 2. Enter search terms
 3. Select filter: "All" or "Forums only"
 4. Click **"Search"**
-5. Click on any result to navigate to the content
+5. Browse results grouped by course sections
+6. Use pagination controls to navigate through multiple pages of results
+7. Click on any result to navigate to the content
 
 ### Highlighting
 
@@ -156,7 +160,17 @@ When clicking on search results, the plugin automatically:
 
 ## Version
 
-Current version: **1.1.0** (Stable)
+Current version: **1.2.0** (Experimental)
+
+### Changelog
+
+#### Version 1.2.0 (December 2025)
+- Added search results pagination for large result sets
+- Added automatic grouping of results by course sections
+- Improved result organization and navigation
+
+#### Version 1.1.0 (December 2025)
+- Extended highlighting support to Pages, Books, Lessons, Wiki, Forums, Glossary, and Database activities
 
 ## License
 
@@ -165,10 +179,11 @@ This plugin is licensed under the GNU GPL v3 or later.
 ## Credits
 
 Original plugin: Yurii Lysak (2025)
+HNEE (Hochschule für nachhaltige Entwicklung Eberswalde)
 
 Enhancements (December 2025):
 - Extended highlighting support to Pages, Books, Lessons, Wiki, Forums, Glossary, and Database activities
-- HNEE (Hochschule für nachhaltige Entwicklung Eberswalde)
+- Added search results pagination and grouping by sections
 
 ## Support
 

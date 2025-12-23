@@ -76,6 +76,19 @@ $string['nocourseinstances'] = 'У цьому курсі немає екземп
 // Admin settings.
 $string['enablehighlight'] = 'Увімкнути прокрутку та підсвічування';
 $string['enablehighlight_desc'] = 'Якщо увімкнено, при натисканні на результати пошуку сторінка автоматично прокрутиться до знайденого тексту та підсвітить його на сторінці курсу.';
+$string['resultsperpage'] = 'Результатів на сторінці';
+$string['resultsperpage_desc'] = 'Кількість результатів пошуку, що відображаються на одній сторінці.';
+
+// Pagination strings.
+$string['pagination'] = 'Сторінки результатів пошуку';
+$string['previous'] = 'Попередня';
+$string['next'] = 'Наступна';
+$string['searchresultsrange'] = 'Показано розділи {$a->start}-{$a->end} з {$a->total}';
+
+// Section grouping strings.
+$string['sectionmatch'] = 'Збіг у розділі';
+$string['subsectionmatch'] = 'Збіг у підрозділі';
+$string['generalsection'] = 'Загальне';
 
 // Privacy.
 $string['privacy:metadata'] = 'Модуль пошуку по курсу не зберігає жодних особистих даних користувачів. Він зберігає лише конфігурацію екземпляра активності, таку як назва, опис, область пошуку та параметри відображення.';

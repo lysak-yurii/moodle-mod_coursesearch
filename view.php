@@ -35,6 +35,7 @@ $id = optional_param('id', 0, PARAM_INT); // Course Module ID.
 $cs = optional_param('cs', 0, PARAM_INT);  // CourseSearch instance ID.
 $query = optional_param('query', '', PARAM_TEXT); // Search query.
 $filter = optional_param('filter', 'all', PARAM_ALPHA); // Content filter (title, content, description).
+$page = optional_param('page', 0, PARAM_INT); // Pagination page number (0-indexed).
 
 // Validate filter parameter against whitelist to prevent injection.
 $allowedfilters = ['all', 'title', 'content', 'description', 'sections', 'activities', 'resources', 'forums'];
@@ -140,21 +141,29 @@ if (!empty($query)) {
             }
         }
 
-        // Process URL - ensure all results have a valid URL.
-        $resulturl = coursesearch_process_result_url($result, $course, $query);
+        // Get the URL - use the original URL from search if valid, only fall back if missing.
+        $resulturl = null;
+        if (isset($result['url']) && $result['url'] instanceof moodle_url) {
+            // Use the original URL from the search - it already has correct section parameter.
+            $resulturl = $result['url'];
+        } else if (isset($result['url']) && !empty($result['url'])) {
+            // URL exists but isn't a moodle_url object.
+            $resulturl = new moodle_url($result['url']);
+        } else {
+            // No URL - fall back to processing.
+            $resulturl = coursesearch_process_result_url($result, $course);
+        }
 
-        // Ensure highlight parameter is added for all result URLs.
-        if ($resulturl instanceof moodle_url && !empty($query)) {
-            $urlpath = $resulturl->get_path();
-            $iscourseview = strpos($urlpath, '/course/view.php') !== false;
-            $ispageview = strpos($urlpath, '/mod/page/view.php') !== false;
-            $ismodview = strpos($urlpath, '/mod/') !== false;
-            if ($iscourseview || $ispageview || $ismodview) {
-                $params = $resulturl->params();
-                if (!isset($params['highlight'])) {
-                    $cleanquery = clean_param($query, PARAM_TEXT);
-                    $resulturl->param('highlight', $cleanquery);
-                }
+        // Only add highlight parameter for content/description matches, NOT for title matches.
+        // Highlighting titles on the page makes no sense - the title is already visible.
+        $matchtype = isset($result['match']) ? $result['match'] : '';
+        $istitlematch = (stripos($matchtype, 'title') !== false);
+
+        if (!$istitlematch && $resulturl instanceof moodle_url && !empty($query)) {
+            $params = $resulturl->params();
+            if (!isset($params['highlight'])) {
+                $cleanquery = clean_param($query, PARAM_TEXT);
+                $resulturl->param('highlight', $cleanquery);
             }
         }
 
@@ -176,6 +185,15 @@ if (!empty($query)) {
         // Get icon URL.
         $iconurl = $result['icon'] ?? '';
 
+        // Get section info.
+        $sectionnumber = $result['section_number'] ?? 0;
+        $sectionname = $result['section_name'] ?? '';
+
+        // Get subsection info.
+        $issubsection = $result['is_subsection'] ?? false;
+        $parentsectionnumber = $result['parent_section_number'] ?? null;
+        $parentsectionname = $result['parent_section_name'] ?? null;
+
         // Create search_result object.
         $resultobjects[] = new search_result(
             $resultname,
@@ -184,12 +202,25 @@ if (!empty($query)) {
             $iconurl,
             $snippet,
             $matchtype,
-            $forumname
+            $forumname,
+            $sectionnumber,
+            $sectionname,
+            $issubsection,
+            $parentsectionnumber,
+            $parentsectionname
         );
     }
 
-    // Create and render search results.
-    $searchresults = new search_results($query, $resultobjects);
+    // Create base URL for pagination (includes current query and filter).
+    $baseurl = new moodle_url('/mod/coursesearch/view.php', [
+        'id' => $cm->id,
+        'query' => $query,
+        'filter' => $filter,
+    ]);
+
+    // Create and render search results with pagination.
+    $perpage = get_config('mod_coursesearch', 'resultsperpage') ?: 10;
+    $searchresults = new search_results($query, $resultobjects, $page, $perpage, $baseurl);
     echo $OUTPUT->render($searchresults);
 
     // Load the resultlinks AMD module to handle click interception if there are results.
@@ -202,111 +233,56 @@ if (!empty($query)) {
 echo $OUTPUT->footer();
 
 /**
- * Process and fix result URL
+ * Process and fix result URL (fallback only - called when result has no valid URL)
+ *
+ * Note: Highlight parameter is NOT added here - it's handled conditionally in the main loop
+ * based on match type (only for content/description matches, not title matches).
  *
  * @param array $result The search result array
  * @param object $course The course object
- * @param string $query The search query
  * @return moodle_url The processed URL
  */
-function coursesearch_process_result_url($result, $course, $query) {
+function coursesearch_process_result_url($result, $course) {
     global $DB;
 
-    // Check if URL exists and is valid.
-    $urlexists = isset($result['url']) && !empty($result['url']);
-    $urlhasanchor = false;
-    if ($urlexists && $result['url'] instanceof moodle_url) {
-        $urlstring = $result['url']->out(true);
-        $urlhasanchor = (strpos($urlstring, '#') !== false);
-    }
+    $modname = $result['modname'] ?? '';
 
-    // Determine if URL needs an anchor.
-    $needsanchor = isset($result['modname']) && ($result['modname'] === 'label' || $result['modname'] === 'html');
-    if (!$urlexists || ($needsanchor && !$urlhasanchor)) {
-        if (isset($result['modname'])) {
-            // If we have a stored cmid and it's a label/html, use it directly.
-            if (isset($result['cmid']) && ($result['modname'] === 'label' || $result['modname'] === 'html')) {
-                $modinfo = get_fast_modinfo($course);
-                $cmobj = $modinfo->get_cm($result['cmid']);
-                $sectionnum = isset($cmobj->sectionnum) ? $cmobj->sectionnum : null;
-                if ($sectionnum === null && isset($cmobj->section)) {
-                    $sectionnum = $cmobj->section;
-                }
-                $urlparams = ['id' => $course->id];
-                if ($sectionnum !== null) {
-                    $urlparams['section'] = $sectionnum;
-                }
-                if (!empty($query)) {
-                    $cleanquery = clean_param($query, PARAM_TEXT);
-                    $urlparams['highlight'] = urlencode($cleanquery);
-                }
-                $moduleurl = new moodle_url('/course/view.php', $urlparams);
-                $moduleurl->set_anchor('module-' . $result['cmid']);
-                return $moduleurl;
-            } else {
-                $modinfo = get_fast_modinfo($course);
-
-                // If it's a section, try to find the section.
-                if ($result['modname'] === 'section') {
-                    $sectionnumber = null;
-                    if (preg_match('/Section\s+(\d+)/i', $result['name'], $matches)) {
-                        $sectionnumber = $matches[1];
-                    }
-
-                    if ($sectionnumber !== null) {
-                        $urlparams = ['id' => $course->id, 'section' => $sectionnumber];
-                        return new moodle_url('/course/view.php', $urlparams);
-                    } else {
-                        $sectionwhere = ['course' => $course->id];
-                        $sections = $DB->get_records('course_sections', $sectionwhere, 'section', 'id, section, name');
-                        $resultname = strip_tags(isset($result['name']) ? coursesearch_process_multilang($result['name']) : '');
-                        $cleanresultname = str_replace(get_string('section') . ': ', '', $resultname);
-                        foreach ($sections as $section) {
-                            $cleansectionname = strip_tags(coursesearch_process_multilang($section->name));
-                            $namesmatch = $cleansectionname === $cleanresultname;
-                            $namecontains = stripos($cleansectionname, $cleanresultname) !== false;
-                            if ($namesmatch || $namecontains) {
-                                $urlparams = ['id' => $course->id, 'section' => $section->section];
-                                return new moodle_url('/course/view.php', $urlparams);
-                            }
-                        }
-                    }
-                } else {
-                    // For other module types, try to find the module by name.
-                    $resultname = strip_tags(isset($result['name']) ? coursesearch_process_multilang($result['name']) : '');
-                    foreach ($modinfo->get_cms() as $cmobj) {
-                        $cleancmname = strip_tags(coursesearch_process_multilang($cmobj->name));
-                        $namesmatch = $cleancmname === $resultname;
-                        $namecontains = stripos($cleancmname, $resultname) !== false;
-                        if ($namesmatch || $namecontains) {
-                            if ($result['modname'] === 'label' || $result['modname'] === 'html') {
-                                $sectionnum = isset($cmobj->sectionnum) ? $cmobj->sectionnum : null;
-                                if ($sectionnum === null && isset($cmobj->section)) {
-                                    $sectionnum = $cmobj->section;
-                                }
-                                $urlparams = ['id' => $course->id];
-                                if ($sectionnum !== null) {
-                                    $urlparams['section'] = $sectionnum;
-                                }
-                                if (!empty($query)) {
-                                    $cleanquery = clean_param($query, PARAM_TEXT);
-                                    $urlparams['highlight'] = urlencode($cleanquery);
-                                }
-                                $moduleurl = new moodle_url('/course/view.php', $urlparams);
-                                $moduleurl->set_anchor('module-' . $cmobj->id);
-                                return $moduleurl;
-                            } else {
-                                return $cmobj->url;
-                            }
-                        }
-                    }
-                }
-            }
+    // For sections, use the section_number if available.
+    if ($modname === 'section') {
+        $sectionnumber = $result['section_number'] ?? null;
+        if ($sectionnumber !== null) {
+            return new moodle_url('/course/view.php', ['id' => $course->id, 'section' => $sectionnumber]);
         }
-
-        // If we still don't have a URL, default to the course page.
+        // Fallback: try to parse from name.
+        if (preg_match('/(\d+)/', $result['name'] ?? '', $matches)) {
+            return new moodle_url('/course/view.php', ['id' => $course->id, 'section' => $matches[1]]);
+        }
         return new moodle_url('/course/view.php', ['id' => $course->id]);
     }
 
-    return $result['url'];
+    // For labels/html, create URL with section and anchor.
+    if (($modname === 'label' || $modname === 'html') && isset($result['cmid'])) {
+        $sectionnum = $result['section_number'] ?? 0;
+        $urlparams = ['id' => $course->id, 'section' => $sectionnum];
+        $moduleurl = new moodle_url('/course/view.php', $urlparams);
+        $moduleurl->set_anchor('module-' . $result['cmid']);
+        return $moduleurl;
+    }
+
+    // For other modules with cmid, try to get their URL.
+    if (isset($result['cmid'])) {
+        try {
+            $modinfo = get_fast_modinfo($course);
+            $cmobj = $modinfo->get_cm($result['cmid']);
+            if ($cmobj && $cmobj->url) {
+                return $cmobj->url;
+            }
+        } catch (Exception $e) {
+            // CM not found, fall through to default.
+            debugging('CM not found: ' . $e->getMessage(), DEBUG_DEVELOPER);
+        }
+    }
+
+    // Default to course page.
+    return new moodle_url('/course/view.php', ['id' => $course->id]);
 }

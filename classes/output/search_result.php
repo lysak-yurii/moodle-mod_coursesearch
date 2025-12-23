@@ -53,6 +53,21 @@ class search_result implements renderable, templatable {
     /** @var bool Whether this is a section result */
     protected $issection;
 
+    /** @var bool Whether this is a subsection result */
+    protected $issubsection;
+
+    /** @var int Section number this result belongs to */
+    protected $sectionnumber;
+
+    /** @var string Section name this result belongs to */
+    protected $sectionname;
+
+    /** @var int|null Parent section number (for subsections) */
+    protected $parentsectionnumber;
+
+    /** @var string|null Parent section name (for subsections) */
+    protected $parentsectionname;
+
     /**
      * Constructor
      *
@@ -63,6 +78,11 @@ class search_result implements renderable, templatable {
      * @param string $snippet The content snippet
      * @param string $matchtype What was matched
      * @param string|null $forumname The forum name (if applicable)
+     * @param int $sectionnumber Section number (default 0)
+     * @param string $sectionname Section name (default empty)
+     * @param bool $issubsection Whether this is a subsection (default false)
+     * @param int|null $parentsectionnumber Parent section number for subsections
+     * @param string|null $parentsectionname Parent section name for subsections
      */
     public function __construct(
         string $name,
@@ -71,7 +91,12 @@ class search_result implements renderable, templatable {
         $iconurl,
         string $snippet = '',
         string $matchtype = '',
-        ?string $forumname = null
+        ?string $forumname = null,
+        int $sectionnumber = 0,
+        string $sectionname = '',
+        bool $issubsection = false,
+        ?int $parentsectionnumber = null,
+        ?string $parentsectionname = null
     ) {
         $this->name = $name;
         $this->url = $url;
@@ -80,7 +105,12 @@ class search_result implements renderable, templatable {
         $this->snippet = $snippet;
         $this->matchtype = $matchtype;
         $this->forumname = $forumname;
-        $this->issection = ($modname === 'section');
+        $this->issection = ($modname === 'section' || $modname === 'subsection');
+        $this->issubsection = $issubsection;
+        $this->sectionnumber = $sectionnumber;
+        $this->sectionname = $sectionname;
+        $this->parentsectionnumber = $parentsectionnumber;
+        $this->parentsectionname = $parentsectionname;
     }
 
     /**
@@ -103,6 +133,10 @@ class search_result implements renderable, templatable {
             $iconurlstr = (new moodle_url('/pix/i/folder.png'))->out(false);
         }
 
+        // Check if this is a title match - if so, don't show snippet (it would repeat the title).
+        $istitlematch = (stripos($this->matchtype, 'title') !== false);
+        $showsnippet = !empty($this->snippet) && !$istitlematch;
+
         return [
             'name' => $this->name,
             'url' => $this->url->out(false),
@@ -110,13 +144,18 @@ class search_result implements renderable, templatable {
             'iconurl' => $iconurlstr,
             'iconalt' => $this->issection ? get_string('section') : $this->modname,
             'snippet' => $this->snippet,
-            'hassnippet' => !empty($this->snippet),
+            'hassnippet' => $showsnippet,
             'matchtype' => $this->matchtype,
             'hasmatchtype' => !empty($this->matchtype),
             'forumname' => $this->forumname,
             'hasforumname' => !empty($this->forumname),
             'issection' => $this->issection,
+            'issubsection' => $this->issubsection,
             'isforum' => ($this->modname === 'forum'),
+            'section_number' => $this->sectionnumber,
+            'section_name' => $this->sectionname,
+            'parent_section_number' => $this->parentsectionnumber,
+            'parent_section_name' => $this->parentsectionname,
         ];
     }
 }

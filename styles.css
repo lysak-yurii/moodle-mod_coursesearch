@@ -9,6 +9,324 @@
     width: 100%;
 }
 
+/* Results container */
+.coursesearch-results-container {
+    margin-top: 30px;
+}
+
+.coursesearch-results-heading {
+    margin-bottom: 15px;
+    font-size: 1.4rem;
+}
+
+/* Results summary with count and range */
+.coursesearch-results-summary {
+    margin-bottom: 20px;
+    padding: 10px 15px;
+    background-color: #f8f9fa;
+    border-radius: 4px;
+    font-size: 0.95rem;
+}
+
+.coursesearch-results-count {
+    font-weight: 600;
+}
+
+.coursesearch-results-range {
+    color: #6c757d;
+    margin-left: 8px;
+}
+
+/* Section groups */
+.coursesearch-results-grouped {
+    margin-bottom: 20px;
+}
+
+.coursesearch-section-group {
+    margin-bottom: 20px;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    background-color: #fff;
+}
+
+.coursesearch-section-header {
+    padding: 12px 15px;
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.coursesearch-section-title {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.coursesearch-section-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.coursesearch-section-icon .icon {
+    color: #495057;
+}
+
+.coursesearch-section-count {
+    margin-left: auto;
+    font-size: 0.85rem;
+}
+
+.coursesearch-section-results {
+    padding: 10px 15px;
+}
+
+/* Section matched - highlight the header */
+.coursesearch-section-matched .coursesearch-section-header {
+    background-color: #e7f3ff;
+    border-bottom-color: #b8d4f0;
+}
+
+.coursesearch-section-snippet {
+    margin-top: 8px;
+    padding: 8px 12px;
+    background-color: #fff;
+    border-left: 3px solid #adb5bd;
+    font-size: 0.9rem;
+    color: #495057;
+    line-height: 1.5;
+    border-radius: 0 4px 4px 0;
+}
+
+/* Nested subsections container */
+.coursesearch-subsections {
+    padding: 0 15px 15px;
+    background-color: #fafbfc;
+    border-top: 1px dashed #dee2e6;
+}
+
+/* Individual subsection */
+.coursesearch-subsection {
+    margin-top: 12px;
+    border: 1px solid #e1e4e8;
+    border-radius: 4px;
+    background-color: #fff;
+    margin-left: 20px;
+    position: relative;
+}
+
+/* Visual connector line */
+.coursesearch-subsection::before {
+    content: '';
+    position: absolute;
+    left: -20px;
+    top: 20px;
+    width: 16px;
+    height: 1px;
+    background-color: #d1d5db;
+}
+
+.coursesearch-subsection-header {
+    padding: 10px 12px;
+    background-color: #f6f8fa;
+    border-bottom: 1px solid #e1e4e8;
+    border-radius: 4px 4px 0 0;
+}
+
+.coursesearch-subsection-title {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.coursesearch-subsection-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.coursesearch-subsection-icon .icon {
+    color: #6c757d;
+    font-size: 0.9rem;
+}
+
+.coursesearch-subsection-count {
+    margin-left: auto;
+    font-size: 0.8rem;
+}
+
+.coursesearch-subsection-results {
+    padding: 10px 12px;
+}
+
+/* Subsection matched - highlight the header */
+.coursesearch-subsection-matched .coursesearch-subsection-header {
+    background-color: #e3f2fd;
+    border-bottom-color: #90caf9;
+}
+
+.coursesearch-subsection-snippet {
+    margin-top: 6px;
+    padding: 6px 10px;
+    background-color: #fff;
+    border-left: 3px solid #90caf9;
+    font-size: 0.85rem;
+    color: #495057;
+    line-height: 1.4;
+    border-radius: 0 4px 4px 0;
+}
+
+/* Individual result item */
+.coursesearch-result {
+    display: flex;
+    margin-bottom: 12px;
+    padding: 12px;
+    border: 1px solid #e9ecef;
+    border-radius: 4px;
+    background-color: #fff;
+    transition: background-color 0.2s;
+}
+
+.coursesearch-result:last-child {
+    margin-bottom: 0;
+}
+
+.coursesearch-result:hover {
+    background-color: #f8f9fa;
+    border-color: #dee2e6;
+}
+
+
+.coursesearch-result-icon {
+    margin-right: 12px;
+    display: flex;
+    align-items: flex-start;
+    padding-top: 2px;
+}
+
+.coursesearch-result-icon img {
+    width: 24px;
+    height: 24px;
+}
+
+.coursesearch-result-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.coursesearch-result-title {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-bottom: 6px;
+}
+
+.coursesearch-result-title a {
+    font-weight: 600;
+    color: #0d6efd;
+    text-decoration: none;
+    word-break: break-word;
+}
+
+.coursesearch-result-title a:hover {
+    color: #0a58ca;
+    text-decoration: underline;
+}
+
+.coursesearch-result-forum {
+    font-size: 0.85rem;
+    color: #6c757d;
+    margin-bottom: 6px;
+}
+
+.coursesearch-result-snippet {
+    margin: 8px 0;
+    padding: 10px 12px;
+    background-color: #f8f9fa;
+    border-left: 3px solid #adb5bd;
+    font-size: 0.9rem;
+    color: #495057;
+    line-height: 1.5;
+    border-radius: 0 4px 4px 0;
+}
+
+.coursesearch-result-match {
+    font-size: 0.8rem;
+    color: #6c757d;
+    font-style: italic;
+}
+
+/* Highlight styles */
+.highlight,
+.coursesearch-highlight {
+    background-color: #fff3bf;
+    padding: 1px 3px;
+    font-weight: 600;
+    border-radius: 2px;
+    color: #212529;
+}
+
+/* Temporary highlight for search results - with !important to override theme styles */
+.coursesearch-highlight-temp,
+span.coursesearch-highlight-temp {
+    background-color: #fff3bf;
+    padding: 2px 4px;
+    border-radius: 2px;
+    color: inherit;
+    display: inline;
+}
+
+/* Pagination styles */
+.coursesearch-pagination {
+    margin-top: 25px;
+    padding-top: 20px;
+    border-top: 1px solid #dee2e6;
+}
+
+.coursesearch-pagination .pagination {
+    margin-bottom: 0;
+}
+
+/* No results message */
+.coursesearch-no-results {
+    padding: 20px;
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    color: #6c757d;
+    text-align: center;
+}
+
+/* Embedded search form styles */
+.coursesearch-embedded {
+    margin: 10px 0;
+    max-width: 100%;
+}
+
+.coursesearch-embedded .input-group {
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.coursesearch-embedded .form-control {
+    border: 1px solid #ddd;
+    height: 42px;
+    font-size: 1rem;
+}
+
+.coursesearch-embedded .btn-primary {
+    padding: 0.5rem 1rem;
+    font-weight: 500;
+}
+
+/* Legacy styles for backwards compatibility */
 .coursesearch-results {
     margin-top: 30px;
 }
@@ -38,95 +356,37 @@
     background-color: #f0f0f0;
 }
 
-.coursesearch-result-icon {
-    margin-right: 15px;
-    display: flex;
-    align-items: center;
-}
-
-.coursesearch-result-icon img {
-    width: 24px;
-    height: 24px;
-}
-
-.coursesearch-result-content {
-    flex: 1;
-}
-
-.coursesearch-result-title {
-    display: block;
-    font-weight: bold;
-    margin-bottom: 5px;
-    color: #1177d1;
-    text-decoration: none;
-}
-
 .coursesearch-result-context {
     font-size: 0.9em;
     color: #555;
     margin-bottom: 5px;
 }
 
-.coursesearch-result-match {
-    font-size: 0.85em;
-    color: #666;
-    font-style: italic;
-}
+/* Responsive adjustments */
+@media (max-width: 576px) {
+    .coursesearch-section-header {
+        padding: 10px 12px;
+    }
 
-.coursesearch-result-snippet {
-    margin: 8px 0;
-    padding: 8px;
-    background-color: #f5f5f5;
-    border-left: 3px solid #ddd;
-    font-size: 0.9em;
-    color: #333;
-    line-height: 1.4;
-}
+    .coursesearch-section-title {
+        font-size: 1rem;
+    }
 
-.coursesearch-highlight {
-    background-color: #ff9;
-    padding: 2px;
-    font-weight: bold;
-    border-radius: 2px;
-}
+    .coursesearch-result {
+        padding: 10px;
+    }
 
-/* Temporary highlight for search results - with !important to override theme styles */
-.coursesearch-highlight-temp,
-span.coursesearch-highlight-temp {
-    background-color: #ff9;
-    padding: 2px;
-    border-radius: 2px;
-    color: inherit;
-    display: inline;
-}
+    .coursesearch-result-icon {
+        margin-right: 10px;
+    }
 
-/* Embedded search form styles */
-.coursesearch-embedded {
-    margin: 10px 0;
-    max-width: 100%;
-}
+    .coursesearch-result-icon img {
+        width: 20px;
+        height: 20px;
+    }
 
-.coursesearch-embedded .input-group {
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-    border-radius: 4px;
-    overflow: hidden;
-}
-
-.coursesearch-embedded .form-control {
-    border: 1px solid #ddd;
-    height: 42px;
-    font-size: 1rem;
-}
-
-.coursesearch-embedded .btn-primary {
-    padding: 0.5rem 1rem;
-    font-weight: 500;
-}
-
-.coursesearch-no-results {
-    padding: 15px;
-    background-color: #f9f9f9;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    color: #666;
+    .coursesearch-results-summary {
+        padding: 8px 12px;
+        font-size: 0.9rem;
+    }
 }

@@ -32,4 +32,13 @@ if ($ADMIN->fulltree) {
         get_string('enablehighlight_desc', 'coursesearch'),
         1
     ));
+
+    // Results per page setting.
+    $settings->add(new admin_setting_configtext(
+        'mod_coursesearch/resultsperpage',
+        get_string('resultsperpage', 'coursesearch'),
+        get_string('resultsperpage_desc', 'coursesearch'),
+        10,
+        PARAM_INT
+    ));
 }
