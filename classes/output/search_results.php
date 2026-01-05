@@ -103,8 +103,35 @@ class search_results implements renderable, templatable {
                 continue;
             }
 
-            // Normalize URL for comparison (remove highlight param).
-            $urlkey = preg_replace('/[&?]highlight=[^&]*/', '', $url);
+            // Normalize URL for comparison (remove highlight param, but preserve anchor/fragment).
+            // The anchor (fragment) is important for labels - each label has a unique anchor like #module-123.
+            // Parse URL to separate base URL from anchor.
+            $urlparts = parse_url($url);
+            $baseurl = '';
+            if (isset($urlparts['scheme'])) {
+                $baseurl .= $urlparts['scheme'] . '://';
+            }
+            if (isset($urlparts['host'])) {
+                $baseurl .= $urlparts['host'];
+            }
+            if (isset($urlparts['port'])) {
+                $baseurl .= ':' . $urlparts['port'];
+            }
+            if (isset($urlparts['path'])) {
+                $baseurl .= $urlparts['path'];
+            }
+            // Remove highlight from query string but keep other params.
+            $query = $urlparts['query'] ?? '';
+            if (!empty($query)) {
+                parse_str($query, $params);
+                unset($params['highlight']);
+                if (!empty($params)) {
+                    $baseurl .= '?' . http_build_query($params);
+                }
+            }
+            // Include anchor/fragment in the key - this ensures labels with different anchors are not deduplicated.
+            $anchor = $urlparts['fragment'] ?? '';
+            $urlkey = $baseurl . ($anchor ? '#' . $anchor : '');
 
             // Determine priority of this match.
             $matchtype = strtolower($result['matchtype'] ?? 'title');
@@ -123,7 +150,32 @@ class search_results implements renderable, templatable {
                     $seen[$urlkey] = ['index' => count($deduplicated), 'priority' => $priority];
                     // Find and replace in deduplicated array.
                     foreach ($deduplicated as $i => $existing) {
-                        $existingurl = preg_replace('/[&?]highlight=[^&]*/', '', $existing['url'] ?? '');
+                        // Normalize existing URL the same way.
+                        $existingurlstr = $existing['url'] ?? '';
+                        $existingparts = parse_url($existingurlstr);
+                        $existingbase = '';
+                        if (isset($existingparts['scheme'])) {
+                            $existingbase .= $existingparts['scheme'] . '://';
+                        }
+                        if (isset($existingparts['host'])) {
+                            $existingbase .= $existingparts['host'];
+                        }
+                        if (isset($existingparts['port'])) {
+                            $existingbase .= ':' . $existingparts['port'];
+                        }
+                        if (isset($existingparts['path'])) {
+                            $existingbase .= $existingparts['path'];
+                        }
+                        $existingquery = $existingparts['query'] ?? '';
+                        if (!empty($existingquery)) {
+                            parse_str($existingquery, $existingparams);
+                            unset($existingparams['highlight']);
+                            if (!empty($existingparams)) {
+                                $existingbase .= '?' . http_build_query($existingparams);
+                            }
+                        }
+                        $existinganchor = $existingparts['fragment'] ?? '';
+                        $existingurl = $existingbase . ($existinganchor ? '#' . $existinganchor : '');
                         if ($existingurl === $urlkey) {
                             $deduplicated[$i] = $result;
                             break;
