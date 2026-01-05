@@ -58,11 +58,12 @@ $string['searchresults'] = 'Результати пошуку для "{$a}"';
 $string['searchresultscount'] = 'Знайдено {$a->count} результатів для "{$a->query}"';
 $string['noresults'] = 'Не знайдено результатів для "{$a}"';
 $string['inforum'] = 'У форумі: {$a}';
-$string['matchedin'] = 'Знайдено в {$a}';
-$string['title'] = 'Назва';
-$string['content'] = 'Вміст';
-$string['description'] = 'Опис';
-$string['intro'] = 'вступ';
+$string['matchedin'] = 'Знайдено у {$a}';
+$string['title'] = 'назві';
+$string['content'] = 'вмісті';
+$string['description'] = 'описі';
+$string['matchdescriptionorcontent'] = 'описі або вмісті';
+$string['intro'] = 'вступному розділі';
 $string['eventcoursesearched'] = 'Пошук по курсу виконано';
 
 // Capability strings.

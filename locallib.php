@@ -156,7 +156,7 @@ function coursesearch_perform_search($query, $course, $filter = 'all') {
                     'url' => $sectionurl,
                     'modname' => $issubsection ? 'subsection' : 'section',
                     'icon' => new moodle_url('/pix/i/section.png'),
-                    'match' => 'title',
+                    'match' => get_string('title', 'mod_coursesearch'),
                     'snippet' => coursesearch_extract_snippet($section->name, $query),
                     'section_number' => $section->section,
                     'section_name' => $section->name,
@@ -183,7 +183,7 @@ function coursesearch_perform_search($query, $course, $filter = 'all') {
                     'url' => $sectionurl,
                     'modname' => $issubsection ? 'subsection' : 'section',
                     'icon' => new moodle_url('/pix/i/section.png'),
-                    'match' => 'description or content',
+                    'match' => get_string('matchdescriptionorcontent', 'mod_coursesearch'),
                     'snippet' => coursesearch_extract_snippet($section->summary, $query),
                     'section_number' => $section->section,
                     'section_name' => $sectionname,
@@ -210,7 +210,7 @@ function coursesearch_perform_search($query, $course, $filter = 'all') {
                     'url' => $sectionurl,
                     'modname' => $issubsection ? 'subsection' : 'section',
                     'icon' => new moodle_url('/pix/i/section.png'),
-                    'match' => 'title',
+                    'match' => get_string('title', 'mod_coursesearch'),
                     'snippet' => $sectionname,
                     'section_number' => $section->section,
                     'section_name' => $sectionname,
@@ -294,7 +294,7 @@ function coursesearch_perform_search($query, $course, $filter = 'all') {
                 'url' => $moduleurl,
                 'modname' => $mod->modname,
                 'icon' => $mod->get_icon_url(),
-                'match' => 'title',
+                'match' => get_string('title', 'mod_coursesearch'),
                 'snippet' => $mod->name,
                 'cmid' => $mod->id,
                 'section_number' => $sectioninfo['section_number'],
@@ -361,7 +361,7 @@ function coursesearch_perform_search($query, $course, $filter = 'all') {
                     'url' => $moduleurl,
                     'modname' => $mod->modname,
                     'icon' => $mod->get_icon_url(),
-                    'match' => 'description or content',
+                    'match' => get_string('matchdescriptionorcontent', 'mod_coursesearch'),
                     'snippet' => $snippet,
                     'cmid' => $mod->id,
                     'section_number' => $sectioninfo['section_number'],
@@ -449,11 +449,14 @@ function coursesearch_perform_search($query, $course, $filter = 'all') {
 
         foreach ($results as $result) {
             // Filter by match type.
-            if ($filter == 'title' && $result['match'] == 'title') {
+            if ($filter == 'title' && $result['match'] == get_string('title', 'mod_coursesearch')) {
                 $filteredresults[] = $result;
-            } else if ($filter == 'content' && $result['match'] == 'content') {
+            } else if ($filter == 'content' && $result['match'] == get_string('content', 'mod_coursesearch')) {
                 $filteredresults[] = $result;
-            } else if ($filter == 'description' && $result['match'] == 'description or content') {
+            } else if (
+                    $filter == 'description' &&
+                    $result['match'] == get_string('matchdescriptionorcontent', 'mod_coursesearch')
+            ) {
                 $filteredresults[] = $result;
             } else if ($filter == 'sections' && $result['modname'] == 'section') {
                 $filteredresults[] = $result;
@@ -480,7 +483,7 @@ function coursesearch_perform_search($query, $course, $filter = 'all') {
 
     // Fix the issue with search results that have 'match' set to 'title' by ensuring they all have valid URLs.
     foreach ($results as &$result) {
-        if ($result['match'] == 'title' && empty($result['url'])) {
+        if ($result['match'] == get_string('title', 'mod_coursesearch') && empty($result['url'])) {
             $result['url'] = new moodle_url('/course/view.php', ['id' => $course->id]);
         }
     }
@@ -630,7 +633,7 @@ function coursesearch_search_page($mod, $query) {
             'url' => $pageurl,
             'modname' => $mod->modname,
             'icon' => $mod->get_icon_url(),
-            'match' => 'content',
+            'match' => get_string('content', 'mod_coursesearch'),
             'snippet' => $snippet,
             'cmid' => $mod->id,
         ];
@@ -666,7 +669,7 @@ function coursesearch_search_book($mod, $query, $filter) {
                 'url' => $chapterurl,
                 'modname' => $mod->modname,
                 'icon' => $mod->get_icon_url(),
-                'match' => 'title',
+                'match' => get_string('title', 'mod_coursesearch'),
                 'snippet' => $chapter->title,
                 'cmid' => $mod->id,
             ];
@@ -686,7 +689,7 @@ function coursesearch_search_book($mod, $query, $filter) {
                 'url' => $chapterurl,
                 'modname' => $mod->modname,
                 'icon' => $mod->get_icon_url(),
-                'match' => 'content',
+                'match' => get_string('content', 'mod_coursesearch'),
                 'snippet' => $snippet,
                 'cmid' => $mod->id,
             ];
@@ -740,7 +743,7 @@ function coursesearch_search_label($mod, $query, $course) {
                 'url' => $moduleurl,
                 'modname' => $mod->modname,
                 'icon' => $mod->get_icon_url(),
-                'match' => 'content',
+                'match' => get_string('content', 'mod_coursesearch'),
                 'snippet' => $snippet,
                 'cmid' => $mod->id,
             ];
@@ -829,7 +832,7 @@ function coursesearch_search_all_labels_direct($query, $course, $sections, $modi
                 'url' => $moduleurl,
                 'modname' => 'label',
                 'icon' => $iconurl,
-                'match' => 'content',
+                'match' => get_string('content', 'mod_coursesearch'),
                 'snippet' => $snippet,
                 'cmid' => $labelmod->cmid,
                 'section_number' => $sectioninfo['section_number'],
@@ -868,7 +871,7 @@ function coursesearch_search_lesson($mod, $query) {
                 'url' => $pageurl,
                 'modname' => $mod->modname,
                 'icon' => $mod->get_icon_url(),
-                'match' => 'content',
+                'match' => get_string('content', 'mod_coursesearch'),
                 'snippet' => $snippet,
                 'cmid' => $mod->id,
             ];
@@ -963,7 +966,7 @@ function coursesearch_search_forum($mod, $query, $filter) {
                     'url' => $discussionurl,
                     'modname' => $mod->modname,
                     'icon' => $mod->get_icon_url(),
-                    'match' => 'title',
+                    'match' => get_string('title', 'mod_coursesearch'),
                     'snippet' => $discussion->name,
                     'forum_name' => $forumname,
                     'cmid' => $mod->id,
@@ -1004,7 +1007,7 @@ function coursesearch_search_forum($mod, $query, $filter) {
                     'url' => $posturl,
                     'modname' => $mod->modname,
                     'icon' => $mod->get_icon_url(),
-                    'match' => 'title',
+                    'match' => get_string('title', 'mod_coursesearch'),
                     'snippet' => $post->subject,
                     'forum_name' => $forumname,
                     'cmid' => $mod->id,
@@ -1027,7 +1030,7 @@ function coursesearch_search_forum($mod, $query, $filter) {
                     'url' => $posturl,
                     'modname' => $mod->modname,
                     'icon' => $mod->get_icon_url(),
-                    'match' => 'content',
+                    'match' => get_string('content', 'mod_coursesearch'),
                     'snippet' => $snippet,
                     'forum_name' => $forumname,
                     'cmid' => $mod->id,
@@ -1072,7 +1075,7 @@ function coursesearch_search_folder($mod, $query) {
                 'url' => $fileurl,
                 'modname' => 'folder',
                 'icon' => $mod->get_icon_url(),
-                'match' => 'title',
+                'match' => get_string('title', 'mod_coursesearch'),
                 'snippet' => $filename,
                 'cmid' => $mod->id,
             ];
@@ -1118,7 +1121,7 @@ function coursesearch_search_wiki($mod, $query, $filter) {
                 'url' => $pageurl,
                 'modname' => $mod->modname,
                 'icon' => $mod->get_icon_url(),
-                'match' => 'title',
+                'match' => get_string('title', 'mod_coursesearch'),
                 'snippet' => $wikipage->title,
                 'cmid' => $mod->id,
             ];
@@ -1141,7 +1144,7 @@ function coursesearch_search_wiki($mod, $query, $filter) {
                 'url' => $pageurl,
                 'modname' => $mod->modname,
                 'icon' => $mod->get_icon_url(),
-                'match' => 'content',
+                'match' => get_string('content', 'mod_coursesearch'),
                 'snippet' => $snippet,
                 'cmid' => $mod->id,
             ];
@@ -1181,7 +1184,7 @@ function coursesearch_search_glossary($mod, $query, $filter) {
                     'url' => $entryurl,
                     'modname' => $mod->modname,
                     'icon' => $mod->get_icon_url(),
-                    'match' => 'title',
+                    'match' => get_string('title', 'mod_coursesearch'),
                     'snippet' => $entry->concept,
                     'cmid' => $mod->id,
                 ];
@@ -1204,7 +1207,7 @@ function coursesearch_search_glossary($mod, $query, $filter) {
                     'url' => $entryurl,
                     'modname' => $mod->modname,
                     'icon' => $mod->get_icon_url(),
-                    'match' => 'content',
+                    'match' => get_string('content', 'mod_coursesearch'),
                     'snippet' => $snippet,
                     'cmid' => $mod->id,
                 ];
@@ -1297,7 +1300,7 @@ function coursesearch_search_database($mod, $query) {
                 'url' => $recordurl,
                 'modname' => $mod->modname,
                 'icon' => $mod->get_icon_url(),
-                'match' => 'content',
+                'match' => get_string('content', 'mod_coursesearch'),
                 'snippet' => $snippet,
                 'cmid' => $mod->id,
             ];
@@ -1335,7 +1338,7 @@ function coursesearch_search_hvp($mod, $query) {
                 'url' => $hvpurl,
                 'modname' => $mod->modname,
                 'icon' => $mod->get_icon_url(),
-                'match' => 'content',
+                'match' => get_string('content', 'mod_coursesearch'),
                 'snippet' => $snippet,
                 'cmid' => $mod->id,
             ];
@@ -1380,7 +1383,7 @@ function coursesearch_search_h5pactivity($mod, $query) {
                 'url' => $h5purl,
                 'modname' => $mod->modname,
                 'icon' => $mod->get_icon_url(),
-                'match' => 'content',
+                'match' => get_string('content', 'mod_coursesearch'),
                 'snippet' => $snippet,
                 'cmid' => $mod->id,
             ];
@@ -1451,7 +1454,7 @@ function coursesearch_search_course_index($query, $course, $results, $sections =
                     'url' => $cm->url,
                     'modname' => $cm->modname,
                     'icon' => $cm->get_icon_url(),
-                    'match' => 'title',
+                    'match' => get_string('title', 'mod_coursesearch'),
                     'snippet' => $cm->name,
                     'cmid' => $cm->id,
                     'section_number' => $sectioninfo['section_number'],

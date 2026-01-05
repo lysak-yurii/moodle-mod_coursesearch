@@ -57,9 +57,10 @@ $string['searchresultscount'] = '{$a->count} results found for "{$a->query}"';
 $string['noresults'] = 'No results found for "{$a}"';
 $string['inforum'] = 'In forum: {$a}';
 $string['matchedin'] = 'Matched in {$a}';
-$string['title'] = 'Title';
-$string['content'] = 'Content';
-$string['description'] = 'Description';
+$string['title'] = 'title';
+$string['content'] = 'content';
+$string['description'] = 'description';
+$string['matchdescriptionorcontent'] = 'description or content';
 $string['intro'] = 'introduction';
 $string['eventcoursesearched'] = 'Course searched';
 

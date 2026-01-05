@@ -62,6 +62,7 @@ $string['matchedin'] = 'Gefunden in {$a}';
 $string['title'] = 'Titel';
 $string['content'] = 'Inhalt';
 $string['description'] = 'Beschreibung';
+$string['matchdescriptionorcontent'] = 'Beschreibung oder Inhalt';
 $string['intro'] = 'Einleitung';
 $string['eventcoursesearched'] = 'Kurs durchsucht';
 
