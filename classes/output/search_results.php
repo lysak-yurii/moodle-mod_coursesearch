@@ -47,6 +47,9 @@ class search_results implements renderable, templatable {
     /** @var moodle_url Base URL for pagination */
     protected $baseurl;
 
+    /** @var bool Whether results should be grouped by section */
+    protected $grouped;
+
     /** @var int Default results per page */
     const DEFAULT_PERPAGE = 10;
 
@@ -58,13 +61,15 @@ class search_results implements renderable, templatable {
      * @param int $page Current page number (0-indexed)
      * @param int $perpage Results per page
      * @param moodle_url|null $baseurl Base URL for pagination links
+     * @param bool $grouped Whether to group results by section (default true)
      */
     public function __construct(
         string $query,
         array $results = [],
         int $page = 0,
         int $perpage = self::DEFAULT_PERPAGE,
-        ?moodle_url $baseurl = null
+        ?moodle_url $baseurl = null,
+        bool $grouped = true
     ) {
         $this->query = $query;
         $this->results = $results;
@@ -72,6 +77,7 @@ class search_results implements renderable, templatable {
         $this->page = max(0, $page);
         $this->perpage = max(1, $perpage);
         $this->baseurl = $baseurl;
+        $this->grouped = $grouped;
     }
 
     /**
@@ -463,56 +469,93 @@ class search_results implements renderable, templatable {
             }
         }
 
-        // Deduplicate results before grouping.
+        // Deduplicate results.
         $exportedresults = $this->deduplicate_results($exportedresults);
 
         // Count total individual results (for user display).
         $totalresultcount = count($exportedresults);
-
-        // Group ALL results first (before pagination).
-        // This ensures subsection matches and their module results stay together.
-        $allgroupedresults = $this->group_results_by_section($exportedresults);
-
-        // Count total groups for pagination.
-        $totalgroupcount = count($allgroupedresults);
-
-        // Paginate at group level (not individual results).
-        $offset = $this->page * $this->perpage;
-        $pagedgroups = array_slice($allgroupedresults, $offset, $this->perpage);
-
-        // Get pagination data (use group count for pagination).
-        $pagination = $this->get_pagination_data($totalgroupcount);
-
-        // Calculate displayed range (now refers to groups/sections).
-        $startgroup = min($offset + 1, $totalgroupcount);
-        $endgroup = min($offset + $this->perpage, $totalgroupcount);
 
         // Prepare count object for language string.
         $countobj = new \stdClass();
         $countobj->count = $totalresultcount;
         $countobj->query = s($this->query);
 
-        // Prepare range object for language string (sections/groups range).
-        $rangeobj = new \stdClass();
-        $rangeobj->start = $startgroup;
-        $rangeobj->end = $endgroup;
-        $rangeobj->total = $totalgroupcount;
+        if ($this->grouped) {
+            // Grouped mode: group by section and paginate groups.
+            // Group ALL results first (before pagination).
+            // This ensures subsection matches and their module results stay together.
+            $allgroupedresults = $this->group_results_by_section($exportedresults);
 
-        return [
-            'query' => s($this->query),
-            'hasresults' => ($totalresultcount > 0),
-            'noresults' => ($totalresultcount === 0),
-            'groups' => $pagedgroups,
-            'hasgroups' => !empty($pagedgroups),
-            'count' => $totalresultcount,
-            'groupcount' => $totalgroupcount,
-            'resultscount' => get_string('searchresultscount', 'coursesearch', $countobj),
-            'resultsrange' => get_string('searchresultsrange', 'coursesearch', $rangeobj),
-            'noresultsmessage' => get_string('noresults', 'coursesearch', s($this->query)),
-            'heading' => get_string('searchresultsfor', 'coursesearch', s($this->query)),
-            'pagination' => $pagination,
-            'haspagination' => $pagination['haspagination'] ?? false,
-            'showingrange' => ($totalgroupcount > $this->perpage),
-        ];
+            // Count total groups for pagination.
+            $totalgroupcount = count($allgroupedresults);
+
+            // Paginate at group level (not individual results).
+            $offset = $this->page * $this->perpage;
+            $pagedgroups = array_slice($allgroupedresults, $offset, $this->perpage);
+
+            // Get pagination data (use group count for pagination).
+            $pagination = $this->get_pagination_data($totalgroupcount);
+
+            // Calculate displayed range (now refers to groups/sections).
+            $startgroup = min($offset + 1, $totalgroupcount);
+            $endgroup = min($offset + $this->perpage, $totalgroupcount);
+
+            // Prepare range object for language string (sections/groups range).
+            $rangeobj = new \stdClass();
+            $rangeobj->start = $startgroup;
+            $rangeobj->end = $endgroup;
+            $rangeobj->total = $totalgroupcount;
+
+            return [
+                'query' => s($this->query),
+                'hasresults' => ($totalresultcount > 0),
+                'noresults' => ($totalresultcount === 0),
+                'grouped' => true,
+                'groups' => $pagedgroups,
+                'hasgroups' => !empty($pagedgroups),
+                'count' => $totalresultcount,
+                'groupcount' => $totalgroupcount,
+                'resultscount' => get_string('searchresultscount', 'coursesearch', $countobj),
+                'resultsrange' => get_string('searchresultsrange', 'coursesearch', $rangeobj),
+                'noresultsmessage' => get_string('noresults', 'coursesearch', s($this->query)),
+                'heading' => get_string('searchresultsfor', 'coursesearch', s($this->query)),
+                'pagination' => $pagination,
+                'haspagination' => $pagination['haspagination'] ?? false,
+                'showingrange' => ($totalgroupcount > $this->perpage),
+            ];
+        } else {
+            // Ungrouped mode: paginate individual results.
+            $offset = $this->page * $this->perpage;
+            $pagedresults = array_slice($exportedresults, $offset, $this->perpage);
+
+            // Get pagination data (use result count for pagination).
+            $pagination = $this->get_pagination_data($totalresultcount);
+
+            // Calculate displayed range (refers to individual results).
+            $startresult = min($offset + 1, $totalresultcount);
+            $endresult = min($offset + $this->perpage, $totalresultcount);
+
+            // Prepare range object for language string (results range).
+            $rangeobj = new \stdClass();
+            $rangeobj->start = $startresult;
+            $rangeobj->end = $endresult;
+            $rangeobj->total = $totalresultcount;
+
+            return [
+                'query' => s($this->query),
+                'hasresults' => ($totalresultcount > 0),
+                'noresults' => ($totalresultcount === 0),
+                'grouped' => false,
+                'results' => $pagedresults,
+                'count' => $totalresultcount,
+                'resultscount' => get_string('searchresultscount', 'coursesearch', $countobj),
+                'resultsrange' => get_string('searchresultsrange_ungrouped', 'coursesearch', $rangeobj),
+                'noresultsmessage' => get_string('noresults', 'coursesearch', s($this->query)),
+                'heading' => get_string('searchresultsfor', 'coursesearch', s($this->query)),
+                'pagination' => $pagination,
+                'haspagination' => $pagination['haspagination'] ?? false,
+                'showingrange' => ($totalresultcount > $this->perpage),
+            ];
+        }
     }
 }

@@ -38,3 +38,14 @@ yarn.lock
 config.php
 *.local
 
+# CI and testing
+ci/
+moodle/
+moodledata/
+# Local CI helper scripts directory (CI runs via GitHub Actions)
+tests/
+# Local PHP_CodeSniffer configuration (excludes tests directory for local use)
+phpcs.xml
+# Local moodle-plugin-ci configuration (for local testing only)
+.moodle-plugin-ci.yml
+

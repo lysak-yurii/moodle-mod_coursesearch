@@ -14,6 +14,7 @@
         <FIELD NAME="searchscope" TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="all" SEQUENCE="false" COMMENT="The scope of search (course, activities, resources, forums, all)"/>
         <FIELD NAME="placeholder" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false" COMMENT="Placeholder text for the search input"/>
         <FIELD NAME="embedded" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="1" SEQUENCE="false" COMMENT="Whether the search bar should be embedded in the course page"/>
+        <FIELD NAME="grouped" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="1" SEQUENCE="false" COMMENT="Whether search results should be grouped by section"/>
         <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Timestamp of when the instance was last modified"/>
       </FIELDS>
       <KEYS>

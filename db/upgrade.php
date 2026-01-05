@@ -86,5 +86,19 @@ function xmldb_coursesearch_upgrade($oldversion) {
         upgrade_mod_savepoint(true, 2025121001, 'coursesearch');
     }
 
+    // Add the grouped field to existing installations.
+    if ($oldversion < 2025122301) {
+        $table = new xmldb_table('coursesearch');
+        $field = new xmldb_field('grouped', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '1', 'embedded');
+
+        // Add the field if it doesn't exist.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Update the plugin version.
+        upgrade_mod_savepoint(true, 2025122301, 'coursesearch');
+    }
+
     return true;
 }

@@ -25,10 +25,8 @@
 defined('MOODLE_INTERNAL') || die();
 
 $string['modulename'] = 'Kurssuche';
-$string['modulenameplural'] = 'Kurssuchen';
 $string['modulename_help'] = 'Das Kurssuche-Modul ermöglicht es Lehrenden, eine Suchfunktion in ihren Kurs einzubinden, damit Lernende leicht Inhalte im Kurs finden können.';
-$string['coursesearch:addinstance'] = 'Eine neue Kurssuche hinzufügen';
-$string['coursesearch:view'] = 'Kurssuche anzeigen';
+$string['modulenameplural'] = 'Kurssuchen';
 $string['pluginadministration'] = 'Kurssuche-Administration';
 $string['pluginname'] = 'Kurssuche';
 
@@ -50,6 +48,9 @@ $string['displayoptions'] = 'Anzeigeoptionen';
 $string['embedded'] = 'In Kursseite einbetten';
 $string['embedded_help'] = 'Wenn aktiviert, wird die Suchleiste direkt in der Kursseite eingebettet, anstatt dass Benutzer auf eine separate Seite klicken müssen.';
 $string['embeddedinfo'] = 'Suchleiste direkt auf der Kursseite anzeigen';
+$string['grouped'] = 'Ergebnisse nach Abschnitten gruppieren';
+$string['grouped_help'] = 'Wenn aktiviert, werden Suchergebnisse nach Kursabschnitten organisiert. Wenn deaktiviert, werden Ergebnisse als flache Liste angezeigt.';
+$string['groupedinfo'] = 'Suchergebnisse nach Kursabschnitten organisieren';
 
 // View page strings.
 $string['search'] = 'Suchen';
@@ -85,6 +86,7 @@ $string['pagination'] = 'Suchergebnis-Paginierung';
 $string['previous'] = 'Zurück';
 $string['next'] = 'Weiter';
 $string['searchresultsrange'] = 'Zeige Abschnitte {$a->start}-{$a->end} von {$a->total}';
+$string['searchresultsrange_ungrouped'] = 'Zeige Ergebnisse {$a->start}-{$a->end} von {$a->total}';
 
 // Section grouping strings.
 $string['sectionmatch'] = 'Abschnitts-Treffer';

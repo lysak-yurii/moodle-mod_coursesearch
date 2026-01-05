@@ -218,9 +218,12 @@ if (!empty($query)) {
         'filter' => $filter,
     ]);
 
+    // Get grouping setting (default to 1 if not set for backward compatibility).
+    $grouped = isset($coursesearch->grouped) ? (bool)$coursesearch->grouped : true;
+
     // Create and render search results with pagination.
     $perpage = get_config('mod_coursesearch', 'resultsperpage') ?: 10;
-    $searchresults = new search_results($query, $resultobjects, $page, $perpage, $baseurl);
+    $searchresults = new search_results($query, $resultobjects, $page, $perpage, $baseurl, $grouped);
     echo $OUTPUT->render($searchresults);
 
     // Load the resultlinks AMD module to handle click interception if there are results.

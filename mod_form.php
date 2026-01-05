@@ -68,6 +68,13 @@ class mod_coursesearch_mod_form extends moodleform_mod {
         $mform->setDefault('embedded', 1);
         $mform->addHelpButton('embedded', 'embedded', 'coursesearch');
 
+        // Grouping option.
+        $groupedlabel = get_string('grouped', 'coursesearch');
+        $groupedinfo = get_string('groupedinfo', 'coursesearch');
+        $mform->addElement('advcheckbox', 'grouped', $groupedlabel, $groupedinfo);
+        $mform->setDefault('grouped', 1);
+        $mform->addHelpButton('grouped', 'grouped', 'coursesearch');
+
         // Add standard elements.
         $this->standard_coursemodule_elements();
 

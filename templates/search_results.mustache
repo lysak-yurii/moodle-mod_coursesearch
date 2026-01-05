@@ -108,6 +108,7 @@
         {{/showingrange}}
     </div>
 
+    {{#grouped}}
     <div class="coursesearch-results-grouped">
         {{#groups}}
         <div class="coursesearch-section-group {{#section_matched}}coursesearch-section-matched{{/section_matched}}" data-section="{{section_number}}">
@@ -186,6 +187,15 @@
         </div>
         {{/groups}}
     </div>
+    {{/grouped}}
+
+    {{^grouped}}
+    <div class="coursesearch-results">
+        {{#results}}
+        {{> mod_coursesearch/search_result }}
+        {{/results}}
+    </div>
+    {{/grouped}}
 
     {{#haspagination}}
     <nav class="coursesearch-pagination" aria-label="{{#str}} pagination, coursesearch {{/str}}">

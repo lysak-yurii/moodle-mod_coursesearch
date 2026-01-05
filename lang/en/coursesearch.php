@@ -25,10 +25,10 @@
 defined('MOODLE_INTERNAL') || die();
 
 $string['modulename'] = 'Course Search';
-$string['modulenameplural'] = 'Course Searches';
 $string['modulename_help'] = 'The course search module enables a teacher to add a search bar to a course that allows students to search through course content.';
-$string['pluginname'] = 'Course Search';
+$string['modulenameplural'] = 'Course Searches';
 $string['pluginadministration'] = 'Course Search administration';
+$string['pluginname'] = 'Course Search';
 
 // Form strings.
 $string['coursesearchsettings'] = 'Course Search settings';
@@ -48,6 +48,9 @@ $string['displayoptions'] = 'Display options';
 $string['embedded'] = 'Embed in course page';
 $string['embedded_help'] = 'When enabled, the search bar will be embedded directly in the course page instead of requiring users to click through to a separate page.';
 $string['embeddedinfo'] = 'Display the search bar directly on the course page';
+$string['grouped'] = 'Group results by section';
+$string['grouped_help'] = 'When enabled, search results will be organized by course sections. When disabled, results will be displayed as a flat list.';
+$string['groupedinfo'] = 'Organize search results by course sections';
 
 // View page strings.
 $string['search'] = 'Search';
@@ -83,6 +86,7 @@ $string['pagination'] = 'Search results pagination';
 $string['previous'] = 'Previous';
 $string['next'] = 'Next';
 $string['searchresultsrange'] = 'Showing sections {$a->start}-{$a->end} of {$a->total}';
+$string['searchresultsrange_ungrouped'] = 'Showing results {$a->start}-{$a->end} of {$a->total}';
 
 // Section grouping strings.
 $string['sectionmatch'] = 'Section match';

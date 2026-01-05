@@ -35,7 +35,7 @@ class backup_coursesearch_activity_structure_step extends backup_activity_struct
 
         // Define the root element describing the coursesearch instance.
         $coursesearch = new backup_nested_element('coursesearch', ['id'], [
-            'name', 'intro', 'introformat', 'searchscope', 'placeholder', 'timemodified']);
+            'name', 'intro', 'introformat', 'searchscope', 'placeholder', 'embedded', 'grouped', 'timemodified']);
 
         // Define sources.
         $coursesearch->set_source_table('coursesearch', ['id' => backup::VAR_ACTIVITYID]);

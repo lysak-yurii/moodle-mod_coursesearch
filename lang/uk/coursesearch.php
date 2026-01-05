@@ -25,10 +25,8 @@
 defined('MOODLE_INTERNAL') || die();
 
 $string['modulename'] = 'Пошук по курсу';
-$string['modulenameplural'] = 'Пошуки по курсах';
 $string['modulename_help'] = 'Модуль пошуку по курсу дозволяє викладачам додати панель пошуку до курсу, щоб студенти могли шукати вміст курсу.';
-$string['coursesearch:addinstance'] = 'Додати новий пошук по курсу';
-$string['coursesearch:view'] = 'Переглянути пошук по курсу';
+$string['modulenameplural'] = 'Пошуки по курсах';
 $string['pluginadministration'] = 'Адміністрування пошуку по курсу';
 $string['pluginname'] = 'Пошук по курсу';
 
@@ -85,6 +83,7 @@ $string['pagination'] = 'Сторінки результатів пошуку';
 $string['previous'] = 'Попередня';
 $string['next'] = 'Наступна';
 $string['searchresultsrange'] = 'Показано розділи {$a->start}-{$a->end} з {$a->total}';
+$string['searchresultsrange_ungrouped'] = 'Показано результати {$a->start}-{$a->end} з {$a->total}';
 
 // Section grouping strings.
 $string['sectionmatch'] = 'Збіг у розділі';
