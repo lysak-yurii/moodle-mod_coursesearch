@@ -163,9 +163,12 @@ When clicking on search results, the plugin automatically:
 
 ## Version
 
-Current version: **1.2.2** (Stable)
+Current version: **1.2.3** (Stable)
 
 ### Changelog
+
+#### Version 1.2.3 (January 2026)
+- Fixed critical bug in forum search where only the last matching post/reply was shown instead of all matching posts - Fixed SQL query to properly retrieve all forum posts by using post ID as the primary key instead of discussion ID
 
 #### Version 1.2.2 (January 2026)
 - Fixed bug where search terms matched HTML tag names (e.g., searching "group" matched `<colgroup>` tags)

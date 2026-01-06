@@ -895,8 +895,10 @@ function coursesearch_search_forum($mod, $query, $filter) {
 
     // Single JOIN query to fetch all discussions and posts at once.
     // This replaces multiple queries: one for discussions + N queries for posts.
-    $sql = "SELECT d.id as discussionid, d.name as discussionname,
-                   p.id as postid, p.parent, p.subject, p.message
+    // IMPORTANT: Use post ID as the first column so get_records_sql uses it as the key,
+    // preventing posts from the same discussion from overwriting each other.
+    $sql = "SELECT p.id as postid, d.id as discussionid, d.name as discussionname,
+                   p.parent, p.subject, p.message
             FROM {forum_discussions} d
             JOIN {forum_posts} p ON p.discussion = d.id
             WHERE d.forum = :forumid
@@ -908,7 +910,7 @@ function coursesearch_search_forum($mod, $query, $filter) {
     $postsbydiscussion = [];
     $firstposts = [];
 
-    foreach ($rows as $row) {
+    foreach ($rows as $postid => $row) {
         // Build discussion object if not seen yet.
         if (!isset($discussions[$row->discussionid])) {
             $discussions[$row->discussionid] = (object)[
@@ -918,6 +920,7 @@ function coursesearch_search_forum($mod, $query, $filter) {
         }
 
         // Build post object.
+        // Note: $postid is now the array key from get_records_sql (the post ID).
         $post = (object)[
             'id' => $row->postid,
             'parent' => $row->parent,
