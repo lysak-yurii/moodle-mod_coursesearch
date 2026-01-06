@@ -80,14 +80,15 @@ $string['resultsperpage_desc'] = 'Кількість результатів по
 
 // Pagination strings.
 $string['pagination'] = 'Сторінки результатів пошуку';
-$string['generalsection'] = 'Загальне';
 $string['previous'] = 'Попередня';
 $string['next'] = 'Наступна';
 $string['searchresultsrange'] = 'Показано розділи {$a->start}-{$a->end} з {$a->total}';
-$string['privacy:metadata'] = 'Модуль пошуку по курсу не зберігає жодних особистих даних користувачів. Він зберігає лише конфігурацію екземпляра активності, таку як назва, опис, область пошуку та параметри відображення.';
 $string['searchresultsrange_ungrouped'] = 'Показано результати {$a->start}-{$a->end} з {$a->total}';
 
 // Section grouping strings.
 $string['sectionmatch'] = 'Збіг у розділі';
-$string['subsection'] = 'Підрозділ';
 $string['subsectionmatch'] = 'Збіг у підрозділі';
+$string['generalsection'] = 'Загальне';
+
+// Privacy.
+$string['privacy:metadata'] = 'Модуль пошуку по курсу не зберігає жодних особистих даних користувачів. Він зберігає лише конфігурацію екземпляра активності, таку як назва, опис, область пошуку та параметри відображення.';

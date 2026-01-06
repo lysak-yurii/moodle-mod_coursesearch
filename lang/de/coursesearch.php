@@ -83,14 +83,15 @@ $string['resultsperpage_desc'] = 'Die Anzahl der Suchergebnisse, die pro Seite a
 
 // Pagination strings.
 $string['pagination'] = 'Suchergebnis-Paginierung';
-$string['generalsection'] = 'Allgemein';
 $string['previous'] = 'Zurück';
 $string['next'] = 'Weiter';
 $string['searchresultsrange'] = 'Zeige Abschnitte {$a->start}-{$a->end} von {$a->total}';
-$string['privacy:metadata'] = 'Das Kurssuche-Modul speichert keine persönlichen Benutzerdaten. Es speichert nur Aktivitätsinstanz-Konfigurationen wie Name, Beschreibung, Suchbereich und Anzeigeoptionen.';
 $string['searchresultsrange_ungrouped'] = 'Zeige Ergebnisse {$a->start}-{$a->end} von {$a->total}';
 
 // Section grouping strings.
 $string['sectionmatch'] = 'Abschnitts-Treffer';
-$string['subsection'] = 'Unterabschnitt';
 $string['subsectionmatch'] = 'Unterabschnitts-Treffer';
+$string['generalsection'] = 'Allgemein';
+
+// Privacy.
+$string['privacy:metadata'] = 'Das Kurssuche-Modul speichert keine persönlichen Benutzerdaten. Es speichert nur Aktivitätsinstanz-Konfigurationen wie Name, Beschreibung, Suchbereich und Anzeigeoptionen.';

@@ -8,8 +8,8 @@ A comprehensive Moodle activity module that enables teachers to add a search bar
 - **Comprehensive Search**: Searches through all course content types
 - **Search Filter**: Filter between "All content" or "Forums only" on the search page
 - **Embedded Mode**: Option to embed search bar directly in course page
-- **Results Grouping**: Search results are automatically grouped by course sections for better organization
-- **Pagination**: Large result sets are paginated for improved performance and usability
+- **Results Grouping**: Optional grouping of search results by course sections (can be enabled/disabled per activity)
+- **Pagination**: Large result sets are paginated for improved performance and usability (works for both grouped and ungrouped views)
 
 ### Search Term Highlighting
 - **Automatic Scrolling**: Automatically scrolls to matched content when clicking search results
@@ -100,6 +100,7 @@ The search covers the following content types:
    - **Name**: Display name for the search activity
    - **Description**: Optional introduction text
    - **Embedded mode**: Enable to show search form inline on course page
+   - **Group results by section**: Enable to organize results by course sections, or disable for a flat list view
 6. Save and display
 
 ### Supported Languages
@@ -114,7 +115,7 @@ The search covers the following content types:
 2. Enter search terms
 3. Select filter: "All" or "Forums only"
 4. Click **"Search"**
-5. Browse results grouped by course sections
+5. Browse results (grouped by sections if enabled, or as a flat list if disabled)
 6. Use pagination controls to navigate through multiple pages of results
 7. Click on any result to navigate to the content
 
@@ -160,9 +161,13 @@ When clicking on search results, the plugin automatically:
 
 ## Version
 
-Current version: **1.2.0** (Experimental)
+Current version: **1.2.1** (Experimental)
 
 ### Changelog
+
+#### Version 1.2.1 (January 2026)
+- Added optional grouping toggle in activity settings - teachers can now choose between grouped (by sections) or ungrouped (flat list) result display
+- Pagination now works for both grouped and ungrouped views
 
 #### Version 1.2.0 (December 2025)
 - Added search results pagination for large result sets
@@ -184,6 +189,9 @@ HNEE (Hochschule für nachhaltige Entwicklung Eberswalde)
 Enhancements (December 2025):
 - Extended highlighting support to Pages, Books, Lessons, Wiki, Forums, Glossary, and Database activities
 - Added search results pagination and grouping by sections
+
+Enhancements (January 2026):
+- Added optional grouping toggle allowing teachers to choose between grouped or flat list result display
 
 ## Support
 
