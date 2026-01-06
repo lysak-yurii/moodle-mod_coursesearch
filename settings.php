@@ -41,4 +41,12 @@ if ($ADMIN->fulltree) {
         10,
         PARAM_INT
     ));
+
+    // Excluded placeholder patterns setting.
+    $settings->add(new admin_setting_configtextarea(
+        'mod_coursesearch/excludedplaceholders',
+        get_string('excludedplaceholders', 'coursesearch'),
+        get_string('excludedplaceholders_desc', 'coursesearch'),
+        '@@[A-Z_]+@@[^\s]*'
+    ));
 }

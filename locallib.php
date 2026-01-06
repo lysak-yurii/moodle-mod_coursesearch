@@ -716,14 +716,6 @@ function coursesearch_search_label($mod, $query, $course) {
     if ($label) {
         // Use the standard relevance check which handles HTML conversion and multilang processing.
         $isrelevant = coursesearch_is_relevant($label->intro, $query);
-        // Additional fallback: also check raw HTML content (case-insensitive) in case HTML conversion missed it.
-        if (!$isrelevant && !empty($label->intro) && !empty($query)) {
-            $contentlower = mb_strtolower($label->intro, 'UTF-8');
-            $querylower = mb_strtolower(trim($query), 'UTF-8');
-            if (mb_strpos($contentlower, $querylower) !== false) {
-                $isrelevant = true;
-            }
-        }
 
         if ($isrelevant) {
             $snippet = coursesearch_extract_snippet($label->intro, $query);
@@ -780,15 +772,10 @@ function coursesearch_search_all_labels_direct($query, $course, $sections, $modi
     $labelmodules = $DB->get_records_sql($sql, ['courseid' => $course->id]);
 
     foreach ($labelmodules as $labelmod) {
-        // Simple check: does the query appear in the intro field (case-insensitive, raw HTML check).
+        // Use the standard relevance check which handles HTML conversion and multilang processing.
         $isrelevant = false;
         if (!empty($labelmod->intro)) {
-            $querylower = mb_strtolower(trim($query), 'UTF-8');
-            $introlower = mb_strtolower($labelmod->intro, 'UTF-8');
-            // Direct substring check in raw HTML - this should catch everything.
-            if (mb_strpos($introlower, $querylower) !== false) {
-                $isrelevant = true;
-            }
+            $isrelevant = coursesearch_is_relevant($labelmod->intro, $query);
         }
 
         if ($isrelevant) {
@@ -1675,6 +1662,13 @@ function coursesearch_html_to_text($html) {
                 $domtext = preg_replace('/\s+/', ' ', $domtext);
                 $domtext = trim($domtext);
 
+                // Remove configured placeholder patterns.
+                $domtext = coursesearch_filter_placeholders($domtext);
+
+                // Normalize whitespace again after removing placeholders.
+                $domtext = preg_replace('/\s+/', ' ', $domtext);
+                $domtext = trim($domtext);
+
                 return $domtext;
             }
         } catch (Exception $e) {
@@ -1726,6 +1720,63 @@ function coursesearch_html_to_text($html) {
     // Normalize whitespace.
     $text = preg_replace('/\s+/', ' ', $text);
     $text = trim($text);
+
+    // Remove configured placeholder patterns.
+    $text = coursesearch_filter_placeholders($text);
+
+    // Normalize whitespace again after removing placeholders.
+    $text = preg_replace('/\s+/', ' ', $text);
+    $text = trim($text);
+
+    return $text;
+}
+
+/**
+ * Filter out configured placeholder patterns from text
+ *
+ * This function removes internal Moodle placeholders (like @@PLUGINFILE@@) and
+ * custom patterns configured by administrators from searchable text.
+ * These placeholders are internal markers not visible to users and should
+ * not be searchable to prevent false positive matches.
+ *
+ * @param string $text The text to filter
+ * @return string The filtered text with placeholders removed
+ */
+function coursesearch_filter_placeholders($text) {
+    // Get configured patterns from admin settings.
+    $configuredpatterns = get_config('mod_coursesearch', 'excludedplaceholders');
+
+    // If no patterns configured, return text as-is.
+    if (empty($configuredpatterns)) {
+        return $text;
+    }
+
+    // Split by newlines and filter out empty lines.
+    $patterns = array_filter(
+        array_map('trim', explode("\n", $configuredpatterns)),
+        function ($line) {
+            return !empty($line);
+        }
+    );
+
+    // Apply each pattern to remove placeholders.
+    foreach ($patterns as $pattern) {
+        // Validate pattern is not empty and doesn't contain dangerous constructs.
+        // Basic safety check: ensure it's a reasonable regex pattern.
+        if (!empty($pattern) && strlen($pattern) < 500) {
+            try {
+                // Apply pattern with case-insensitive flag.
+                $text = preg_replace('/' . $pattern . '/i', '', $text);
+            } catch (Exception $e) {
+                // If pattern is invalid, log and skip it.
+                debugging('Invalid placeholder pattern in coursesearch settings: ' . $pattern, DEBUG_DEVELOPER);
+            } catch (Error $e) {
+                // Catch PHP 7+ Error exceptions as well.
+                $errormsg = 'Invalid placeholder pattern in coursesearch settings: ' . $pattern . ' - ' . $e->getMessage();
+                debugging($errormsg, DEBUG_DEVELOPER);
+            }
+        }
+    }
 
     return $text;
 }

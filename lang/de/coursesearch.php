@@ -78,11 +78,32 @@ $string['nocourseinstances'] = 'Es gibt keine Kurssuche-Instanzen in diesem Kurs
 // Admin settings.
 $string['enablehighlight'] = 'Scrollen und Hervorheben aktivieren';
 $string['enablehighlight_desc'] = 'Wenn aktiviert, wird beim Klicken auf Suchergebnisse automatisch zum gefundenen Text gescrollt und dieser auf der Kursseite hervorgehoben.';
+$string['excludedplaceholders'] = 'Ausgeschlossene Platzhalter-Muster';
+$string['excludedplaceholders_desc'] = 'Reguläre Ausdrucksmuster (eine pro Zeile) für interne Platzhalter, die von der Suche ausgeschlossen werden sollen. Dies sind interne Markierungen, die für Benutzer nicht sichtbar sind und nicht durchsuchbar sein sollten.
+
+<strong>Regex-Symbol-Leitfaden:</strong>
+<ul>
+<li><code>@@</code> - Entspricht wörtlichen doppelten @-Zeichen</li>
+<li><code>[A-Z_]</code> - Entspricht jedem Großbuchstaben oder Unterstrich</li>
+<li><code>+</code> - Entspricht einem oder mehreren des vorhergehenden Zeichens/Gruppe</li>
+<li><code>[^\s]</code> - Entspricht jedem Zeichen außer Leerzeichen</li>
+<li><code>*</code> - Entspricht null oder mehreren des vorhergehenden Zeichens/Gruppe</li>
+<li><code>\s</code> - Entspricht jedem Leerzeichen (Leerzeichen, Tabulator, Zeilenumbruch)</li>
+<li><code>^</code> - Innerhalb von Klammern [^...] bedeutet "nicht" (Negation)</li>
+</ul>
+
+<strong>Beispiele:</strong>
+<ul>
+<li><code>@@[A-Z_]+@@[^\s]*</code> - Schließt jedes @@PLATZHALTER@@-Muster aus (allgemeines Muster, empfohlen)</li>
+<li><code>\{\{[^}]+\}\}</code> - Schließt Template-Variablen wie {{variablen_name}} aus (geschweifte Klammern müssen mit Backslash maskiert werden)</li>
+</ul>
+
+<strong>Hinweis:</strong> Muster sind nicht zwischen Groß- und Kleinschreibung unterscheidend. Ungültige Muster werden mit einer Debug-Nachricht übersprungen. Wenn Sie alle Muster entfernen, wird keine Platzhalter-Filterung angewendet.';
+$string['pagination'] = 'Suchergebnis-Paginierung';
 $string['resultsperpage'] = 'Ergebnisse pro Seite';
 $string['resultsperpage_desc'] = 'Die Anzahl der Suchergebnisse, die pro Seite angezeigt werden.';
 
 // Pagination strings.
-$string['pagination'] = 'Suchergebnis-Paginierung';
 $string['previous'] = 'Zurück';
 $string['next'] = 'Weiter';
 $string['searchresultsrange'] = 'Zeige Abschnitte {$a->start}-{$a->end} von {$a->total}';

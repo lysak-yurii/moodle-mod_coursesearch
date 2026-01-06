@@ -20,6 +20,8 @@ A comprehensive Moodle activity module that enables teachers to add a search bar
 
 ### Admin Settings
 - **Enable/Disable Highlighting**: Global setting to turn scrolling and highlighting on or off (Site Administration > Plugins > Activity modules > Course Search)
+- **Results Per Page**: Configure the number of search results displayed per page
+- **Excluded Placeholder Patterns**: Configure regex patterns to exclude internal Moodle placeholders (like @@PLUGINFILE@@) from search results to prevent false matches
 
 ## Screenshots
 
@@ -161,9 +163,15 @@ When clicking on search results, the plugin automatically:
 
 ## Version
 
-Current version: **1.2.1** (Experimental)
+Current version: **1.2.2** (Stable)
 
 ### Changelog
+
+#### Version 1.2.2 (January 2026)
+- Fixed bug where search terms matched HTML tag names (e.g., searching "group" matched `<colgroup>` tags)
+- Fixed bug where internal Moodle placeholders (like @@PLUGINFILE@@) caused false positive search matches
+- Added configurable placeholder filtering in admin settings - administrators can now define regex patterns to exclude internal placeholders from search
+- Improved search accuracy by filtering out non-visible HTML markup and internal system strings
 
 #### Version 1.2.1 (January 2026)
 - Added optional grouping toggle in activity settings - teachers can now choose between grouped (by sections) or ungrouped (flat list) result display
@@ -192,6 +200,8 @@ Enhancements (December 2025):
 
 Enhancements (January 2026):
 - Added optional grouping toggle allowing teachers to choose between grouped or flat list result display
+- Fixed HTML tag and placeholder matching bugs, improving search accuracy
+- Added configurable placeholder filtering for administrators
 
 ## Support
 

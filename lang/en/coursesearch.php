@@ -78,11 +78,32 @@ $string['nocourseinstances'] = 'There are no course search instances in this cou
 // Admin settings.
 $string['enablehighlight'] = 'Enable scrolling and highlighting';
 $string['enablehighlight_desc'] = 'When enabled, clicking on search results will automatically scroll to and highlight the matched text on the course page.';
+$string['excludedplaceholders'] = 'Excluded placeholder patterns';
+$string['excludedplaceholders_desc'] = 'Regular expression patterns (one per line) for internal placeholders that should be excluded from search. These are internal markers not visible to users and should not be searchable.
+
+<strong>Regex Symbol Guide:</strong>
+<ul>
+<li><code>@@</code> - Matches literal double at signs</li>
+<li><code>[A-Z_]</code> - Matches any uppercase letter or underscore</li>
+<li><code>+</code> - Matches one or more of the preceding character/group</li>
+<li><code>[^\s]</code> - Matches any character except whitespace</li>
+<li><code>*</code> - Matches zero or more of the preceding character/group</li>
+<li><code>\s</code> - Matches any whitespace character (space, tab, newline)</li>
+<li><code>^</code> - Inside brackets [^...], means "not" (negation)</li>
+</ul>
+
+<strong>Examples:</strong>
+<ul>
+<li><code>@@[A-Z_]+@@[^\s]*</code> - Excludes any @@PLACEHOLDER@@ pattern (general pattern, recommended)</li>
+<li><code>\{\{[^}]+\}\}</code> - Excludes template variables like {{variable_name}} (braces must be escaped with backslash)</li>
+</ul>
+
+<strong>Note:</strong> Patterns are case-insensitive. Invalid patterns will be skipped with a debug message. If you remove all patterns, no placeholder filtering will be applied.';
+$string['pagination'] = 'Search results pagination';
 $string['resultsperpage'] = 'Results per page';
 $string['resultsperpage_desc'] = 'The number of search results to display per page.';
 
 // Pagination strings.
-$string['pagination'] = 'Search results pagination';
 $string['previous'] = 'Previous';
 $string['next'] = 'Next';
 $string['searchresultsrange'] = 'Showing sections {$a->start}-{$a->end} of {$a->total}';
