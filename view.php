@@ -134,10 +134,16 @@ if (!empty($query)) {
         $resultname = strip_tags($resultname);
 
         // For sections, remove 'Section: ' prefix from the displayed name to avoid duplication.
-        if ($result['modname'] === 'section') {
-            $sectionprefix = get_string('section') . ': ';
-            if (strpos($resultname, $sectionprefix) === 0) {
-                $resultname = substr($resultname, strlen($sectionprefix));
+        // Use icon instead of text prefix to prevent overlap with title.
+        if ($result['modname'] === 'section' || $result['modname'] === 'subsection') {
+            $sectionword = get_string('section');
+            // Remove various patterns: "Section: ", "Section ", etc.
+            $patterns = [
+                '/^' . preg_quote($sectionword, '/') . ':\s*/i',
+                '/^' . preg_quote($sectionword, '/') . '\s+/i',
+            ];
+            foreach ($patterns as $pattern) {
+                $resultname = preg_replace($pattern, '', $resultname);
             }
         }
 

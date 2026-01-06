@@ -319,6 +319,7 @@ class search_results implements renderable, templatable {
                         'results' => $subsection['module_results'],
                         'resultcount' => count($subsection['module_results']),
                         'hasresults' => !empty($subsection['module_results']),
+                        'section_icon_title' => get_string('subsection', 'coursesearch'),
                     ];
                 }
             }
@@ -340,6 +341,7 @@ class search_results implements renderable, templatable {
                 'hasresults' => !empty($group['module_results']),
                 'subsections' => $subsections,
                 'hassubsections' => !empty($subsections),
+                'section_icon_title' => get_string('section'),
             ];
         }
 

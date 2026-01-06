@@ -17,8 +17,8 @@
 {{!
     @template mod_coursesearch/search_result
 
-    Single search result item template (module/activity results only).
-    Section results are handled in the group header, not here.
+    Single search result item template (for both module/activity results and sections in ungrouped mode).
+    In grouped mode, section results are handled in the group header, not here.
 
     Context variables required for this template:
     * name - The result name/title
@@ -52,9 +52,19 @@
 }}
 <div class="coursesearch-result">
     <div class="coursesearch-result-icon">
+        {{#issection}}
+        {{#issubsection}}
+        <i class="icon fa fa-folder fa-fw" aria-hidden="true" title="{{iconalt}}"></i>
+        {{/issubsection}}
+        {{^issubsection}}
+        <i class="icon fa fa-folder-o fa-fw" aria-hidden="true" title="{{iconalt}}"></i>
+        {{/issubsection}}
+        {{/issection}}
+        {{^issection}}
         {{#iconurl}}
         <img src="{{iconurl}}" alt="{{iconalt}}" class="icon">
         {{/iconurl}}
+        {{/issection}}
     </div>
     <div class="coursesearch-result-content">
         <div class="coursesearch-result-title">

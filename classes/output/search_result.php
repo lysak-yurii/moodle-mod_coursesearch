@@ -142,7 +142,9 @@ class search_result implements renderable, templatable {
             'url' => $this->url->out(false),
             'modname' => $this->modname,
             'iconurl' => $iconurlstr,
-            'iconalt' => $this->issection ? get_string('section') : $this->modname,
+            'iconalt' => $this->issection
+                ? ($this->issubsection ? get_string('subsection', 'coursesearch') : get_string('section'))
+                : $this->modname,
             'snippet' => $this->snippet,
             'hassnippet' => $showsnippet,
             'matchtype' => $this->matchtype,

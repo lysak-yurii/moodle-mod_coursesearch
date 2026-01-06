@@ -83,15 +83,14 @@ $string['resultsperpage_desc'] = 'The number of search results to display per pa
 
 // Pagination strings.
 $string['pagination'] = 'Search results pagination';
+$string['generalsection'] = 'General';
 $string['previous'] = 'Previous';
 $string['next'] = 'Next';
 $string['searchresultsrange'] = 'Showing sections {$a->start}-{$a->end} of {$a->total}';
+$string['privacy:metadata'] = 'The Course Search module does not store any personal user data. It only stores activity instance configuration such as name, description, search scope, and display options.';
 $string['searchresultsrange_ungrouped'] = 'Showing results {$a->start}-{$a->end} of {$a->total}';
 
 // Section grouping strings.
 $string['sectionmatch'] = 'Section match';
+$string['subsection'] = 'Subsection';
 $string['subsectionmatch'] = 'Subsection match';
-$string['generalsection'] = 'General';
-
-// Privacy.
-$string['privacy:metadata'] = 'The Course Search module does not store any personal user data. It only stores activity instance configuration such as name, description, search scope, and display options.';
