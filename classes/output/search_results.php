@@ -101,6 +101,18 @@ class search_results implements renderable, templatable {
         ];
 
         foreach ($results as $result) {
+            // Skip deduplication for grouped results - they should be kept as-is.
+            // Check both 'isgrouped' flag and 'matches' key to be safe.
+            // Grouped results have multiple matches and should never be deduplicated.
+            $isgrouped = (isset($result['isgrouped']) && $result['isgrouped'] === true);
+            $hasmatches = (isset($result['matches']) && is_array($result['matches']) && count($result['matches']) >= 2);
+
+            if ($isgrouped || $hasmatches) {
+                // This is a grouped result - add it directly without deduplication.
+                $deduplicated[] = $result;
+                continue;
+            }
+
             // Create a unique key based on URL (without query params that might vary).
             $url = $result['url'] ?? '';
             if (empty($url)) {

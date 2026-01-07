@@ -102,6 +102,10 @@ $string['excludedplaceholders_desc'] = 'Reguläre Ausdrucksmuster (eine pro Zeil
 $string['pagination'] = 'Suchergebnis-Paginierung';
 $string['resultsperpage'] = 'Ergebnisse pro Seite';
 $string['resultsperpage_desc'] = 'Die Anzahl der Suchergebnisse, die pro Seite angezeigt werden.';
+$string['maxoccurrences'] = 'Maximale Vorkommen pro Inhaltselement';
+$string['maxoccurrences_desc'] = 'Maximale Anzahl von Vorkommen, die pro Inhaltselement gefunden werden, wenn ein Suchbegriff mehrfach vorkommt. Auf 0 setzen, um das Limit zu deaktivieren und alle Vorkommen zu finden (nicht empfohlen für große Kurse, da dies die Leistung beeinträchtigen und überwältigende Ergebnislisten erstellen kann). Standard: 5.';
+$string['maxoccurrences_invalid'] = 'Maximale Vorkommen müssen 0 oder größer sein.';
+$string['maxoccurrences_warning'] = 'Warnung: Wenn Sie dies auf 0 setzen, werden alle Vorkommen gefunden, was in großen Kursen zu Leistungsproblemen und überwältigenden Ergebnislisten führen kann.';
 
 // Pagination strings.
 $string['previous'] = 'Zurück';
@@ -113,6 +117,12 @@ $string['searchresultsrange_ungrouped'] = 'Zeige Ergebnisse {$a->start}-{$a->end
 $string['sectionmatch'] = 'Abschnitts-Treffer';
 $string['subsectionmatch'] = 'Unterabschnitts-Treffer';
 $string['generalsection'] = 'Allgemein';
+
+// Activity grouping strings.
+$string['matchcount'] = '{$a} Treffer';
+$string['expandmatches'] = 'Treffer erweitern';
+$string['collapsematches'] = 'Treffer einklappen';
+$string['matchof'] = 'Treffer {$a->index} von {$a->total}';
 
 // Privacy.
 $string['privacy:metadata'] = 'Das Kurssuche-Modul speichert keine persönlichen Benutzerdaten. Es speichert nur Aktivitätsinstanz-Konfigurationen wie Name, Beschreibung, Suchbereich und Anzeigeoptionen.';

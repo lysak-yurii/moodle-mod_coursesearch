@@ -68,6 +68,24 @@ class search_result implements renderable, templatable {
     /** @var string|null Parent section name (for subsections) */
     protected $parentsectionname;
 
+    /** @var bool Whether this result represents a group of matches */
+    protected $isgrouped;
+
+    /** @var int Number of matches in the group (for grouped results) */
+    protected $matchcount;
+
+    /** @var string Activity name (for grouped results) */
+    protected $activityname;
+
+    /** @var moodle_url|null URL to main activity page (for grouped results) */
+    protected $activityurl;
+
+    /** @var string|moodle_url|null Activity icon (for grouped results) */
+    protected $activityicon;
+
+    /** @var array Array of individual match results (for grouped results) */
+    protected $matches;
+
     /**
      * Constructor
      *
@@ -83,6 +101,12 @@ class search_result implements renderable, templatable {
      * @param bool $issubsection Whether this is a subsection (default false)
      * @param int|null $parentsectionnumber Parent section number for subsections
      * @param string|null $parentsectionname Parent section name for subsections
+     * @param bool $isgrouped Whether this represents a group of matches
+     * @param int $matchcount Number of matches in group (for grouped results)
+     * @param string $activityname Activity name (for grouped results)
+     * @param moodle_url|null $activityurl URL to main activity (for grouped results)
+     * @param string|moodle_url|null $activityicon Activity icon (for grouped results)
+     * @param array $matches Array of individual match results (for grouped results)
      */
     public function __construct(
         string $name,
@@ -96,7 +120,13 @@ class search_result implements renderable, templatable {
         string $sectionname = '',
         bool $issubsection = false,
         ?int $parentsectionnumber = null,
-        ?string $parentsectionname = null
+        ?string $parentsectionname = null,
+        bool $isgrouped = false,
+        int $matchcount = 0,
+        string $activityname = '',
+        ?moodle_url $activityurl = null,
+        $activityicon = null,
+        array $matches = []
     ) {
         $this->name = $name;
         $this->url = $url;
@@ -111,6 +141,12 @@ class search_result implements renderable, templatable {
         $this->sectionname = $sectionname;
         $this->parentsectionnumber = $parentsectionnumber;
         $this->parentsectionname = $parentsectionname;
+        $this->isgrouped = $isgrouped;
+        $this->matchcount = $matchcount;
+        $this->activityname = $activityname;
+        $this->activityurl = $activityurl;
+        $this->activityicon = $activityicon;
+        $this->matches = $matches;
     }
 
     /**
@@ -120,6 +156,43 @@ class search_result implements renderable, templatable {
      * @return array
      */
     public function export_for_template(renderer_base $output): array {
+        // If this is a grouped result, export grouped structure.
+        if ($this->isgrouped) {
+            // Determine activity icon URL string.
+            $activityiconurlstr = '';
+            if ($this->activityicon instanceof moodle_url) {
+                $activityiconurlstr = $this->activityicon->out(false);
+            } else if (is_string($this->activityicon)) {
+                $activityiconurlstr = $this->activityicon;
+            }
+
+            // Export individual matches.
+            $exportedmatches = [];
+            foreach ($this->matches as $match) {
+                if ($match instanceof search_result) {
+                    $exportedmatches[] = $match->export_for_template($output);
+                }
+            }
+
+            return [
+                'isgrouped' => true,
+                'activityname' => $this->activityname,
+                'activityurl' => $this->activityurl ? $this->activityurl->out(false) : '',
+                'hasactivityurl' => ($this->activityurl !== null),
+                'activityiconurl' => $activityiconurlstr,
+                'activitymodname' => $this->modname,
+                'matchcount' => $this->matchcount,
+                'hasmatches' => !empty($exportedmatches),
+                'matches' => $exportedmatches,
+                'section_number' => $this->sectionnumber,
+                'section_name' => $this->sectionname,
+                'parent_section_number' => $this->parentsectionnumber,
+                'parent_section_name' => $this->parentsectionname,
+                'issubsection' => $this->issubsection,
+            ];
+        }
+
+        // Regular individual result export.
         // Determine icon URL string.
         $iconurlstr = '';
         if ($this->iconurl instanceof moodle_url) {
@@ -138,6 +211,7 @@ class search_result implements renderable, templatable {
         $showsnippet = !empty($this->snippet) && !$istitlematch;
 
         return [
+            'isgrouped' => false,
             'name' => $this->name,
             'url' => $this->url->out(false),
             'modname' => $this->modname,

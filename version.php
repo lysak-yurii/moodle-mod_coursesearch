@@ -24,9 +24,10 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version   = 2026010603;       // The current module version (Date: YYYYMMDDXX).
+$plugin->version   = 2026010700;       // The current module version (Date: YYYYMMDDXX).
 $plugin->requires  = 2024042200;       // Requires this Moodle version (Moodle 4.4+).
 $plugin->component = 'mod_coursesearch'; // Full name of the plugin (used for diagnostics).
 $plugin->cron      = 0;
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.2.3';          // Version 1.2.3 - fixed forum search bug where only the last matching post was shown.
+// Version 1.3.0 - added activity grouping, configurable multiple occurrences support, and improved search logic.
+$plugin->release   = '1.3.0';

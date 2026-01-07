@@ -24,6 +24,32 @@
 
 defined('MOODLE_INTERNAL') || die();
 
+// Custom admin setting for maximum occurrences with validation.
+if (!class_exists('admin_setting_configtext_maxoccurrences')) {
+    /**
+     * Custom admin setting for maximum occurrences with validation.
+     *
+     * @package    mod_coursesearch
+     * @copyright  2025 Yurii Lysak
+     * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+     */
+    class admin_setting_configtext_maxoccurrences extends admin_setting_configtext {
+        /**
+         * Validate the setting value.
+         *
+         * @param string $value The value to validate
+         * @return mixed True if valid, error string if invalid
+         */
+        public function validate($value) {
+            $value = (int)$value;
+            if ($value < 0) {
+                return get_string('maxoccurrences_invalid', 'coursesearch');
+            }
+            return true;
+        }
+    }
+}
+
 if ($ADMIN->fulltree) {
     // Enable/disable scrolling and highlighting feature.
     $settings->add(new admin_setting_configcheckbox(
@@ -48,5 +74,14 @@ if ($ADMIN->fulltree) {
         get_string('excludedplaceholders', 'coursesearch'),
         get_string('excludedplaceholders_desc', 'coursesearch'),
         '@@[A-Z_]+@@[^\s]*'
+    ));
+
+    // Maximum occurrences per content item setting.
+    $settings->add(new admin_setting_configtext_maxoccurrences(
+        'mod_coursesearch/maxoccurrences',
+        get_string('maxoccurrences', 'coursesearch'),
+        get_string('maxoccurrences_desc', 'coursesearch'),
+        5,
+        PARAM_INT
     ));
 }

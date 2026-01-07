@@ -9,6 +9,8 @@ A comprehensive Moodle activity module that enables teachers to add a search bar
 - **Search Filter**: Filter between "All content" or "Forums only" on the search page
 - **Embedded Mode**: Option to embed search bar directly in course page
 - **Results Grouping**: Optional grouping of search results by course sections (can be enabled/disabled per activity)
+- **Activity Grouping**: Automatic collapsible grouping of multiple matches within the same activity (e.g., multiple forum posts, book chapters, or content occurrences)
+- **Multiple Occurrences**: Finds multiple occurrences of search terms in content (configurable limit per content item, default: 5) for comprehensive results. Administrators can configure this limit or disable it in admin settings.
 - **Pagination**: Large result sets are paginated for improved performance and usability (works for both grouped and ungrouped views)
 
 ### Search Term Highlighting
@@ -21,6 +23,7 @@ A comprehensive Moodle activity module that enables teachers to add a search bar
 ### Admin Settings
 - **Enable/Disable Highlighting**: Global setting to turn scrolling and highlighting on or off (Site Administration > Plugins > Activity modules > Course Search)
 - **Results Per Page**: Configure the number of search results displayed per page
+- **Maximum Occurrences Per Content Item**: Configure how many occurrences of a search term to find per content item (default: 5). Set to 0 to disable the limit and find all occurrences (not recommended for large courses as it may impact performance)
 - **Excluded Placeholder Patterns**: Configure regex patterns to exclude internal Moodle placeholders (like @@PLUGINFILE@@) from search results to prevent false matches
 
 ## Screenshots
@@ -163,9 +166,19 @@ When clicking on search results, the plugin automatically:
 
 ## Version
 
-Current version: **1.2.3** (Stable)
+Current version: **1.3.0** (Stable)
 
 ### Changelog
+
+#### Version 1.3.0 (January 2026)
+- **New Feature**: Added collapsible grouping of search results by activity - when multiple matches are found in the same activity (e.g., multiple forum posts, book chapters, or page content), they are now grouped together with a collapsible interface showing the match count
+- **New Feature**: Multiple occurrences support - now finds multiple occurrences of search terms in content (configurable limit per content item, default: 5) instead of just the first match. The limit is configurable in admin settings and can be disabled (set to 0) to find all occurrences, though this is not recommended for large courses as it may impact performance.
+- **Improved**: Enhanced search logic to find both title and content matches for all activity types (books, pages, wiki, etc.) - previously, title matches would skip content search
+- **Fixed**: Books now properly search both description/intro and chapter content, allowing multiple matches to be grouped
+- **Fixed**: Pages now properly search both title and content, allowing multiple matches to be grouped
+- **Fixed**: Wiki now properly searches both page titles and content, allowing multiple matches to be grouped
+- **Fixed**: Labels now only show "Matched in description or content" results (eliminated duplicate results)
+- **Fixed**: Wiki URL format corrected to use only `pageid` parameter instead of both `id` and `pageid`
 
 #### Version 1.2.3 (January 2026)
 - Fixed critical bug in forum search where only the last matching post/reply was shown instead of all matching posts - Fixed SQL query to properly retrieve all forum posts by using post ID as the primary key instead of discussion ID
@@ -205,6 +218,9 @@ Enhancements (January 2026):
 - Added optional grouping toggle allowing teachers to choose between grouped or flat list result display
 - Fixed HTML tag and placeholder matching bugs, improving search accuracy
 - Added configurable placeholder filtering for administrators
+- Added collapsible activity grouping for multiple matches within the same activity
+- Enhanced search to find all occurrences of search terms in content & added configuration for admins to limit maximum occurrences per content item
+- Improved search logic across all activity types for better result coverage
 
 ## Support
 

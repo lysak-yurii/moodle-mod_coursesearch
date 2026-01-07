@@ -311,12 +311,15 @@ function coursesearch_perform_search($query, $course, $filter = 'all') {
             }
 
             $results[] = $result;
-            continue;
+            // Don't skip content search - modules can have both title and content matches.
+            // This allows grouping of title matches with content matches for the same activity.
+            // Fall through to description and content search below.
         }
 
         // Search in the module description/intro if available (only if filter is 'all' or 'description').
+        // Skip description search for labels and html - their intro IS the content, so it's handled by content search.
         $description = '';
-        if ($filter == 'all' || $filter == 'description') {
+        if (($filter == 'all' || $filter == 'description') && $mod->modname !== 'label' && $mod->modname !== 'html') {
             // Get the module description from pre-fetched data (bulk loaded to avoid N+1 queries).
             $modulerecord = $moduledata[$mod->modname][$mod->instance] ?? null;
 
@@ -353,37 +356,53 @@ function coursesearch_perform_search($query, $course, $filter = 'all') {
                     $moduleurl = $mod->url;
                 }
 
-                $snippet = coursesearch_extract_snippet($description, $query);
+                // Extract multiple snippets for all occurrences (limit from admin settings).
+                $maxoccurrences = get_config('mod_coursesearch', 'maxoccurrences');
+                $maxoccurrences = ($maxoccurrences === false || $maxoccurrences === null) ? 5 : (int)$maxoccurrences;
+                $snippets = coursesearch_extract_multiple_snippets($description, $query, 150, $maxoccurrences);
                 $sectioninfo = coursesearch_get_section_info($mod, $sections);
-                $result = [
-                    'type' => 'module_description',
-                    'name' => $mod->name,
-                    'url' => $moduleurl,
-                    'modname' => $mod->modname,
-                    'icon' => $mod->get_icon_url(),
-                    'match' => get_string('matchdescriptionorcontent', 'mod_coursesearch'),
-                    'snippet' => $snippet,
-                    'cmid' => $mod->id,
-                    'section_number' => $sectioninfo['section_number'],
-                    'section_name' => $sectioninfo['section_name'],
-                    'is_subsection' => false,
-                ];
 
-                // Check if module is inside a subsection.
-                if (isset($subsectionparents[$sectioninfo['section_number']])) {
-                    $parentinfo = $subsectionparents[$sectioninfo['section_number']];
-                    $result['is_subsection'] = true;
-                    $result['parent_section_number'] = $parentinfo['parent_section_number'];
-                    $result['parent_section_name'] = $parentinfo['parent_section_name'];
+                // Create one result per snippet occurrence.
+                foreach ($snippets as $index => $snippet) {
+                    // For multiple occurrences, add occurrence parameter to URL.
+                    $resulturl = clone $moduleurl;
+                    if ($index > 0) {
+                        $resulturl->param('occurrence', $index + 1);
+                    }
+
+                    $result = [
+                        'type' => 'module_description',
+                        'name' => $mod->name,
+                        'url' => $resulturl,
+                        'modname' => $mod->modname,
+                        'icon' => $mod->get_icon_url(),
+                        'match' => get_string('matchdescriptionorcontent', 'mod_coursesearch'),
+                        'snippet' => $snippet,
+                        'cmid' => $mod->id,
+                        'section_number' => $sectioninfo['section_number'],
+                        'section_name' => $sectioninfo['section_name'],
+                        'is_subsection' => false,
+                    ];
+
+                    // Check if module is inside a subsection.
+                    if (isset($subsectionparents[$sectioninfo['section_number']])) {
+                        $parentinfo = $subsectionparents[$sectioninfo['section_number']];
+                        $result['is_subsection'] = true;
+                        $result['parent_section_number'] = $parentinfo['parent_section_number'];
+                        $result['parent_section_name'] = $parentinfo['parent_section_name'];
+                    }
+
+                    $results[] = $result;
                 }
-
-                $results[] = $result;
-                continue;
+                // Don't use continue here - we want to also search content for all modules
+                // that can have multiple matches. This allows grouping of description matches with content matches.
+                // Fall through to content search below.
             }
         }
 
         // Search in module content based on the module type (only if filter is 'all' or 'content').
         // For forums, we want to search content regardless of the filter when 'forums' filter is selected.
+        // We always want to search content even if title/description matched, to allow grouping of multiple matches.
         if ($filter == 'all' || $filter == 'content' || ($filter == 'forums' && $mod->modname == 'forum')) {
             $contentresults = coursesearch_search_module_content($mod, $query, $course, $filter, $sections);
             $results = array_merge($results, $contentresults);
@@ -622,21 +641,33 @@ function coursesearch_search_page($mod, $query) {
     $page = $DB->get_record('page', ['id' => $mod->instance], 'id, name, content');
 
     if ($page && coursesearch_is_relevant($page->content, $query)) {
-        $snippet = coursesearch_extract_snippet($page->content, $query);
-        $pageurl = new moodle_url('/mod/page/view.php', ['id' => $mod->id]);
-        if (!empty($query)) {
-            $pageurl->param('highlight', $query);
+        // Extract multiple snippets for all occurrences (limit from admin settings).
+        $maxoccurrences = get_config('mod_coursesearch', 'maxoccurrences');
+        $maxoccurrences = ($maxoccurrences === false || $maxoccurrences === null) ? 5 : (int)$maxoccurrences;
+        $snippets = coursesearch_extract_multiple_snippets($page->content, $query, 150, $maxoccurrences);
+
+        // Create one result per snippet occurrence.
+        foreach ($snippets as $index => $snippet) {
+            $pageurl = new moodle_url('/mod/page/view.php', ['id' => $mod->id]);
+            if (!empty($query)) {
+                $pageurl->param('highlight', $query);
+            }
+            // Add occurrence index to URL to distinguish multiple matches (optional, for future use).
+            if ($index > 0) {
+                $pageurl->param('occurrence', $index + 1);
+            }
+
+            $results[] = [
+                'type' => 'page_content',
+                'name' => $mod->name,
+                'url' => $pageurl,
+                'modname' => $mod->modname,
+                'icon' => $mod->get_icon_url(),
+                'match' => get_string('content', 'mod_coursesearch'),
+                'snippet' => $snippet,
+                'cmid' => $mod->id,
+            ];
         }
-        $results[] = [
-            'type' => 'page_content',
-            'name' => $mod->name,
-            'url' => $pageurl,
-            'modname' => $mod->modname,
-            'icon' => $mod->get_icon_url(),
-            'match' => get_string('content', 'mod_coursesearch'),
-            'snippet' => $snippet,
-            'cmid' => $mod->id,
-        ];
     }
 
     return $results;
@@ -718,27 +749,39 @@ function coursesearch_search_label($mod, $query, $course) {
         $isrelevant = coursesearch_is_relevant($label->intro, $query);
 
         if ($isrelevant) {
-            $snippet = coursesearch_extract_snippet($label->intro, $query);
-            $sectionnum = isset($mod->sectionnum) ? $mod->sectionnum : (isset($mod->section) ? $mod->section : null);
-            $urlparams = ['id' => $course->id];
-            if ($sectionnum !== null) {
-                $urlparams['section'] = $sectionnum;
+            // Extract multiple snippets for all occurrences (limit from admin settings).
+            $maxoccurrences = get_config('mod_coursesearch', 'maxoccurrences');
+            $maxoccurrences = ($maxoccurrences === false || $maxoccurrences === null) ? 5 : (int)$maxoccurrences;
+            $snippets = coursesearch_extract_multiple_snippets($label->intro, $query, 150, $maxoccurrences);
+
+            // Create one result per snippet occurrence.
+            foreach ($snippets as $index => $snippet) {
+                $sectionnum = isset($mod->sectionnum) ? $mod->sectionnum : (isset($mod->section) ? $mod->section : null);
+                $urlparams = ['id' => $course->id];
+                if ($sectionnum !== null) {
+                    $urlparams['section'] = $sectionnum;
+                }
+                if (!empty($query)) {
+                    $urlparams['highlight'] = urlencode($query);
+                }
+                // Add occurrence index to distinguish multiple matches.
+                if ($index > 0) {
+                    $urlparams['occurrence'] = $index + 1;
+                }
+                $moduleurl = new moodle_url('/course/view.php', $urlparams);
+                $moduleurl->set_anchor('module-' . $mod->id);
+                $results[] = [
+                    'type' => 'label_content',
+                    'name' => $mod->name,
+                    'url' => $moduleurl,
+                    'modname' => $mod->modname,
+                    'icon' => $mod->get_icon_url(),
+                    // For labels, intro IS the content, so use "description or content" to match user expectations.
+                    'match' => get_string('matchdescriptionorcontent', 'mod_coursesearch'),
+                    'snippet' => $snippet,
+                    'cmid' => $mod->id,
+                ];
             }
-            if (!empty($query)) {
-                $urlparams['highlight'] = urlencode($query);
-            }
-            $moduleurl = new moodle_url('/course/view.php', $urlparams);
-            $moduleurl->set_anchor('module-' . $mod->id);
-            $results[] = [
-                'type' => 'label_content',
-                'name' => $mod->name,
-                'url' => $moduleurl,
-                'modname' => $mod->modname,
-                'icon' => $mod->get_icon_url(),
-                'match' => get_string('content', 'mod_coursesearch'),
-                'snippet' => $snippet,
-                'cmid' => $mod->id,
-            ];
         }
     }
 
@@ -1101,7 +1144,8 @@ function coursesearch_search_wiki($mod, $query, $filter) {
     foreach ($wikipages as $wikipage) {
         // First check if the page title matches.
         if (($filter == 'all' || $filter == 'title') && coursesearch_mb_stripos($wikipage->title, $query) !== false) {
-            $pageurl = new moodle_url('/mod/wiki/view.php', ['id' => $mod->id, 'pageid' => $wikipage->id]);
+            // Wiki URLs should use pageid only, not both id and pageid.
+            $pageurl = new moodle_url('/mod/wiki/view.php', ['pageid' => $wikipage->id]);
             if (!empty($query)) {
                 $pageurl->param('highlight', $query);
             }
@@ -1115,7 +1159,8 @@ function coursesearch_search_wiki($mod, $query, $filter) {
                 'snippet' => $wikipage->title,
                 'cmid' => $mod->id,
             ];
-            continue;
+            // Don't use continue - wiki pages can have both title and content matches.
+            // Fall through to content search below.
         }
 
         // Then check if the page content matches.
@@ -1124,7 +1169,9 @@ function coursesearch_search_wiki($mod, $query, $filter) {
         $relevant = $hascon && coursesearch_is_relevant($wikipage->cachedcontent, $query);
         if ($filterok && $relevant) {
             $snippet = coursesearch_extract_snippet($wikipage->cachedcontent, $query);
-            $pageurl = new moodle_url('/mod/wiki/view.php', ['id' => $mod->id, 'pageid' => $wikipage->id]);
+
+            // Wiki URLs should use pageid only, not both id and pageid.
+            $pageurl = new moodle_url('/mod/wiki/view.php', ['pageid' => $wikipage->id]);
             if (!empty($query)) {
                 $pageurl->param('highlight', $query);
             }
@@ -1627,6 +1674,76 @@ function coursesearch_extract_snippet($content, $query, $length = 150) {
     $snippet = preg_replace($pattern, $replacement, $snippet);
 
     return $snippet;
+}
+
+/**
+ * Extract multiple snippets for all occurrences of a search term
+ *
+ * @param string $content The full content to extract from
+ * @param string $query The search term to find
+ * @param int $length The approximate length of each snippet
+ * @param int $maxresults Maximum number of snippets to return
+ * @return array Array of snippets, one for each occurrence
+ */
+function coursesearch_extract_multiple_snippets($content, $query, $length = 150, $maxresults = 5) {
+    // Process multilanguage tags before extracting snippets.
+    $content = coursesearch_process_multilang($content);
+
+    // Improved HTML handling.
+    $plaincontent = coursesearch_html_to_text($content);
+
+    // Find all positions of the search term (case-insensitive) with multibyte support.
+    $snippets = [];
+    $contentlower = mb_strtolower($plaincontent, 'UTF-8');
+    $querylower = mb_strtolower($query, 'UTF-8');
+    $querylen = mb_strlen($querylower, 'UTF-8');
+    $contentlen = mb_strlen($plaincontent, 'UTF-8');
+
+    $pos = 0;
+    $occurrence = 0;
+
+    // If maxresults is 0, set to a very high number to effectively disable the limit.
+    // This allows admins to disable the limit, but we still cap it at a reasonable maximum
+    // to prevent infinite loops or memory issues.
+    if ($maxresults <= 0) {
+        $maxresults = 1000; // Effectively unlimited but with a safety cap.
+    }
+
+    while ($pos < $contentlen && $occurrence < $maxresults) {
+        // Find next occurrence.
+        $foundpos = mb_strpos($contentlower, $querylower, $pos, 'UTF-8');
+
+        if ($foundpos === false) {
+            break;
+        }
+
+        // Calculate the start position of the snippet.
+        $start = max(0, $foundpos - floor($length / 2));
+
+        // If we're not starting from the beginning, add ellipsis.
+        $prefix = ($start > 0) ? '...' : '';
+
+        // Extract the snippet.
+        $snippet = $prefix . mb_substr($plaincontent, $start, $length, 'UTF-8') . '...';
+
+        // Highlight the search term in the snippet.
+        $pattern = '/(' . preg_quote($query, '/') . ')/iu';
+        $replacement = '<span class="highlight">$1</span>';
+        $snippet = preg_replace($pattern, $replacement, $snippet);
+
+        $snippets[] = $snippet;
+
+        // Move position past this occurrence.
+        $pos = $foundpos + $querylen;
+        $occurrence++;
+    }
+
+    // If no snippets found, return at least one from the beginning.
+    if (empty($snippets)) {
+        $snippets[] = mb_substr($plaincontent, 0, $length, 'UTF-8') . '...';
+    }
+
+    return $snippets;
 }
 
 /**

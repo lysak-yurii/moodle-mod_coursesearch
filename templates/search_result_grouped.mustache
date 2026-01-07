@@ -1,0 +1,88 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template mod_coursesearch/search_result_grouped
+
+    Grouped search result template for activities with multiple matches.
+    Shows a collapsible header with activity name and match count.
+    When expanded, shows all individual matches.
+
+    Context variables required for this template:
+    * isgrouped - Always true for this template
+    * activityname - The activity name
+    * activityurl - URL to main activity page (optional)
+    * hasactivityurl - Whether activity URL is available
+    * activityiconurl - The activity icon URL
+    * activitymodname - The module name
+    * matchcount - Number of matches in this group
+    * hasmatches - Whether there are matches to display
+    * matches - Array of individual match results
+    * section_number - Section number (optional)
+    * section_name - Section name (optional)
+    * issubsection - Whether this is in a subsection
+
+    Example context (json):
+    {
+        "isgrouped": true,
+        "activityname": "Introduction to Course",
+        "activityurl": "http://example.com/mod/page/view.php?id=123",
+        "hasactivityurl": true,
+        "activityiconurl": "http://example.com/theme/image.php/boost/core/1/f/pdf-24",
+        "activitymodname": "page",
+        "matchcount": 3,
+        "hasmatches": true,
+        "matches": [
+            {
+                "name": "Introduction to Course",
+                "url": "http://example.com/mod/page/view.php?id=123&highlight=search",
+                "modname": "page",
+                "iconurl": "...",
+                "snippet": "...",
+                "hassnippet": true
+            }
+        ]
+    }
+}}
+<div class="coursesearch-result-group coursesearch-group-collapsed" data-group-id="group-{{activitymodname}}-{{matchcount}}">
+    <div class="coursesearch-group-header" role="group" aria-expanded="false" aria-controls="group-matches-{{activitymodname}}-{{matchcount}}">
+        <div class="coursesearch-result-icon">
+            {{#activityiconurl}}
+            <img src="{{activityiconurl}}" alt="{{activitymodname}}" class="icon">
+            {{/activityiconurl}}
+        </div>
+        <div class="coursesearch-group-title">
+            {{#hasactivityurl}}
+            <a href="{{activityurl}}" class="coursesearch-group-activity-link" onclick="event.stopPropagation();">{{activityname}}</a>
+            {{/hasactivityurl}}
+            {{^hasactivityurl}}
+            <span class="coursesearch-group-activity-name" tabindex="0" role="button">{{activityname}}</span>
+            {{/hasactivityurl}}
+            <span class="badge badge-info coursesearch-group-matchcount">{{#str}} matchcount, mod_coursesearch, {{matchcount}} {{/str}}</span>
+        </div>
+        <button class="coursesearch-group-toggle" aria-label="{{#str}} expandmatches, mod_coursesearch {{/str}}" type="button" data-expand-label="{{#str}} expandmatches, mod_coursesearch {{/str}}" data-collapse-label="{{#str}} collapsematches, mod_coursesearch {{/str}}">
+            <i class="icon fa fa-chevron-down" aria-hidden="true"></i>
+        </button>
+    </div>
+    <div class="coursesearch-group-matches" id="group-matches-{{activitymodname}}-{{matchcount}}" aria-hidden="true">
+        {{#hasmatches}}
+        {{#matches}}
+        {{> mod_coursesearch/search_result }}
+        {{/matches}}
+        {{/hasmatches}}
+    </div>
+</div>
+

@@ -139,7 +139,12 @@
             {{#hasresults}}
             <div class="coursesearch-section-results">
                 {{#results}}
+                {{#isgrouped}}
+                {{> mod_coursesearch/search_result_grouped }}
+                {{/isgrouped}}
+                {{^isgrouped}}
                 {{> mod_coursesearch/search_result }}
+                {{/isgrouped}}
                 {{/results}}
             </div>
             {{/hasresults}}
@@ -176,7 +181,12 @@
                     {{#hasresults}}
                     <div class="coursesearch-subsection-results">
                         {{#results}}
+                        {{#isgrouped}}
+                        {{> mod_coursesearch/search_result_grouped }}
+                        {{/isgrouped}}
+                        {{^isgrouped}}
                         {{> mod_coursesearch/search_result }}
+                        {{/isgrouped}}
                         {{/results}}
                     </div>
                     {{/hasresults}}
@@ -192,7 +202,12 @@
     {{^grouped}}
     <div class="coursesearch-results">
         {{#results}}
+        {{#isgrouped}}
+        {{> mod_coursesearch/search_result_grouped }}
+        {{/isgrouped}}
+        {{^isgrouped}}
         {{> mod_coursesearch/search_result }}
+        {{/isgrouped}}
         {{/results}}
     </div>
     {{/grouped}}
