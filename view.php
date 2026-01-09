@@ -194,12 +194,16 @@ if (!empty($query)) {
 
         // Get section info.
         $sectionnumber = $result['section_number'] ?? 0;
-        $sectionname = $result['section_name'] ?? '';
+        $sectionname = isset($result['section_name']) && !empty($result['section_name'])
+            ? coursesearch_process_multilang($result['section_name'])
+            : '';
 
         // Get subsection info.
         $issubsection = $result['is_subsection'] ?? false;
         $parentsectionnumber = $result['parent_section_number'] ?? null;
-        $parentsectionname = $result['parent_section_name'] ?? null;
+        $parentsectionname = isset($result['parent_section_name']) && !empty($result['parent_section_name'])
+            ? coursesearch_process_multilang($result['parent_section_name'])
+            : null;
 
         // Check if this is a grouped result (has 'matches' key).
         if (isset($result['matches']) && is_array($result['matches']) && count($result['matches']) >= 2) {
@@ -244,10 +248,14 @@ if (!empty($query)) {
                 }
                 $matchiconurl = $matchdata['icon'] ?? '';
                 $matchsectionnumber = $matchdata['section_number'] ?? 0;
-                $matchsectionname = $matchdata['section_name'] ?? '';
+                $matchsectionname = isset($matchdata['section_name']) && !empty($matchdata['section_name'])
+                    ? coursesearch_process_multilang($matchdata['section_name'])
+                    : '';
                 $matchissubsection = $matchdata['is_subsection'] ?? false;
                 $matchparentsectionnumber = $matchdata['parent_section_number'] ?? null;
-                $matchparentsectionname = $matchdata['parent_section_name'] ?? null;
+                $matchparentsectionname = isset($matchdata['parent_section_name']) && !empty($matchdata['parent_section_name'])
+                    ? coursesearch_process_multilang($matchdata['parent_section_name'])
+                    : null;
 
                 $matches[] = new search_result(
                     $matchresultname,
@@ -276,10 +284,14 @@ if (!empty($query)) {
 
             // Get section info from the result array (preserved from grouping function).
             $groupsectionnumber = $result['section_number'] ?? $sectionnumber;
-            $groupsectionname = $result['section_name'] ?? $sectionname;
+            $groupsectionname = isset($result['section_name']) && !empty($result['section_name'])
+                ? coursesearch_process_multilang($result['section_name'])
+                : $sectionname;
             $groupissubsection = $result['is_subsection'] ?? $issubsection;
             $groupparentsectionnumber = $result['parent_section_number'] ?? $parentsectionnumber;
-            $groupparentsectionname = $result['parent_section_name'] ?? $parentsectionname;
+            $groupparentsectionname = isset($result['parent_section_name']) && !empty($result['parent_section_name'])
+                ? coursesearch_process_multilang($result['parent_section_name'])
+                : $parentsectionname;
 
             $resultobjects[] = new search_result(
                 $activityname,

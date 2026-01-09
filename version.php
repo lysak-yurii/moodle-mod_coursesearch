@@ -24,10 +24,13 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version   = 2026010700;       // The current module version (Date: YYYYMMDDXX).
+$plugin->version   = 2026010900;       // The current module version (Date: YYYYMMDDXX).
 $plugin->requires  = 2024042200;       // Requires this Moodle version (Moodle 4.4+).
 $plugin->component = 'mod_coursesearch'; // Full name of the plugin (used for diagnostics).
 $plugin->cron      = 0;
 $plugin->maturity  = MATURITY_STABLE;
-// Version 1.3.0 - added activity grouping, configurable multiple occurrences support, and improved search logic.
-$plugin->release   = '1.3.0';
+// Version 1.3.1 - Fixed: highlight parameter URL encoding in grouped results,
+// Fixed: Proper disabling of all highlight features when its off in admin setting,
+// Fixed: Multilang processing for section names and language selection.
+
+$plugin->release   = '1.3.1';

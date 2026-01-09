@@ -228,13 +228,19 @@ class search_results implements renderable, templatable {
 
         foreach ($results as $result) {
             $sectionnumber = $result['section_number'] ?? 0;
-            $sectionname = $result['section_name'] ?? get_string('section') . ' ' . $sectionnumber;
+            $rawsectionname = $result['section_name'] ?? null;
+            $sectionname = !empty($rawsectionname)
+                ? \coursesearch_process_multilang($rawsectionname)
+                : (get_string('section') . ' ' . $sectionnumber);
             $issubsection = $result['issubsection'] ?? false;
 
             // For subsections, group under parent section.
             if ($issubsection && isset($result['parent_section_number'])) {
                 $parentsectionnumber = $result['parent_section_number'];
-                $parentsectionname = $result['parent_section_name'] ?? get_string('section') . ' ' . $parentsectionnumber;
+                $rawparentsectionname = $result['parent_section_name'] ?? null;
+                $parentsectionname = !empty($rawparentsectionname)
+                    ? \coursesearch_process_multilang($rawparentsectionname)
+                    : (get_string('section') . ' ' . $parentsectionnumber);
 
                 // Ensure parent group exists.
                 if (!isset($groups[$parentsectionnumber])) {

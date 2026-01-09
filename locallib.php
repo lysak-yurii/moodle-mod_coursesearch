@@ -1534,22 +1534,70 @@ function coursesearch_process_multilang($content) {
     // Process multilanguage tags.
     $pattern = '/\{mlang\s+([\w\-_]+)\}(.*?)\{mlang\}/s';
 
-    // First pass: try to find content for the user's language.
+    // Find all multilang blocks.
     if (preg_match_all($pattern, $content, $matches, PREG_SET_ORDER)) {
+        $selectedtext = null;
+        $selectedblock = null;
+
+        // First pass: try to find content for the user's exact language.
         foreach ($matches as $match) {
             $lang = $match[1];
             $text = $match[2];
 
-            // If this is the user's language or a fallback language (other/en).
-            if ($lang === $userlang || $lang === 'other' || $lang === 'en') {
-                // Replace the entire multilang block with just this language's content.
-                $content = str_replace($match[0], $text, $content);
+            if ($lang === $userlang) {
+                // Found exact match - use this and stop searching.
+                $selectedtext = $text;
+                $selectedblock = $match[0];
+                break;
             }
         }
-    }
 
-    // Second pass: remove any remaining multilang tags.
-    $content = preg_replace($pattern, '', $content);
+        // Second pass: if no exact match, try fallback languages (en, then other).
+        if ($selectedtext === null) {
+            // Try 'en' first as common fallback.
+            foreach ($matches as $match) {
+                $lang = $match[1];
+                $text = $match[2];
+
+                if ($lang === 'en') {
+                    $selectedtext = $text;
+                    $selectedblock = $match[0];
+                    break;
+                }
+            }
+
+            // If still no match, try 'other'.
+            if ($selectedtext === null) {
+                foreach ($matches as $match) {
+                    $lang = $match[1];
+                    $text = $match[2];
+
+                    if ($lang === 'other') {
+                        $selectedtext = $text;
+                        $selectedblock = $match[0];
+                        break;
+                    }
+                }
+            }
+
+            // If still no match, use the first available language as last resort.
+            if ($selectedtext === null && !empty($matches)) {
+                $selectedtext = $matches[0][2];
+                $selectedblock = $matches[0][0];
+            }
+        }
+
+        // Replace the selected block with its text, and remove all other multilang blocks.
+        if ($selectedblock !== null) {
+            // Replace the selected block with its text.
+            $content = str_replace($selectedblock, $selectedtext, $content);
+            // Remove all remaining multilang blocks.
+            $content = preg_replace($pattern, '', $content);
+        } else {
+            // No match found - remove all multilang tags.
+            $content = preg_replace($pattern, '', $content);
+        }
+    }
 
     return $content;
 }

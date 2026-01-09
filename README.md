@@ -166,9 +166,14 @@ When clicking on search results, the plugin automatically:
 
 ## Version
 
-Current version: **1.3.0** (Stable)
+Current version: **1.3.1** (Stable)
 
 ### Changelog
+
+#### Version 1.3.1 (January 2026)
+- **Fixed**: Highlight parameter URL encoding in grouped results.
+- **Fixed**: Proper disabling of all highlight features when its off in admin setting.
+- **Fixed**: Multilang processing for section names and language selection.
 
 #### Version 1.3.0 (January 2026)
 - **New Feature**: Added collapsible grouping of search results by activity - when multiple matches are found in the same activity (e.g., multiple forum posts, book chapters, or page content), they are now grouped together with a collapsible interface showing the match count
@@ -186,16 +191,16 @@ Current version: **1.3.0** (Stable)
 #### Version 1.2.2 (January 2026)
 - Fixed bug where search terms matched HTML tag names (e.g., searching "group" matched `<colgroup>` tags)
 - Fixed bug where internal Moodle placeholders (like @@PLUGINFILE@@) caused false positive search matches
-- Added configurable placeholder filtering in admin settings - administrators can now define regex patterns to exclude internal placeholders from search
+- **Added** configurable placeholder filtering in admin settings - administrators can now define regex patterns to exclude internal placeholders from search
 - Improved search accuracy by filtering out non-visible HTML markup and internal system strings
 
 #### Version 1.2.1 (January 2026)
-- Added optional grouping toggle in activity settings - teachers can now choose between grouped (by sections) or ungrouped (flat list) result display
+- **Added** optional grouping toggle in activity settings - teachers can now choose between grouped (by sections) or ungrouped (flat list) result display
 - Pagination now works for both grouped and ungrouped views
 
 #### Version 1.2.0 (December 2025)
-- Added search results pagination for large result sets
-- Added automatic grouping of results by course sections
+- **Added** search results pagination for large result sets
+- **Added** automatic grouping of results by course sections
 - Improved result organization and navigation
 
 #### Version 1.1.0 (December 2025)
