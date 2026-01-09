@@ -762,7 +762,7 @@ function coursesearch_search_label($mod, $query, $course) {
                     $urlparams['section'] = $sectionnum;
                 }
                 if (!empty($query)) {
-                    $urlparams['highlight'] = urlencode($query);
+                    $urlparams['highlight'] = $query;
                 }
                 // Add occurrence index to distinguish multiple matches.
                 if ($index > 0) {
@@ -839,7 +839,7 @@ function coursesearch_search_all_labels_direct($query, $course, $sections, $modi
                 $urlparams['section'] = $sectioninfo['section_number'];
             }
             if (!empty($query)) {
-                $urlparams['highlight'] = urlencode($query);
+                $urlparams['highlight'] = $query;
             }
             $moduleurl = new moodle_url('/course/view.php', $urlparams);
             $moduleurl->set_anchor('module-' . $labelmod->cmid);
