@@ -103,9 +103,14 @@ $string['pagination'] = 'Suchergebnis-Paginierung';
 $string['resultsperpage'] = 'Ergebnisse pro Seite';
 $string['resultsperpage_desc'] = 'Die Anzahl der Suchergebnisse, die pro Seite angezeigt werden.';
 $string['maxoccurrences'] = 'Maximale Vorkommen pro Inhaltselement';
-$string['maxoccurrences_desc'] = 'Maximale Anzahl von Vorkommen, die pro Inhaltselement gefunden werden, wenn ein Suchbegriff mehrfach vorkommt. Auf 0 setzen, um das Limit zu deaktivieren und alle Vorkommen zu finden (nicht empfohlen für große Kurse, da dies die Leistung beeinträchtigen und überwältigende Ergebnislisten erstellen kann). Standard: 5.';
+$string['maxoccurrences_desc'] = 'Maximale Anzahl von Vorkommen, die pro Inhaltselement gefunden werden, wenn ein Suchbegriff mehrfach vorkommt. Auf 0 setzen, um das Limit zu deaktivieren und alle Vorkommen zu finden (nicht empfohlen für große Kurse, da dies die Leistung beeinträchtigen und überwältigende Ergebnislisten erstellen kann).';
 $string['maxoccurrences_invalid'] = 'Maximale Vorkommen müssen 0 oder größer sein.';
 $string['maxoccurrences_warning'] = 'Warnung: Wenn Sie dies auf 0 setzen, werden alle Vorkommen gefunden, was in großen Kursen zu Leistungsproblemen und überwältigenden Ergebnislisten führen kann.';
+$string['enablefloatingwidget'] = 'Schwebendes Schnellzugriffs-Widget aktivieren';
+$string['enablefloatingwidget_desc'] = 'Wenn aktiviert, erscheint ein schwebendes Such-Widget auf Kursseiten, das schnellen Zugriff auf die Kurssuche ermöglicht, ohne zur Suchaktivitätsseite zu navigieren.';
+$string['floatingwidgetverticaloffset'] = 'Vertikaler Versatz des schwebenden Widgets';
+$string['floatingwidgetverticaloffset_desc'] = 'Vertikaler Positionsversatz in Pixeln vom unteren Seitenrand. Erhöhen Sie diesen Wert, um das Widget höher zu positionieren und Überlappungen mit anderen Seitenelementen (z. B. Moodles Infobutton) zu vermeiden.';
+$string['floatingwidgetverticaloffset_invalid'] = 'Vertikaler Versatz muss 0 oder größer sein.';
 
 // Pagination strings.
 $string['previous'] = 'Zurück';
@@ -123,6 +128,9 @@ $string['matchcount'] = '{$a} Treffer';
 $string['expandmatches'] = 'Treffer erweitern';
 $string['collapsematches'] = 'Treffer einklappen';
 $string['matchof'] = 'Treffer {$a->index} von {$a->total}';
+
+// Floating widget strings.
+$string['quicksearch'] = 'Schnellsuche';
 
 // Privacy.
 $string['privacy:metadata'] = 'Das Kurssuche-Modul speichert keine persönlichen Benutzerdaten. Es speichert nur Aktivitätsinstanz-Konfigurationen wie Name, Beschreibung, Suchbereich und Anzeigeoptionen.';

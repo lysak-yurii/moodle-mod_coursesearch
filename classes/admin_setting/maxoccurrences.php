@@ -15,21 +15,35 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Course Search module version information
+ * Custom admin setting for maximum occurrences with validation.
  *
  * @package    mod_coursesearch
  * @copyright  2025 Yurii Lysak
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+// phpcs:ignore moodle.Files.MoodleInternal.MoodleInternalNotNeeded -- Required for Moodle security
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version   = 2026010901;       // The current module version (Date: YYYYMMDDXX).
-$plugin->requires  = 2024042200;       // Requires this Moodle version (Moodle 4.4+).
-$plugin->component = 'mod_coursesearch'; // Full name of the plugin (used for diagnostics).
-$plugin->cron      = 0;
-$plugin->maturity  = MATURITY_STABLE;
-// Version 1.4.0 - Added: Floating quick-access search widget that appears on all course pages,
-// Added: Admin settings for enabling/disabling widget and configuring vertical offset.
-
-$plugin->release   = '1.4.0';
+/**
+ * Custom admin setting for maximum occurrences with validation.
+ *
+ * @package    mod_coursesearch
+ * @copyright  2025 Yurii Lysak
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+class admin_setting_configtext_maxoccurrences extends admin_setting_configtext {
+    /**
+     * Validate the setting value.
+     *
+     * @param string $value The value to validate
+     * @return mixed True if valid, error string if invalid
+     */
+    public function validate($value) {
+        $value = (int)$value;
+        if ($value < 0) {
+            return get_string('maxoccurrences_invalid', 'coursesearch');
+        }
+        return true;
+    }
+}

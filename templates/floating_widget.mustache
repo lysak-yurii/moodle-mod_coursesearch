@@ -1,0 +1,71 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template mod_coursesearch/floating_widget
+
+    Floating quick-access search widget template.
+
+    Context variables required for this template:
+    * formurl - The form action URL
+    * cmid - The course module ID
+    * placeholder - The placeholder text for the search input
+    * searchlabel - The label for the search button
+    * verticaloffset - The vertical offset in pixels from the bottom
+
+    Example context (json):
+    {
+        "formurl": "/mod/coursesearch/view.php?id=123",
+        "cmid": 123,
+        "placeholder": "Search this course...",
+        "searchlabel": "Search",
+        "verticaloffset": 20
+    }
+}}
+<div id="coursesearch-floating-widget" class="coursesearch-floating-widget coursesearch-floating-widget-collapsed" style="bottom: {{verticaloffset}}px;">
+    <div class="coursesearch-floating-widget-toggle" role="button" tabindex="0" aria-label="{{#str}} quicksearch, mod_coursesearch {{/str}}" aria-expanded="false">
+        <span class="coursesearch-floating-widget-icon" aria-hidden="true">
+            <svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8" fill="none" stroke="currentColor"/>
+                <line x1="21" y1="21" x2="16.65" y2="16.65" stroke="currentColor"/>
+            </svg>
+        </span>
+    </div>
+    <div class="coursesearch-floating-widget-content">
+        <div class="coursesearch-floating-widget-header">
+            <span class="coursesearch-floating-widget-title">{{#str}} quicksearch, mod_coursesearch {{/str}}</span>
+            <button type="button" class="coursesearch-floating-widget-close" aria-label="{{#str}} close, core {{/str}}">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+        <form action="{{formurl}}" method="get" class="coursesearch-floating-widget-form">
+            <input type="hidden" name="id" value="{{cmid}}">
+            <div class="input-group">
+                <input type="text"
+                       name="query"
+                       class="form-control coursesearch-floating-widget-input"
+                       placeholder="{{placeholder}}"
+                       aria-label="{{#str}} search, mod_coursesearch {{/str}}"
+                       autocomplete="off">
+                <div class="input-group-append">
+                    <button type="submit" class="btn btn-primary coursesearch-floating-widget-submit" aria-label="{{#str}} search, mod_coursesearch {{/str}}">
+                        {{searchlabel}}
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>

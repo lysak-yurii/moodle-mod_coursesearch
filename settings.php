@@ -24,31 +24,9 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-// Custom admin setting for maximum occurrences with validation.
-if (!class_exists('admin_setting_configtext_maxoccurrences')) {
-    /**
-     * Custom admin setting for maximum occurrences with validation.
-     *
-     * @package    mod_coursesearch
-     * @copyright  2025 Yurii Lysak
-     * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
-     */
-    class admin_setting_configtext_maxoccurrences extends admin_setting_configtext {
-        /**
-         * Validate the setting value.
-         *
-         * @param string $value The value to validate
-         * @return mixed True if valid, error string if invalid
-         */
-        public function validate($value) {
-            $value = (int)$value;
-            if ($value < 0) {
-                return get_string('maxoccurrences_invalid', 'coursesearch');
-            }
-            return true;
-        }
-    }
-}
+// Load custom admin setting classes.
+require_once($CFG->dirroot . '/mod/coursesearch/classes/admin_setting/maxoccurrences.php');
+require_once($CFG->dirroot . '/mod/coursesearch/classes/admin_setting/floatingwidgetoffset.php');
 
 if ($ADMIN->fulltree) {
     // Enable/disable scrolling and highlighting feature.
@@ -82,6 +60,23 @@ if ($ADMIN->fulltree) {
         get_string('maxoccurrences', 'coursesearch'),
         get_string('maxoccurrences_desc', 'coursesearch'),
         5,
+        PARAM_INT
+    ));
+
+    // Enable/disable floating quick-access widget.
+    $settings->add(new admin_setting_configcheckbox(
+        'mod_coursesearch/enablefloatingwidget',
+        get_string('enablefloatingwidget', 'coursesearch'),
+        get_string('enablefloatingwidget_desc', 'coursesearch'),
+        1
+    ));
+
+    // Floating widget vertical offset setting.
+    $settings->add(new admin_setting_configtext_floatingwidgetoffset(
+        'mod_coursesearch/floatingwidgetverticaloffset',
+        get_string('floatingwidgetverticaloffset', 'coursesearch'),
+        get_string('floatingwidgetverticaloffset_desc', 'coursesearch'),
+        80,
         PARAM_INT
     ));
 }

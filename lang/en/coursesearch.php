@@ -103,9 +103,14 @@ $string['pagination'] = 'Search results pagination';
 $string['resultsperpage'] = 'Results per page';
 $string['resultsperpage_desc'] = 'The number of search results to display per page.';
 $string['maxoccurrences'] = 'Maximum occurrences per content item';
-$string['maxoccurrences_desc'] = 'Maximum number of occurrences to find per content item when a search term appears multiple times. Set to 0 to disable the limit and find all occurrences (not recommended for large courses as it may impact performance and create overwhelming result lists). Default: 5.';
+$string['maxoccurrences_desc'] = 'Maximum number of occurrences to find per content item when a search term appears multiple times. Set to 0 to disable the limit and find all occurrences (not recommended for large courses as it may impact performance and create overwhelming result lists).';
 $string['maxoccurrences_invalid'] = 'Maximum occurrences must be 0 or greater.';
 $string['maxoccurrences_warning'] = 'Warning: Setting this to 0 will find all occurrences, which may cause performance issues and overwhelming result lists in large courses.';
+$string['enablefloatingwidget'] = 'Enable floating quick-access widget';
+$string['enablefloatingwidget_desc'] = 'When enabled, a floating search widget will appear on course pages, allowing quick access to course search without navigating to the search activity page.';
+$string['floatingwidgetverticaloffset'] = 'Floating widget vertical offset';
+$string['floatingwidgetverticaloffset_desc'] = 'Vertical position offset in pixels from the bottom of the page. Increase this value to move the widget higher and avoid overlap with other page elements (e.g., Moodle\'s infobutton).';
+$string['floatingwidgetverticaloffset_invalid'] = 'Vertical offset must be 0 or greater.';
 
 // Pagination strings.
 $string['previous'] = 'Previous';
@@ -123,6 +128,9 @@ $string['matchcount'] = '{$a} matches';
 $string['expandmatches'] = 'Expand matches';
 $string['collapsematches'] = 'Collapse matches';
 $string['matchof'] = 'Match {$a->index} of {$a->total}';
+
+// Floating widget strings.
+$string['quicksearch'] = 'Quick search';
 
 // Privacy.
 $string['privacy:metadata'] = 'The Course Search module does not store any personal user data. It only stores activity instance configuration such as name, description, search scope, and display options.';

@@ -20,8 +20,16 @@ A comprehensive Moodle activity module that enables teachers to add a search bar
 - **Wide Activity Support**: Highlighting works on Pages, Books, Lessons, Wiki, Forums, Glossary, Database, and Labels
 - **Accordion Support**: Automatically expands Bootstrap accordions/collapsible sections to reveal and highlight text inside
 
+### Floating Quick-Access Widget
+- **Quick Search Access**: A floating search widget appears on all course pages (course view, module pages, etc.) providing instant access to course search without navigating to the search activity page
+- **Smart Positioning**: Configurable vertical offset to avoid overlap with other page elements (e.g., Moodle's infobutton)
+- **Theme Integration**: Widget automatically adapts to Moodle's theme colors
+- **Universal Availability**: Appears on all course pages where a coursesearch activity exists (excludes H5P pages to prevent duplication)
+
 ### Admin Settings
 - **Enable/Disable Highlighting**: Global setting to turn scrolling and highlighting on or off (Site Administration > Plugins > Activity modules > Course Search)
+- **Enable/Disable Floating Widget**: Global setting to turn the floating quick-access widget on or off
+- **Floating Widget Vertical Offset**: Configure the vertical position of the floating widget in pixels from the bottom of the page (default: 80px)
 - **Results Per Page**: Configure the number of search results displayed per page
 - **Maximum Occurrences Per Content Item**: Configure how many occurrences of a search term to find per content item (default: 5). Set to 0 to disable the limit and find all occurrences (not recommended for large courses as it may impact performance)
 - **Excluded Placeholder Patterns**: Configure regex patterns to exclude internal Moodle placeholders (like @@PLUGINFILE@@) from search results to prevent false matches
@@ -166,9 +174,13 @@ When clicking on search results, the plugin automatically:
 
 ## Version
 
-Current version: **1.3.1** (Stable)
+Current version: **1.4.0** (Stable)
 
 ### Changelog
+
+#### Version 1.4.0 (January 2026)
+- **New Feature**: Added floating quick-access search widget that appears on all course pages (course view, module pages, etc.) providing instant access to course search without navigating to the search activity page.
+- **New Feature**: Added admin settings for enabling/disabling the floating widget and configuring its vertical offset position.
 
 #### Version 1.3.1 (January 2026)
 - **Fixed**: Highlight parameter URL encoding in grouped results.
@@ -220,6 +232,7 @@ Enhancements (December 2025):
 - Added search results pagination and grouping by sections
 
 Enhancements (January 2026):
+- Added floating quick-access search widget with admin settings for enabling/disabling it and configuring its vertical offset position
 - Added optional grouping toggle allowing teachers to choose between grouped or flat list result display
 - Fixed HTML tag and placeholder matching bugs, improving search accuracy
 - Added configurable placeholder filtering for administrators

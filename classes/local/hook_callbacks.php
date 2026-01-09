@@ -80,4 +80,136 @@ class hook_callbacks {
             $PAGE->requires->js_call_amd('mod_coursesearch/scrolltohighlight', 'init');
         }
     }
+
+    /**
+     * Callback for the before_footer_html_generation hook.
+     *
+     * Injects floating quick-access search widget on course pages where a coursesearch activity exists.
+     * Appears on any page within a course context (course view, module pages, etc.) as long as
+     * the feature is enabled and a coursesearch activity exists in the course.
+     *
+     * @param \core\hook\output\before_footer_html_generation $hook The hook instance.
+     * @return void
+     */
+    public static function inject_floating_widget(\core\hook\output\before_footer_html_generation $hook): void {
+        global $PAGE, $DB, $COURSE;
+
+        // Check if floating widget is enabled in admin settings.
+        $enablefloatingwidget = get_config('mod_coursesearch', 'enablefloatingwidget');
+        // Get_config() may return '0', 0, false, or null (not configured yet).
+        // Treat null as enabled (default), and treat any 0-ish value as disabled.
+        if ($enablefloatingwidget !== null && (int)$enablefloatingwidget === 0) {
+            return;
+        }
+
+        // Exclude H5P pages - H5P content is rendered in iframe and may have its own search functionality,
+        // which would cause the widget to appear embedded in the H5P content area.
+        // Check both page type and module type to catch all H5P variations.
+        $h5ppagetypes = ['mod-hvp-view', 'mod-h5pactivity-view', 'mod-hvp', 'mod-h5pactivity'];
+        foreach ($h5ppagetypes as $h5ptype) {
+            if (strpos($PAGE->pagetype, $h5ptype) === 0) {
+                return;
+            }
+        }
+
+        // Also check if the current page's module is an H5P module.
+        if ($PAGE->cm) {
+            $modname = $PAGE->cm->modname;
+            if ($modname === 'hvp' || $modname === 'h5pactivity') {
+                return;
+            }
+        }
+
+        // Get course ID from page context or global $COURSE.
+        // This works for any page type within a course (course-view, mod-*-view, etc.).
+        $courseid = null;
+        if (!empty($COURSE->id) && $COURSE->id != SITEID) {
+            $courseid = $COURSE->id;
+        } else {
+            // Try to get course from page context.
+            $context = $PAGE->context;
+            if ($context && $context instanceof \context_course) {
+                $courseid = $context->instanceid;
+            } else if ($context && $context instanceof \context_module) {
+                // For module pages, get course from module.
+                $cm = $PAGE->cm;
+                if ($cm && !empty($cm->course)) {
+                    $courseid = $cm->course;
+                }
+            } else if ($context && $context instanceof \context_block) {
+                // For block contexts, try to get course from parent context.
+                $parentcontext = $context->get_parent_context();
+                if ($parentcontext && $parentcontext instanceof \context_course) {
+                    $courseid = $parentcontext->instanceid;
+                }
+            }
+        }
+
+        // Check if we have a valid course ID (must be in a course context, not site level).
+        if (empty($courseid) || $courseid == SITEID) {
+            return;
+        }
+
+        // Check if there's at least one coursesearch activity in this course.
+        $sql = "SELECT cs.id, cs.name, cs.placeholder, cm.id as cmid
+                  FROM {coursesearch} cs
+                  JOIN {course_modules} cm ON cm.instance = cs.id
+                  JOIN {modules} m ON m.id = cm.module
+                 WHERE cs.course = :courseid
+                   AND m.name = 'coursesearch'
+                   AND cm.visible = 1
+              ORDER BY cs.id ASC
+                 LIMIT 1";
+        $coursesearch = $DB->get_record_sql($sql, ['courseid' => $courseid]);
+
+        if (!$coursesearch) {
+            return;
+        }
+
+        // Check if user has capability to view the course search activity.
+        $course = $DB->get_record('course', ['id' => $courseid], '*', MUST_EXIST);
+        $modinfo = get_fast_modinfo($course);
+        $cm = $modinfo->get_cm($coursesearch->cmid);
+        $context = \context_module::instance($coursesearch->cmid);
+        if (!has_capability('mod/coursesearch:view', $context)) {
+            return;
+        }
+
+        // Get placeholder text.
+        $defaultplaceholder = get_string('defaultplaceholder', 'coursesearch');
+        $placeholder = !empty($coursesearch->placeholder) ? $coursesearch->placeholder : $defaultplaceholder;
+
+        // Get vertical offset setting (default to 80px if not set).
+        $verticaloffset = get_config('mod_coursesearch', 'floatingwidgetverticaloffset');
+        if ($verticaloffset === false || $verticaloffset === null) {
+            $verticaloffset = 80; // Default value.
+        } else {
+            $verticaloffset = (int)$verticaloffset;
+            // Ensure non-negative value.
+            if ($verticaloffset < 0) {
+                $verticaloffset = 80;
+            }
+        }
+
+        // Create the form URL.
+        $formurl = new \moodle_url('/mod/coursesearch/view.php', ['id' => $coursesearch->cmid]);
+
+        // Get renderer.
+        $renderer = $PAGE->get_renderer('mod_coursesearch');
+
+        // Render the floating widget template.
+        $templatecontext = [
+            'formurl' => $formurl->out(false),
+            'cmid' => $coursesearch->cmid,
+            'placeholder' => $placeholder,
+            'searchlabel' => get_string('search', 'coursesearch'),
+            'verticaloffset' => $verticaloffset,
+        ];
+
+        $html = $renderer->render_from_template('mod_coursesearch/floating_widget', $templatecontext);
+        $hook->add_html($html);
+
+        // Load the JavaScript module for the floating widget.
+        $PAGE->requires->js_call_amd('mod_coursesearch/floatingwidget', 'init');
+    }
 }
