@@ -45,7 +45,9 @@ class hook_callbacks {
 
         // Check if highlighting is enabled in admin settings.
         $enablehighlight = get_config('mod_coursesearch', 'enablehighlight');
-        if ($enablehighlight === '0') {
+        // Get_config() may return '0', 0, false, or null (not configured yet).
+        // Treat null as enabled (default), and treat any 0-ish value as disabled.
+        if ($enablehighlight !== null && (int)$enablehighlight === 0) {
             return;
         }
 

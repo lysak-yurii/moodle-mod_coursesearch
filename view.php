@@ -127,6 +127,10 @@ if (!empty($query)) {
     // Group raw results by activity before processing.
     $groupedrawresults = coursesearch_group_raw_results_by_activity($rawresults, $course);
 
+    // Highlight/scroll feature (admin setting). Default to enabled for backward compatibility.
+    $enablehighlight = get_config('mod_coursesearch', 'enablehighlight');
+    $highlightenabled = ($enablehighlight === null) ? true : ((int)$enablehighlight === 1);
+
     // Process results and create search_result objects.
     $resultobjects = [];
 
@@ -162,7 +166,7 @@ if (!empty($query)) {
         $matchtype = isset($result['match']) ? $result['match'] : '';
         $istitlematch = (stripos($matchtype, 'title') !== false);
 
-        if (!$istitlematch && $resulturl instanceof moodle_url && !empty($query)) {
+        if ($highlightenabled && !$istitlematch && $resulturl instanceof moodle_url && !empty($query)) {
             $params = $resulturl->params();
             if (!isset($params['highlight'])) {
                 $cleanquery = clean_param($query, PARAM_TEXT);
@@ -219,7 +223,7 @@ if (!empty($query)) {
                 // Add highlight if needed.
                 $matchmatchtype = isset($matchdata['match']) ? $matchdata['match'] : '';
                 $matchistitlematch = (stripos($matchmatchtype, 'title') !== false);
-                if (!$matchistitlematch && $matchurl instanceof moodle_url && !empty($query)) {
+                if ($highlightenabled && !$matchistitlematch && $matchurl instanceof moodle_url && !empty($query)) {
                     $params = $matchurl->params();
                     if (!isset($params['highlight'])) {
                         $cleanquery = clean_param($query, PARAM_TEXT);
@@ -333,7 +337,10 @@ if (!empty($query)) {
 
     // Load the resultlinks AMD module to handle click interception if there are results.
     if (!empty($resultobjects)) {
-        $PAGE->requires->js_call_amd('mod_coursesearch/resultlinks', 'init');
+        // Only needed when highlight/scroll feature is enabled (it persists highlight data across navigation).
+        if ($highlightenabled) {
+            $PAGE->requires->js_call_amd('mod_coursesearch/resultlinks', 'init');
+        }
         // Check if any results are grouped and load the groups module.
         $hasgrouped = false;
         foreach ($resultobjects as $result) {
