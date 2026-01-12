@@ -44,6 +44,8 @@ define([], function() {
                 try {
                     const url = new URL(href, window.location.origin);
                     const highlight = url.searchParams.get('highlight');
+                    const occurrence = url.searchParams.get('occurrence');
+                    const highlightAll = url.searchParams.get('highlight_all');
                     const hash = url.hash;
                     let moduleId = null;
 
@@ -66,6 +68,21 @@ define([], function() {
                             }
                             sessionStorage.setItem('coursesearch_timestamp', Date.now().toString());
                             sessionStorage.setItem('coursesearch_shouldScroll', 'true');
+
+                            // Store highlight_all flag for grouped results (accordion header clicks).
+                            if (highlightAll === '1') {
+                                sessionStorage.setItem('coursesearch_highlight_all', 'true');
+                            } else {
+                                sessionStorage.removeItem('coursesearch_highlight_all');
+                            }
+
+                            // Store occurrence index for specific match highlighting.
+                            // Only store if not highlight_all mode.
+                            if (occurrence !== null && highlightAll !== '1' && /^\d+$/.test(occurrence)) {
+                                sessionStorage.setItem('coursesearch_occurrence', occurrence);
+                            } else {
+                                sessionStorage.removeItem('coursesearch_occurrence');
+                            }
                         } catch (err) {
                             // Error escaping highlight data, continue without storing.
                         }

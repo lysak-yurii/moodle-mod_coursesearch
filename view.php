@@ -209,6 +209,7 @@ if (!empty($query)) {
         if (isset($result['matches']) && is_array($result['matches']) && count($result['matches']) >= 2) {
             // This is a grouped result - create grouped search_result object.
             $matches = [];
+            $occurrenceindex = 0;
             foreach ($result['matches'] as $matchdata) {
                 // Process each match in the group.
                 $matchresultname = isset($matchdata['name']) ? coursesearch_process_multilang($matchdata['name']) : '';
@@ -233,6 +234,10 @@ if (!empty($query)) {
                         $cleanquery = clean_param($query, PARAM_TEXT);
                         $matchurl->param('highlight', $cleanquery);
                     }
+                    // Add occurrence index for specific match highlighting.
+                    // Only increment for content matches, not title matches.
+                    $matchurl->param('occurrence', $occurrenceindex);
+                    $occurrenceindex++;
                 }
 
                 // Process snippet.
@@ -279,6 +284,15 @@ if (!empty($query)) {
             $activityurl = isset($result['activityurl']) && $result['activityurl'] instanceof moodle_url
                 ? $result['activityurl']
                 : ($resulturl ?: new moodle_url('/course/view.php', ['id' => $course->id]));
+
+            // Add highlight and highlight_all parameters to activity URL for accordion header click.
+            // This enables highlighting ALL occurrences when clicking the grouped result header.
+            if ($highlightenabled && $activityurl instanceof moodle_url && !empty($query)) {
+                $cleanquery = clean_param($query, PARAM_TEXT);
+                $activityurl->param('highlight', $cleanquery);
+                $activityurl->param('highlight_all', '1');
+            }
+
             $activityicon = $result['activityicon'] ?? $iconurl;
             $activitymodname = $result['modname'] ?? 'unknown';
 

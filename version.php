@@ -24,12 +24,12 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version   = 2026011200;       // The current module version (Date: YYYYMMDDXX).
+$plugin->version   = 2026011201;       // The current module version (Date: YYYYMMDDXX).
 $plugin->requires  = 2024042200;       // Requires this Moodle version (Moodle 4.4+).
 $plugin->component = 'mod_coursesearch'; // Full name of the plugin (used for diagnostics).
 $plugin->cron      = 0;
 $plugin->maturity  = MATURITY_STABLE;
-// Version 1.4.0 - Added: Floating quick-access search widget that appears on all course pages,
-// Added: Admin settings for enabling/disabling widget and configuring vertical offset.
+// Version 1.4.1 - Added: Multi-occurrence highlighting - opeing grouped activity result highlights all occurrences,
+// opening individual matches highlights the specific occurrence. Highlights persist until user clicks elsewhere.
 
-$plugin->release   = '1.4.0';
+$plugin->release   = '1.4.1';

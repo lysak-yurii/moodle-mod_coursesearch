@@ -364,6 +364,227 @@ define(['jquery'], function($) {
     }
 
     /**
+     * Find all occurrences of search text and return array of text nodes with their positions
+     * @param {HTMLElement} element The element to search within
+     * @param {string} searchText The text to search for
+     * @return {Array} Array of objects with textNode, startIndex, and parent element
+     */
+    function findAllOccurrences(element, searchText) {
+        if (!element || !searchText) {
+            return [];
+        }
+
+        const textNodes = getVisibleTextNodes(element);
+        const searchLower = searchText.toLowerCase();
+        const normalizedSearch = searchLower.replace(/[\u00A0\s]+/g, ' ');
+        const occurrences = [];
+
+        for (let i = 0; i < textNodes.length; i++) {
+            const nodeText = textNodes[i].textContent;
+            const nodeTextLower = nodeText.replace(/[\u00A0\s]+/g, ' ').toLowerCase();
+            let startPos = 0;
+
+            // Find all occurrences within this text node.
+            let index = nodeTextLower.indexOf(normalizedSearch, startPos);
+            while (index !== -1) {
+                // Find the actual index in the original text (accounting for space normalization).
+                const originalIndex = findOriginalIndex(nodeText, nodeTextLower, index);
+
+                occurrences.push({
+                    textNode: textNodes[i],
+                    startIndex: originalIndex,
+                    length: searchText.length,
+                    nodeIndex: i
+                });
+
+                startPos = index + normalizedSearch.length;
+                index = nodeTextLower.indexOf(normalizedSearch, startPos);
+            }
+        }
+
+        return occurrences;
+    }
+
+    /**
+     * Find the original index in the text accounting for space normalization
+     * @param {string} original The original text
+     * @param {string} normalized The normalized text (spaces collapsed)
+     * @param {number} normalizedIndex Index in the normalized text
+     * @return {number} Index in the original text
+     */
+    function findOriginalIndex(original, normalized, normalizedIndex) {
+        // Simple case: if no difference in length, return same index.
+        if (original.length === normalized.length) {
+            return normalizedIndex;
+        }
+
+        // Map from normalized position to original position.
+        let normalizedPos = 0;
+        let originalPos = 0;
+        const originalLower = original.toLowerCase();
+
+        while (normalizedPos < normalizedIndex && originalPos < original.length) {
+            // Check if we're at whitespace.
+            if (/[\u00A0\s]/.test(originalLower[originalPos])) {
+                // Skip consecutive whitespace in original.
+                while (originalPos < original.length - 1 && /[\u00A0\s]/.test(originalLower[originalPos + 1])) {
+                    originalPos++;
+                }
+            }
+            originalPos++;
+            normalizedPos++;
+        }
+
+        return originalPos;
+    }
+
+    /**
+     * Remove all highlight spans from page
+     * @param {Array} highlightedElements Array of highlight span elements
+     */
+    function removeAllHighlights(highlightedElements) {
+        highlightedElements.forEach(function(span) {
+            if (span && span.parentNode) {
+                const parent = span.parentNode;
+                parent.replaceChild(document.createTextNode(span.textContent), span);
+                parent.normalize();
+            }
+        });
+    }
+
+    /**
+     * Highlight all occurrences of search text
+     * Highlights persist until user clicks somewhere on the page
+     * @param {HTMLElement} element The element to search within
+     * @param {string} searchText The text to highlight
+     * @return {boolean} True if any occurrences were highlighted
+     */
+    function highlightAllOccurrences(element, searchText) {
+        const occurrences = findAllOccurrences(element, searchText);
+
+        if (occurrences.length === 0) {
+            return false;
+        }
+
+        // Highlight each occurrence (process in reverse to avoid index shifting).
+        const highlightedElements = [];
+        for (let i = occurrences.length - 1; i >= 0; i--) {
+            const occ = occurrences[i];
+            const highlighted = highlightOccurrence(occ.textNode, occ.startIndex, searchText.length);
+            if (highlighted) {
+                highlightedElements.unshift(highlighted);
+            }
+        }
+
+        // Scroll to the first highlighted element.
+        if (highlightedElements.length > 0) {
+            const firstHighlight = highlightedElements[0];
+            const rect = firstHighlight.getBoundingClientRect();
+            const scrollY = window.scrollY + rect.top - 100;
+            window.scrollTo({top: scrollY, behavior: 'smooth'});
+
+            // Remove highlights when user clicks anywhere on the page.
+            const clickHandler = function() {
+                removeAllHighlights(highlightedElements);
+                document.removeEventListener('click', clickHandler);
+            };
+
+            // Add click listener with a small delay to avoid immediate trigger.
+            setTimeout(function() {
+                document.addEventListener('click', clickHandler);
+            }, 100);
+        }
+
+        return highlightedElements.length > 0;
+    }
+
+    /**
+     * Highlight a specific occurrence (by index) of search text
+     * @param {HTMLElement} element The element to search within
+     * @param {string} searchText The text to highlight
+     * @param {number} occurrenceIndex Which occurrence to highlight (0-indexed)
+     * @return {boolean} True if the occurrence was highlighted
+     */
+    function highlightNthOccurrence(element, searchText, occurrenceIndex) {
+        const occurrences = findAllOccurrences(element, searchText);
+
+        if (occurrences.length === 0) {
+            return false;
+        }
+
+        // Clamp occurrence index to valid range (don't exceed available occurrences).
+        if (occurrenceIndex < 0 || occurrenceIndex >= occurrences.length) {
+            occurrenceIndex = Math.min(occurrenceIndex, occurrences.length - 1);
+            if (occurrenceIndex < 0) {
+                occurrenceIndex = 0;
+            }
+        }
+
+        const occ = occurrences[occurrenceIndex];
+        const highlighted = highlightOccurrence(occ.textNode, occ.startIndex, searchText.length);
+
+        if (highlighted) {
+            const rect = highlighted.getBoundingClientRect();
+            const scrollY = window.scrollY + rect.top - 100;
+            window.scrollTo({top: scrollY, behavior: 'smooth'});
+
+            // Remove highlight after delay.
+            setTimeout(function() {
+                if (highlighted.parentNode) {
+                    const parent = highlighted.parentNode;
+                    parent.replaceChild(document.createTextNode(highlighted.textContent), highlighted);
+                    parent.normalize();
+                }
+            }, 3000);
+
+            return true;
+        }
+
+        // Even if highlighting failed, return true if we found occurrences
+        // to prevent the fallback from running and causing double-highlight.
+        // The text exists, we just couldn't visually highlight it.
+        return occurrences.length > 0;
+    }
+
+    /**
+     * Create a highlight span around text in a text node
+     * @param {Node} textNode The text node containing the text
+     * @param {number} startIndex Start index within the text node
+     * @param {number} length Length of text to highlight
+     * @return {HTMLElement|null} The highlight span element or null if failed
+     */
+    function highlightOccurrence(textNode, startIndex, length) {
+        try {
+            const text = textNode.textContent;
+
+            // Validate indices.
+            if (startIndex < 0 || startIndex >= text.length) {
+                return null;
+            }
+
+            const endIndex = Math.min(startIndex + length, text.length);
+
+            const range = document.createRange();
+            range.setStart(textNode, startIndex);
+            range.setEnd(textNode, endIndex);
+
+            const span = document.createElement('span');
+            span.style.setProperty('background-color', '#ffff99', 'important');
+            span.style.setProperty('padding', '2px', 'important');
+            span.style.setProperty('border-radius', '2px', 'important');
+            span.style.setProperty('color', 'inherit', 'important');
+            span.style.setProperty('display', 'inline', 'important');
+            span.className = 'coursesearch-highlight-temp';
+
+            range.surroundContents(span);
+            return span;
+        } catch (e) {
+            // Range operations can fail in some edge cases.
+            return null;
+        }
+    }
+
+    /**
      * Initialize scrolling to highlighted text
      */
     function init() {
@@ -375,6 +596,8 @@ define(['jquery'], function($) {
         // Check for highlight parameter in URL.
         const urlParams = new URLSearchParams(window.location.search);
         let highlightText = urlParams.get('highlight');
+        let highlightAll = urlParams.get('highlight_all') === '1';
+        let occurrenceIndex = parseInt(urlParams.get('occurrence') || '0', 10);
 
         // If not in URL, check sessionStorage (set by coursesearch module).
         let storedModuleId = null;
@@ -382,6 +605,8 @@ define(['jquery'], function($) {
             const storedHighlight = sessionStorage.getItem('coursesearch_highlight');
             storedModuleId = sessionStorage.getItem('coursesearch_moduleId');
             const timestamp = sessionStorage.getItem('coursesearch_timestamp');
+            const storedHighlightAll = sessionStorage.getItem('coursesearch_highlight_all');
+            const storedOccurrence = sessionStorage.getItem('coursesearch_occurrence');
 
             // Check if timestamp is recent (within 10 seconds).
             if (timestamp && Date.now() - parseInt(timestamp, 10) > 10000) {
@@ -390,6 +615,8 @@ define(['jquery'], function($) {
                 sessionStorage.removeItem('coursesearch_moduleId');
                 sessionStorage.removeItem('coursesearch_timestamp');
                 sessionStorage.removeItem('coursesearch_shouldScroll');
+                sessionStorage.removeItem('coursesearch_highlight_all');
+                sessionStorage.removeItem('coursesearch_occurrence');
                 return;
             }
 
@@ -404,11 +631,20 @@ define(['jquery'], function($) {
                     // If JSON parsing fails, try using it directly (backwards compatibility).
                     highlightText = storedHighlight;
                 }
+
+                // Get highlight_all and occurrence from sessionStorage.
+                highlightAll = storedHighlightAll === 'true';
+                if (storedOccurrence && /^\d+$/.test(storedOccurrence)) {
+                    occurrenceIndex = parseInt(storedOccurrence, 10);
+                }
+
                 // Clear it after use.
                 sessionStorage.removeItem('coursesearch_highlight');
                 sessionStorage.removeItem('coursesearch_moduleId');
                 sessionStorage.removeItem('coursesearch_timestamp');
                 sessionStorage.removeItem('coursesearch_shouldScroll');
+                sessionStorage.removeItem('coursesearch_highlight_all');
+                sessionStorage.removeItem('coursesearch_occurrence');
             }
         }
 
@@ -448,26 +684,50 @@ define(['jquery'], function($) {
                         moduleId = null;
                     }
 
+                    // Determine the search context element.
+                    let searchElement = document.body;
                     if (moduleId) {
                         const moduleElement = document.getElementById('module-' + moduleId);
-
                         if (moduleElement) {
-                            // Try to find and scroll to the text within this module.
-                            if (!scrollToText(moduleElement, searchText)) {
-                                // If text not found in module, try searching in whole page.
-                                if (!scrollToText(document.body, searchText)) {
-                                    // If still not found, just scroll to the module.
-                                    const elementTop = moduleElement.getBoundingClientRect().top + window.scrollY;
-                                    window.scrollTo({top: elementTop - 100, behavior: 'smooth'});
-                                }
-                            }
-                        } else {
-                            // Module element not found, search in whole page.
-                            scrollToText(document.body, searchText);
+                            searchElement = moduleElement;
+                        }
+                    }
+
+                    // Apply the appropriate highlighting mode.
+                    let success = false;
+                    if (highlightAll) {
+                        // Highlight all occurrences.
+                        success = highlightAllOccurrences(searchElement, searchText);
+                        // If not found in module, try whole page.
+                        if (!success && searchElement !== document.body) {
+                            success = highlightAllOccurrences(document.body, searchText);
                         }
                     } else {
-                        // No moduleId, search in the whole page.
-                        scrollToText(document.body, searchText);
+                        // Highlight specific occurrence.
+                        success = highlightNthOccurrence(searchElement, searchText, occurrenceIndex);
+                        // If not found in module, try whole page.
+                        if (!success && searchElement !== document.body) {
+                            success = highlightNthOccurrence(document.body, searchText, occurrenceIndex);
+                        }
+                    }
+
+                    // Fallback to original scrollToText if new methods fail.
+                    if (!success) {
+                        if (moduleId) {
+                            const moduleElement = document.getElementById('module-' + moduleId);
+                            if (moduleElement) {
+                                if (!scrollToText(moduleElement, searchText)) {
+                                    if (!scrollToText(document.body, searchText)) {
+                                        const elementTop = moduleElement.getBoundingClientRect().top + window.scrollY;
+                                        window.scrollTo({top: elementTop - 100, behavior: 'smooth'});
+                                    }
+                                }
+                            } else {
+                                scrollToText(document.body, searchText);
+                            }
+                        } else {
+                            scrollToText(document.body, searchText);
+                        }
                     }
                 });
             }, 500);

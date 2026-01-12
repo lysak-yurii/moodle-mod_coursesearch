@@ -15,7 +15,11 @@ A comprehensive Moodle activity module that enables teachers to add a search bar
 
 ### Search Term Highlighting
 - **Automatic Scrolling**: Automatically scrolls to matched content when clicking search results
-- **Visual Highlighting**: Highlights search terms with a yellow background for 3 seconds
+- **Visual Highlighting**: Highlights search terms with a yellow background for 3 seconds (or until user clicks elsewhere for grouped results)
+- **Multi-Occurrence Highlighting**: 
+  - Opening grouped activity result highlights ALL occurrences of the search term. All-occurrence highlights persist until the user clicks anywhere on the page
+  - Opening individual match items highlights the SPECIFIC occurrence that was clicked
+
 - **Smart Fallback**: If direct text highlighting fails (e.g., text inside links), highlights the parent element
 - **Wide Activity Support**: Highlighting works on Pages, Books, Lessons, Wiki, Forums, Glossary, Database, and Labels
 - **Accordion Support**: Automatically expands Bootstrap accordions/collapsible sections to reveal and highlight text inside
@@ -136,8 +140,12 @@ The search covers the following content types:
 
 When clicking on search results, the plugin automatically:
 - Scrolls to the matched text
-- Highlights the text with a yellow background for 3 seconds
+- Highlights the text with a yellow background
 - Expands Bootstrap accordions/collapsible sections if needed
+
+**Highlighting Modes:**
+- **All Occurrences**: When opening a group activity result (e.g., "Activity Name - 3 matches"), all occurrences of the search term are highlighted and remain visible until you click anywhere on the page
+- **Specific Occurrence**: When opening an individual match from an expanded accordion, only that specific occurrence is highlighted (auto-removes after 3 seconds)
 
 **Highlighting works on:**
 - Course page (Labels, Sections)
@@ -174,9 +182,13 @@ When clicking on search results, the plugin automatically:
 
 ## Version
 
-Current version: **1.4.0** (Stable)
+Current version: **1.4.1** (Stable)
 
 ### Changelog
+
+#### Version 1.4.1 (January 2026)
+- **New Feature**: Multi-occurrence highlighting - opening grouped activity result (e.g., "Activity Name - 3 matches") now highlights ALL occurrences of the search term, and highlights persist until the user clicks anywhere on the page
+- **New Feature**: Specific occurrence highlighting - opening individual match items from expanded accordions now highlights the exact occurrence that was clicked
 
 #### Version 1.4.0 (January 2026)
 - **New Feature**: Added floating quick-access search widget that appears on all course pages (course view, module pages, etc.) providing instant access to course search without navigating to the search activity page.
@@ -239,6 +251,7 @@ Enhancements (January 2026):
 - Added collapsible activity grouping for multiple matches within the same activity
 - Enhanced search to find all occurrences of search terms in content & added configuration for admins to limit maximum occurrences per content item
 - Improved search logic across all activity types for better result coverage
+- Added multi-occurrence highlighting - opening grouped result highlights all occurrences (persists until click), opening individual match highlights specific occurrences
 
 ## Support
 
