@@ -102,20 +102,84 @@ class hook_callbacks {
             return;
         }
 
-        // Exclude H5P pages - H5P content is rendered in iframe and may have its own search functionality,
-        // which would cause the widget to appear embedded in the H5P content area.
-        // Check both page type and module type to catch all H5P variations.
-        $h5ppagetypes = ['mod-hvp-view', 'mod-h5pactivity-view', 'mod-hvp', 'mod-h5pactivity'];
-        foreach ($h5ppagetypes as $h5ptype) {
-            if (strpos($PAGE->pagetype, $h5ptype) === 0) {
+        // Exclude H5P content files and embedded content, but allow H5P activity view pages.
+        // H5P view pages (mod/h5pactivity/view.php, mod/hvp/view.php) should show the widget,
+        // but H5P content files served via pluginfile.php or contentbank should not.
+
+        // Exclude SCORM player pages (when SCORM content is being played), but allow SCORM view/start pages.
+        // SCORM player pages are rendered in iframe/popup and should not show the widget.
+        $scormplayerpagetypes = ['mod-scorm-player', 'mod-scorm-play'];
+        foreach ($scormplayerpagetypes as $scormplayertype) {
+            if (strpos($PAGE->pagetype, $scormplayertype) === 0) {
                 return;
             }
         }
 
-        // Also check if the current page's module is an H5P module.
-        if ($PAGE->cm) {
-            $modname = $PAGE->cm->modname;
-            if ($modname === 'hvp' || $modname === 'h5pactivity') {
+        // Get page URL for various checks.
+        $url = $PAGE->url;
+        if ($url) {
+            $urlpath = $url->get_path();
+            $querystring = $url->get_query_string() ?? '';
+            $fullurl = $url->out(false);
+            $params = $url->params();
+
+            // Exclude H5P embed/player pages (where H5P content is actually rendered in iframe).
+            // These are different from view pages - they're the pages that load inside the iframe.
+            // Check for H5P-specific embed URLs or parameters that indicate embedded content.
+            if (
+                stripos($urlpath, 'mod/h5pactivity/embed.php') !== false ||
+                stripos($urlpath, 'mod/hvp/embed.php') !== false ||
+                stripos($urlpath, 'h5p/embed.php') !== false ||
+                stripos($urlpath, '/embed.php') !== false ||
+                (isset($params['embed']) && ($params['embed'] === '1' || $params['embed'] === 'true'))
+            ) {
+                return;
+            }
+
+            // Check URL for SCORM player.php pages.
+            if (stripos($urlpath, 'mod/scorm/player.php') !== false || stripos($urlpath, 'player.php') !== false) {
+                // Check if it's actually a player page (has player-specific parameters).
+                if (isset($params['a']) || isset($params['scoid']) || isset($params['display'])) {
+                    return;
+                }
+            }
+
+            // Exclude any page serving H5P content - check multiple ways to be robust.
+            // 1. Check the full request URI for .h5p file references.
+            $requesturi = $_SERVER['REQUEST_URI'] ?? '';
+            if (stripos($requesturi, '.h5p') !== false) {
+                return;
+            }
+
+            // 2. Check page URL for H5P content.
+            // Check if URL contains .h5p anywhere (path, query, or full URL).
+            if (
+                stripos($urlpath, '.h5p') !== false ||
+                stripos($querystring, '.h5p') !== false ||
+                stripos($fullurl, '.h5p') !== false
+            ) {
+                return;
+            }
+
+            // Check if serving files via pluginfile.php with contentbank component.
+            if (stripos($urlpath, 'pluginfile.php') !== false) {
+                // Check for contentbank in the path.
+                if (stripos($urlpath, 'contentbank') !== false) {
+                    return;
+                }
+                // Also check URL parameters for component=contentbank.
+                if (isset($params['component']) && $params['component'] === 'contentbank') {
+                    return;
+                }
+            }
+        }
+
+        // 3. Check page context for content bank context.
+        $context = $PAGE->context;
+        if ($context) {
+            // Check if context is content bank related.
+            $contextpath = $context->path ?? '';
+            if (stripos($contextpath, '/contentbank') !== false) {
                 return;
             }
         }

@@ -561,8 +561,8 @@ span.coursesearch-highlight-temp {
 }
 
 .coursesearch-floating-widget-toggle:hover {
-    /* Use darker shade of primary color */
-    background-color: var(--bs-primary-dark, var(--primary-dark, #0a58ca));
+    /* Darken the primary color on hover using filter */
+    filter: brightness(0.85);
     color: #fff;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
 }
