@@ -1534,68 +1534,52 @@ function coursesearch_process_multilang($content) {
     // Process multilanguage tags.
     $pattern = '/\{mlang\s+([\w\-_]+)\}(.*?)\{mlang\}/s';
 
-    // Find all multilang blocks.
-    if (preg_match_all($pattern, $content, $matches, PREG_SET_ORDER)) {
-        $selectedtext = null;
-        $selectedblock = null;
+    // Use preg_replace_callback to process EACH multilang block independently.
+    // This ensures ALL blocks matching the user's language are kept, not just the first one.
+    $content = preg_replace_callback($pattern, function ($match) use ($userlang) {
+        $lang = $match[1];
+        $text = $match[2];
 
-        // First pass: try to find content for the user's exact language.
-        foreach ($matches as $match) {
+        // If this block matches user's language, return its text.
+        if ($lang === $userlang) {
+            return $text;
+        }
+
+        // For blocks that don't match, return empty to remove them.
+        // We'll handle fallback languages in subsequent passes if needed.
+        return '';
+    }, $content);
+
+    // Handle fallback languages: if content still has multilang blocks (meaning
+    // no blocks matched the user's language), try fallback languages.
+    if (preg_match($pattern, $content)) {
+        // Try 'en' as fallback.
+        $content = preg_replace_callback($pattern, function ($match) {
             $lang = $match[1];
             $text = $match[2];
-
-            if ($lang === $userlang) {
-                // Found exact match - use this and stop searching.
-                $selectedtext = $text;
-                $selectedblock = $match[0];
-                break;
+            if ($lang === 'en') {
+                return $text;
             }
-        }
+            return '';
+        }, $content);
 
-        // Second pass: if no exact match, try fallback languages (en, then other).
-        if ($selectedtext === null) {
-            // Try 'en' first as common fallback.
-            foreach ($matches as $match) {
+        // If still has multilang blocks, try 'other'.
+        if (preg_match($pattern, $content)) {
+            $content = preg_replace_callback($pattern, function ($match) {
                 $lang = $match[1];
                 $text = $match[2];
-
-                if ($lang === 'en') {
-                    $selectedtext = $text;
-                    $selectedblock = $match[0];
-                    break;
+                if ($lang === 'other') {
+                    return $text;
                 }
-            }
-
-            // If still no match, try 'other'.
-            if ($selectedtext === null) {
-                foreach ($matches as $match) {
-                    $lang = $match[1];
-                    $text = $match[2];
-
-                    if ($lang === 'other') {
-                        $selectedtext = $text;
-                        $selectedblock = $match[0];
-                        break;
-                    }
-                }
-            }
-
-            // If still no match, use the first available language as last resort.
-            if ($selectedtext === null && !empty($matches)) {
-                $selectedtext = $matches[0][2];
-                $selectedblock = $matches[0][0];
-            }
+                return '';
+            }, $content);
         }
 
-        // Replace the selected block with its text, and remove all other multilang blocks.
-        if ($selectedblock !== null) {
-            // Replace the selected block with its text.
-            $content = str_replace($selectedblock, $selectedtext, $content);
-            // Remove all remaining multilang blocks.
-            $content = preg_replace($pattern, '', $content);
-        } else {
-            // No match found - remove all multilang tags.
-            $content = preg_replace($pattern, '', $content);
+        // If still has multilang blocks, use first available language.
+        if (preg_match($pattern, $content)) {
+            $content = preg_replace_callback($pattern, function ($match) {
+                return $match[2]; // Return text from first available language.
+            }, $content);
         }
     }
 
@@ -1949,16 +1933,13 @@ function coursesearch_filter_placeholders($text) {
         // Validate pattern is not empty and doesn't contain dangerous constructs.
         // Basic safety check: ensure it's a reasonable regex pattern.
         if (!empty($pattern) && strlen($pattern) < 500) {
-            try {
-                // Apply pattern with case-insensitive flag.
-                $text = preg_replace('/' . $pattern . '/i', '', $text);
-            } catch (Exception $e) {
-                // If pattern is invalid, log and skip it.
+            // Suppress errors and check result - preg_replace doesn't throw exceptions.
+            $result = @preg_replace('#' . $pattern . '#iu', '', $text);
+            if ($result !== null) {
+                $text = $result;
+            } else {
+                // Pattern was invalid, log and skip it.
                 debugging('Invalid placeholder pattern in coursesearch settings: ' . $pattern, DEBUG_DEVELOPER);
-            } catch (Error $e) {
-                // Catch PHP 7+ Error exceptions as well.
-                $errormsg = 'Invalid placeholder pattern in coursesearch settings: ' . $pattern . ' - ' . $e->getMessage();
-                debugging($errormsg, DEBUG_DEVELOPER);
             }
         }
     }
