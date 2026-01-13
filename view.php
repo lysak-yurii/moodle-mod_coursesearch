@@ -168,9 +168,9 @@ if (!empty($query)) {
 
         if ($highlightenabled && !$istitlematch && $resulturl instanceof moodle_url && !empty($query)) {
             $params = $resulturl->params();
-            if (!isset($params['highlight'])) {
+            if (!isset($params['cs_highlight'])) {
                 $cleanquery = clean_param($query, PARAM_TEXT);
-                $resulturl->param('highlight', $cleanquery);
+                $resulturl->param('cs_highlight', $cleanquery);
             }
         }
 
@@ -230,13 +230,13 @@ if (!empty($query)) {
                 $matchistitlematch = (stripos($matchmatchtype, 'title') !== false);
                 if ($highlightenabled && !$matchistitlematch && $matchurl instanceof moodle_url && !empty($query)) {
                     $params = $matchurl->params();
-                    if (!isset($params['highlight'])) {
+                    if (!isset($params['cs_highlight'])) {
                         $cleanquery = clean_param($query, PARAM_TEXT);
-                        $matchurl->param('highlight', $cleanquery);
+                        $matchurl->param('cs_highlight', $cleanquery);
                     }
                     // Add occurrence index for specific match highlighting.
                     // Only increment for content matches, not title matches.
-                    $matchurl->param('occurrence', $occurrenceindex);
+                    $matchurl->param('cs_occurrence', $occurrenceindex);
                     $occurrenceindex++;
                 }
 
@@ -289,8 +289,8 @@ if (!empty($query)) {
             // This enables highlighting ALL occurrences when clicking the grouped result header.
             if ($highlightenabled && $activityurl instanceof moodle_url && !empty($query)) {
                 $cleanquery = clean_param($query, PARAM_TEXT);
-                $activityurl->param('highlight', $cleanquery);
-                $activityurl->param('highlight_all', '1');
+                $activityurl->param('cs_highlight', $cleanquery);
+                $activityurl->param('cs_highlight_all', '1');
             }
 
             $activityicon = $result['activityicon'] ?? $iconurl;

@@ -161,7 +161,7 @@ When clicking on search results, the plugin automatically:
 
 ## Performance
 
-- JavaScript only loads when needed (when `highlight` parameter is present)
+- JavaScript only loads when needed (when `cs_highlight` parameter is present)
 - AMD modules are lazy-loaded by Moodle
 - Client-side highlighting only
 - Minimal impact on page load
@@ -182,9 +182,12 @@ When clicking on search results, the plugin automatically:
 
 ## Version
 
-Current version: **1.4.1** (Stable)
+Current version: **1.4.2** (Stable)
 
 ### Changelog
+
+#### Version 1.4.2 (January 2026)
+- **Fixed**: Changed URL parameters from `highlight` to `cs_highlight` (and `highlight_all` to `cs_highlight_all`, `occurrence` to `cs_occurrence`) to avoid conflict with Moodle core's built-in highlighting mechanism. This fixes the issue where the first occurrence was incorrectly highlighted when opening specific occurrence results.
 
 #### Version 1.4.1 (January 2026)
 - **New Feature**: Multi-occurrence highlighting - opening grouped activity result (e.g., "Activity Name - 3 matches") now highlights ALL occurrences of the search term, and highlights persist until the user clicks anywhere on the page

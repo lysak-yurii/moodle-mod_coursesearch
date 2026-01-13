@@ -43,9 +43,9 @@ define([], function() {
                 const href = this.getAttribute('href');
                 try {
                     const url = new URL(href, window.location.origin);
-                    const highlight = url.searchParams.get('highlight');
-                    const occurrence = url.searchParams.get('occurrence');
-                    const highlightAll = url.searchParams.get('highlight_all');
+                    const highlight = url.searchParams.get('cs_highlight');
+                    const occurrence = url.searchParams.get('cs_occurrence');
+                    const highlightAll = url.searchParams.get('cs_highlight_all');
                     const hash = url.hash;
                     let moduleId = null;
 

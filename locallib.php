@@ -384,7 +384,7 @@ function coursesearch_perform_search($query, $course, $filter = 'all') {
                     // For multiple occurrences, add occurrence parameter to URL.
                     $resulturl = clone $moduleurl;
                     if ($index > 0) {
-                        $resulturl->param('occurrence', $index + 1);
+                        $resulturl->param('cs_occurrence', $index + 1);
                     }
 
                     $result = [
@@ -667,11 +667,11 @@ function coursesearch_search_page($mod, $query) {
         foreach ($snippets as $index => $snippet) {
             $pageurl = new moodle_url('/mod/page/view.php', ['id' => $mod->id]);
             if (coursesearch_is_highlight_enabled() && !empty($query)) {
-                $pageurl->param('highlight', $query);
+                $pageurl->param('cs_highlight', $query);
             }
             // Add occurrence index to URL to distinguish multiple matches (optional, for future use).
             if ($index > 0) {
-                $pageurl->param('occurrence', $index + 1);
+                $pageurl->param('cs_occurrence', $index + 1);
             }
 
             $results[] = [
@@ -709,7 +709,7 @@ function coursesearch_search_book($mod, $query, $filter) {
         if (($filter == 'all' || $filter == 'title') && coursesearch_mb_stripos($chapter->title, $query) !== false) {
             $chapterurl = new moodle_url('/mod/book/view.php', ['id' => $mod->id, 'chapterid' => $chapter->id]);
             if (coursesearch_is_highlight_enabled() && !empty($query)) {
-                $chapterurl->param('highlight', $query);
+                $chapterurl->param('cs_highlight', $query);
             }
             $results[] = [
                 'type' => 'book_title',
@@ -729,7 +729,7 @@ function coursesearch_search_book($mod, $query, $filter) {
             $snippet = coursesearch_extract_snippet($chapter->content, $query);
             $chapterurl = new moodle_url('/mod/book/view.php', ['id' => $mod->id, 'chapterid' => $chapter->id]);
             if (coursesearch_is_highlight_enabled() && !empty($query)) {
-                $chapterurl->param('highlight', $query);
+                $chapterurl->param('cs_highlight', $query);
             }
             $results[] = [
                 'type' => 'book_content',
@@ -779,11 +779,11 @@ function coursesearch_search_label($mod, $query, $course) {
                     $urlparams['section'] = $sectionnum;
                 }
                 if (coursesearch_is_highlight_enabled() && !empty($query)) {
-                    $urlparams['highlight'] = $query;
+                    $urlparams['cs_highlight'] = $query;
                 }
                 // Add occurrence index to distinguish multiple matches.
                 if ($index > 0) {
-                    $urlparams['occurrence'] = $index + 1;
+                    $urlparams['cs_occurrence'] = $index + 1;
                 }
                 $moduleurl = new moodle_url('/course/view.php', $urlparams);
                 $moduleurl->set_anchor('module-' . $mod->id);
@@ -856,7 +856,7 @@ function coursesearch_search_all_labels_direct($query, $course, $sections, $modi
                 $urlparams['section'] = $sectioninfo['section_number'];
             }
             if (coursesearch_is_highlight_enabled() && !empty($query)) {
-                $urlparams['highlight'] = $query;
+                $urlparams['cs_highlight'] = $query;
             }
             $moduleurl = new moodle_url('/course/view.php', $urlparams);
             $moduleurl->set_anchor('module-' . $labelmod->cmid);
@@ -910,7 +910,7 @@ function coursesearch_search_lesson($mod, $query) {
             $snippet = coursesearch_extract_snippet($page->contents, $query);
             $pageurl = new moodle_url('/mod/lesson/view.php', ['id' => $mod->id, 'pageid' => $page->id]);
             if (coursesearch_is_highlight_enabled() && !empty($query)) {
-                $pageurl->param('highlight', $query);
+                $pageurl->param('cs_highlight', $query);
             }
             $results[] = [
                 'type' => 'lesson_content',
@@ -1007,7 +1007,7 @@ function coursesearch_search_forum($mod, $query, $filter) {
             if (isset($firstposts[$discussionid])) {
                 $discussionurl = new moodle_url('/mod/forum/discuss.php', ['d' => $discussion->id]);
                 if (coursesearch_is_highlight_enabled() && !empty($query)) {
-                    $discussionurl->param('highlight', $query);
+                    $discussionurl->param('cs_highlight', $query);
                 }
 
                 $results[] = [
@@ -1047,7 +1047,7 @@ function coursesearch_search_forum($mod, $query, $filter) {
             if ($searchforumsubjects && coursesearch_mb_stripos($post->subject, $query) !== false) {
                 $posturl = new moodle_url('/mod/forum/discuss.php', ['d' => $discussion->id, 'p' => $post->id]);
                 if (coursesearch_is_highlight_enabled() && !empty($query)) {
-                    $posturl->param('highlight', $query);
+                    $posturl->param('cs_highlight', $query);
                 }
                 $posturl->set_anchor('p' . $post->id);
 
@@ -1070,7 +1070,7 @@ function coursesearch_search_forum($mod, $query, $filter) {
                 $snippet = coursesearch_extract_snippet($post->message, $query);
                 $posturl = new moodle_url('/mod/forum/discuss.php', ['d' => $discussion->id, 'p' => $post->id]);
                 if (coursesearch_is_highlight_enabled() && !empty($query)) {
-                    $posturl->param('highlight', $query);
+                    $posturl->param('cs_highlight', $query);
                 }
                 $posturl->set_anchor('p' . $post->id);
 
@@ -1164,7 +1164,7 @@ function coursesearch_search_wiki($mod, $query, $filter) {
             // Wiki URLs should use pageid only, not both id and pageid.
             $pageurl = new moodle_url('/mod/wiki/view.php', ['pageid' => $wikipage->id]);
             if (coursesearch_is_highlight_enabled() && !empty($query)) {
-                $pageurl->param('highlight', $query);
+                $pageurl->param('cs_highlight', $query);
             }
             $results[] = [
                 'type' => 'wiki_page_title',
@@ -1190,7 +1190,7 @@ function coursesearch_search_wiki($mod, $query, $filter) {
             // Wiki URLs should use pageid only, not both id and pageid.
             $pageurl = new moodle_url('/mod/wiki/view.php', ['pageid' => $wikipage->id]);
             if (coursesearch_is_highlight_enabled() && !empty($query)) {
-                $pageurl->param('highlight', $query);
+                $pageurl->param('cs_highlight', $query);
             }
             $results[] = [
                 'type' => 'wiki_page_content',
@@ -1230,7 +1230,7 @@ function coursesearch_search_glossary($mod, $query, $filter) {
             if (($filter == 'all' || $filter == 'title') && coursesearch_mb_stripos($entry->concept, $query) !== false) {
                 $entryurl = new moodle_url('/mod/glossary/showentry.php', ['eid' => $entry->id, 'displayformat' => 'dictionary']);
                 if (coursesearch_is_highlight_enabled() && !empty($query)) {
-                    $entryurl->param('highlight', $query);
+                    $entryurl->param('cs_highlight', $query);
                 }
                 $results[] = [
                     'type' => 'glossary_entry_title',
@@ -1253,7 +1253,7 @@ function coursesearch_search_glossary($mod, $query, $filter) {
                 $snippet = coursesearch_extract_snippet($entry->definition, $query);
                 $entryurl = new moodle_url('/mod/glossary/showentry.php', ['eid' => $entry->id, 'displayformat' => 'dictionary']);
                 if (coursesearch_is_highlight_enabled() && !empty($query)) {
-                    $entryurl->param('highlight', $query);
+                    $entryurl->param('cs_highlight', $query);
                 }
                 $results[] = [
                     'type' => 'glossary_entry_content',
@@ -1339,7 +1339,7 @@ function coursesearch_search_database($mod, $query) {
             $snippet = coursesearch_extract_snippet($matchedcontent, $query);
             $recordurl = new moodle_url('/mod/data/view.php', ['d' => $mod->instance, 'rid' => $recordid]);
             if (coursesearch_is_highlight_enabled() && !empty($query)) {
-                $recordurl->param('highlight', $query);
+                $recordurl->param('cs_highlight', $query);
             }
 
             // Try to get a meaningful name for the record.

@@ -593,11 +593,12 @@ define(['jquery'], function($) {
             return;
         }
 
-        // Check for highlight parameter in URL.
+        // Check for cs_highlight parameter in URL.
+        // Use cs_highlight (not highlight) to avoid conflict with Moodle core's built-in highlighting.
         const urlParams = new URLSearchParams(window.location.search);
-        let highlightText = urlParams.get('highlight');
-        let highlightAll = urlParams.get('highlight_all') === '1';
-        let occurrenceIndex = parseInt(urlParams.get('occurrence') || '0', 10);
+        let highlightText = urlParams.get('cs_highlight');
+        let highlightAll = urlParams.get('cs_highlight_all') === '1';
+        let occurrenceIndex = parseInt(urlParams.get('cs_occurrence') || '0', 10);
 
         // If not in URL, check sessionStorage (set by coursesearch module).
         let storedModuleId = null;
@@ -759,9 +760,9 @@ define(['jquery'], function($) {
             return;
         }
 
-        // Check for highlight in URL or sessionStorage.
+        // Check for cs_highlight in URL or sessionStorage.
         const urlParams = new URLSearchParams(window.location.search);
-        let highlightText = urlParams.get('highlight');
+        let highlightText = urlParams.get('cs_highlight');
 
         if (!highlightText && typeof sessionStorage !== 'undefined') {
             const storedHighlight = sessionStorage.getItem('coursesearch_highlight');

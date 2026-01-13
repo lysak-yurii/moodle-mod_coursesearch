@@ -74,8 +74,9 @@ class hook_callbacks {
             return;
         }
 
-        // Only load AMD module if there's a highlight parameter in the URL.
-        $highlight = optional_param('highlight', '', PARAM_TEXT);
+        // Only load AMD module if there's a cs_highlight parameter in the URL.
+        // Use cs_highlight (not highlight) to avoid conflict with Moodle core's built-in highlighting.
+        $highlight = optional_param('cs_highlight', '', PARAM_TEXT);
         if (!empty($highlight)) {
             $PAGE->requires->js_call_amd('mod_coursesearch/scrolltohighlight', 'init');
         }
