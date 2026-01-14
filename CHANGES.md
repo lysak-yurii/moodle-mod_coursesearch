@@ -1,5 +1,11 @@
 # Changelog
 
+## Changes in version 1.4.3 (Build: 2026011401)
+
+- **Fixed**: Critical bug causing "The theme has already been set up for this page" error for non-admin users (teachers, students) when viewing course pages or using search functionality
+- **Fixed**: Removed unnecessary `get_fast_modinfo()` call in floating widget hook that triggered theme re-initialization during footer generation
+- **Fixed**: Replaced `$PAGE->get_renderer()` call in `cm_info_dynamic` with direct HTML generation, as the renderer requires page context which is not available during course module info building
+
 ## Changes in version 1.4.2 (Build: 2026011300)
 
 - **Fixed**: Changed URL parameters from 'highlight' to 'cs_highlight' (and 'highlight_all' to 'cs_highlight_all', 'occurrence' to 'cs_occurrence') to avoid conflict with Moodle core's built-in highlighting mechanism. This fixes the issue where the first occurrence was incorrectly highlighted when opening specific occurrence results.

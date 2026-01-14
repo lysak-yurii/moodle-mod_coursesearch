@@ -248,34 +248,42 @@ function coursesearch_cm_info_view(cm_info $cm) {
 /**
  * Overwrites the content output for a course module
  *
- * This function is used to display the embedded search form directly in the course page
+ * This function is used to display the embedded search form directly in the course page.
+ * Note: We generate HTML directly here without using $PAGE->get_renderer() because
+ * cm_info_dynamic is called during course module info building BEFORE the page context
+ * is set.
  *
  * @param cm_info $cm Course module info object
  */
 function coursesearch_cm_info_dynamic(cm_info $cm) {
-    global $CFG, $DB, $PAGE;
-
-    // Note: JavaScript for scrolling is now handled client-side via sessionStorage.
-    // No need to load AMD modules here.
+    global $DB;
 
     // Check if the module should be embedded.
-    $coursesearch = $DB->get_record('coursesearch', ['id' => $cm->instance], 'embedded');
+    $coursesearch = $DB->get_record('coursesearch', ['id' => $cm->instance], 'embedded, placeholder');
 
     if (!$coursesearch || empty($coursesearch->embedded)) {
         return;
     }
 
-    // Include the renderer.
-    require_once($CFG->dirroot . '/mod/coursesearch/renderer.php');
+    // Generate the embedded search form HTML directly (without using $PAGE->get_renderer()).
+    // This is necessary because cm_info_dynamic is called before page context is set.
+    $defaultplaceholder = get_string('defaultplaceholder', 'coursesearch');
+    $placeholder = !empty($coursesearch->placeholder) ? s($coursesearch->placeholder) : s($defaultplaceholder);
+    $searchlabel = get_string('search', 'coursesearch');
+    $formurl = new moodle_url('/mod/coursesearch/view.php', ['id' => $cm->id]);
+    $formaction = $formurl->out(false);
 
-    // Get the full coursesearch record.
-    $fullcoursesearch = $DB->get_record('coursesearch', ['id' => $cm->instance], '*', MUST_EXIST);
-
-    // Get the renderer.
-    $renderer = $PAGE->get_renderer('mod_coursesearch');
-
-    // Generate the embedded search form.
-    $content = $renderer->render_embedded_search_form($fullcoursesearch, $cm);
+    // Build the HTML form directly.
+    $content = '<div class="coursesearch-embedded">';
+    $content .= '<form action="' . s($formaction) . '" method="get" class="coursesearch-form">';
+    $content .= '<input type="hidden" name="id" value="' . $cm->id . '">';
+    $content .= '<div class="input-group">';
+    $content .= '<input type="text" name="query" class="form-control" placeholder="' . $placeholder . '"';
+    $content .= ' aria-label="' . $searchlabel . '">';
+    $content .= '<button type="submit" class="btn btn-primary">' . $searchlabel . '</button>';
+    $content .= '</div>';
+    $content .= '</form>';
+    $content .= '</div>';
 
     // Set the content to be displayed in the course page.
     $cm->set_content($content);

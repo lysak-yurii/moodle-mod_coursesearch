@@ -232,9 +232,9 @@ class hook_callbacks {
         }
 
         // Check if user has capability to view the course search activity.
-        $course = $DB->get_record('course', ['id' => $courseid], '*', MUST_EXIST);
-        $modinfo = get_fast_modinfo($course);
-        $cm = $modinfo->get_cm($coursesearch->cmid);
+        // Note: We directly create the context without using get_fast_modinfo() to avoid
+        // triggering theme re-initialization during footer generation (which causes errors
+        // for non-admin users).
         $context = \context_module::instance($coursesearch->cmid);
         if (!has_capability('mod/coursesearch:view', $context)) {
             return;

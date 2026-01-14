@@ -24,12 +24,13 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version   = 2026011400;       // The current module version (Date: YYYYMMDDXX).
+$plugin->version   = 2026011401;       // The current module version (Date: YYYYMMDDXX).
 $plugin->requires  = 2024042200;       // Requires this Moodle version (Moodle 4.4+).
 $plugin->component = 'mod_coursesearch'; // Full name of the plugin (used for diagnostics).
 $plugin->cron      = 0;
 $plugin->maturity  = MATURITY_STABLE;
-// Version 1.4.2 - Fixed: Changed URL parameters from 'highlight' to 'cs_highlight' to avoid conflict
-// with Moodle core's built-in highlighting mechanism, which was causing double highlighting issues.
+// Version 1.4.3 - Fixed: Theme initialization error for non-admin users when viewing courses
+// or using search. Removed problematic get_fast_modinfo() and $PAGE->get_renderer() calls
+// that were executed before page context was properly set.
 
-$plugin->release   = '1.4.2';
+$plugin->release   = '1.4.3';

@@ -3,7 +3,7 @@
 ![Moodle](https://img.shields.io/badge/Moodle-4.4+-orange?logo=moodle)
 ![PHP](https://img.shields.io/badge/PHP-7.4+-777BB4?logo=php&logoColor=white)
 ![License](https://img.shields.io/badge/License-GPL%20v3-green?logo=gnu)
-![Version](https://img.shields.io/badge/Version-1.4.2-blue)
+![Version](https://img.shields.io/badge/Version-1.4.3-blue)
 
 A comprehensive Moodle activity module that enables teachers to add a search bar to courses, allowing students to search through course content with automatic highlighting of search terms.
 
@@ -220,7 +220,7 @@ When clicking on search results, the plugin automatically:
 
 ## Version
 
-Current version: **1.4.2** (Stable)
+Current version: **1.4.3** (Build: 2026011401, Stable)
 
 For detailed version history, see [CHANGES.md](CHANGES.md).
 
