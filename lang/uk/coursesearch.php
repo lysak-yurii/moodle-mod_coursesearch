@@ -24,57 +24,22 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$string['modulename'] = 'Пошук по курсу';
-$string['modulename_help'] = 'Модуль пошуку по курсу дозволяє викладачам додати панель пошуку до курсу, щоб студенти могли шукати вміст курсу.';
-$string['modulenameplural'] = 'Пошуки по курсах';
-$string['pluginadministration'] = 'Адміністрування пошуку по курсу';
-$string['pluginname'] = 'Пошук по курсу';
-
-// Form strings.
+$string['collapsematches'] = 'Згорнути збіги';
+$string['content'] = 'вмісті';
+$string['coursesearch:addinstance'] = 'Додати новий пошук по курсу';
+$string['coursesearch:view'] = 'Переглянути пошук по курсу';
 $string['coursesearchsettings'] = 'Налаштування пошуку по курсу';
-$string['searchscope'] = 'Область пошуку';
-$string['searchscope_help'] = 'Визначте, який вміст має бути включено в результати пошуку.';
-$string['searchscope_course'] = 'Лише вміст курсу';
-$string['searchscope_activities'] = 'Лише активності';
-$string['searchscope_resources'] = 'Лише ресурси';
-$string['searchscope_forums'] = 'Лише форуми';
-$string['searchscope_all'] = 'Весь вміст курсу';
-$string['placeholder'] = 'Текст підказки';
-$string['placeholder_help'] = 'Текст, який з\'являється в полі пошуку до введення запиту користувачем.';
 $string['defaultplaceholder'] = 'Пошук по курсу...';
-
-// Display options.
+$string['description'] = 'описі';
 $string['displayoptions'] = 'Параметри відображення';
 $string['embedded'] = 'Вбудувати в сторінку курсу';
 $string['embedded_help'] = 'Якщо увімкнено, панель пошуку буде вбудована безпосередньо на сторінці курсу, замість переходу на окрему сторінку.';
 $string['embeddedinfo'] = 'Відображати панель пошуку безпосередньо на сторінці курсу';
-
-// View page strings.
-$string['search'] = 'Пошук';
-$string['searchresultsfor'] = 'Результати пошуку для "{$a}"';
-$string['searchresults'] = 'Результати пошуку для "{$a}"';
-$string['searchresultscount'] = 'Знайдено {$a->count} результатів для "{$a->query}"';
-$string['noresults'] = 'Не знайдено результатів для "{$a}"';
-$string['inforum'] = 'У форумі: {$a}';
-$string['matchedin'] = 'Знайдено у {$a}';
-$string['title'] = 'назві';
-$string['content'] = 'вмісті';
-$string['description'] = 'описі';
-$string['matchdescriptionorcontent'] = 'описі або вмісті';
-$string['intro'] = 'вступному розділі';
-$string['eventcoursesearched'] = 'Пошук по курсу виконано';
-
-// Capability strings.
-$string['coursesearch:addinstance'] = 'Додати новий пошук по курсу';
-$string['coursesearch:view'] = 'Переглянути пошук по курсу';
-
-// Error strings.
-$string['missingidandcmid'] = 'Відсутній ID модуля курсу або ID пошуку по курсу';
-$string['nocourseinstances'] = 'У цьому курсі немає екземплярів пошуку по курсу';
-
-// Admin settings.
+$string['enablefloatingwidget'] = 'Увімкнути плаваючий віджет швидкого доступу';
+$string['enablefloatingwidget_desc'] = 'Якщо увімкнено, на сторінках курсу з\'явиться плаваючий віджет пошуку, який дозволяє швидко отримати доступ до пошуку по курсу без переходу на сторінку активності пошуку.';
 $string['enablehighlight'] = 'Увімкнути прокрутку та підсвічування';
 $string['enablehighlight_desc'] = 'Якщо увімкнено, при натисканні на результати пошуку сторінка автоматично прокрутиться до знайденого тексту та підсвітить його на сторінці курсу.';
+$string['eventcoursesearched'] = 'Пошук по курсу виконано';
 $string['excludedplaceholders'] = 'Виключені шаблони плейсхолдерів';
 $string['excludedplaceholders_desc'] = 'Шаблони регулярних виразів (по одному на рядок) для внутрішніх плейсхолдерів, які слід виключити з пошуку. Це внутрішні маркери, невидимі для користувачів, і вони не повинні бути доступні для пошуку.
 
@@ -96,38 +61,54 @@ $string['excludedplaceholders_desc'] = 'Шаблони регулярних ви
 </ul>
 
 <strong>Примітка:</strong> Шаблони не чутливі до регістру. Недійсні шаблони будуть пропущені з повідомленням налагодження. Якщо ви видалите всі шаблони, фільтрація плейсхолдерів не буде застосована.';
-$string['pagination'] = 'Сторінки результатів пошуку';
-$string['resultsperpage'] = 'Результатів на сторінці';
-$string['resultsperpage_desc'] = 'Кількість результатів пошуку, що відображаються на одній сторінці.';
+$string['expandmatches'] = 'Розгорнути збіги';
+$string['floatingwidgetverticaloffset'] = 'Вертикальне зміщення плаваючого віджета';
+$string['floatingwidgetverticaloffset_desc'] = 'Вертикальне зміщення позиції в пікселях від нижнього краю сторінки. Збільште це значення, щоб перемістити віджет вище та уникнути перекриття з іншими елементами сторінки (наприклад, інфокнопкою Moodle).';
+$string['floatingwidgetverticaloffset_invalid'] = 'Вертикальне зміщення повинно бути 0 або більше.';
+$string['generalsection'] = 'Загальне';
+$string['grouped'] = 'Групувати результати за розділами';
+$string['grouped_help'] = 'Якщо увімкнено, результати пошуку будуть організовані за розділами курсу. Якщо вимкнено, результати будуть відображатися як плоский список.';
+$string['groupedinfo'] = 'Організувати результати пошуку за розділами курсу';
+$string['inforum'] = 'У форумі: {$a}';
+$string['intro'] = 'вступному розділі';
+$string['matchcount'] = '{$a} збігів';
+$string['matchdescriptionorcontent'] = 'описі або вмісті';
+$string['matchedin'] = 'Знайдено у {$a}';
+$string['matchof'] = 'Збіг {$a->index} з {$a->total}';
 $string['maxoccurrences'] = 'Максимальна кількість входжень на елемент контенту';
 $string['maxoccurrences_desc'] = 'Максимальна кількість входжень, які будуть знайдені на елемент контенту, коли пошуковий термін з\'являється кілька разів. Встановіть 0, щоб вимкнути обмеження та знайти всі входження (не рекомендується для великих курсів, оскільки це може вплинути на продуктивність та створити перевантажені списки результатів).';
 $string['maxoccurrences_invalid'] = 'Максимальна кількість входжень повинна бути 0 або більше.';
 $string['maxoccurrences_warning'] = 'Попередження: Встановлення цього значення на 0 призведе до пошуку всіх входжень, що може спричинити проблеми з продуктивністю та перевантажені списки результатів у великих курсах.';
-$string['enablefloatingwidget'] = 'Увімкнути плаваючий віджет швидкого доступу';
-$string['enablefloatingwidget_desc'] = 'Якщо увімкнено, на сторінках курсу з\'явиться плаваючий віджет пошуку, який дозволяє швидко отримати доступ до пошуку по курсу без переходу на сторінку активності пошуку.';
-$string['floatingwidgetverticaloffset'] = 'Вертикальне зміщення плаваючого віджета';
-$string['floatingwidgetverticaloffset_desc'] = 'Вертикальне зміщення позиції в пікселях від нижнього краю сторінки. Збільште це значення, щоб перемістити віджет вище та уникнути перекриття з іншими елементами сторінки (наприклад, інфокнопкою Moodle).';
-$string['floatingwidgetverticaloffset_invalid'] = 'Вертикальне зміщення повинно бути 0 або більше.';
-
-// Pagination strings.
-$string['previous'] = 'Попередня';
+$string['missingidandcmid'] = 'Відсутній ID модуля курсу або ID пошуку по курсу';
+$string['modulename'] = 'Пошук по курсу';
+$string['modulename_help'] = 'Модуль пошуку по курсу дозволяє викладачам додати панель пошуку до курсу, щоб студенти могли шукати вміст курсу.';
+$string['modulenameplural'] = 'Пошуки по курсах';
 $string['next'] = 'Наступна';
+$string['nocourseinstances'] = 'У цьому курсі немає екземплярів пошуку по курсу';
+$string['noresults'] = 'Не знайдено результатів для "{$a}"';
+$string['pagination'] = 'Сторінки результатів пошуку';
+$string['placeholder'] = 'Текст підказки';
+$string['placeholder_help'] = 'Текст, який з\'являється в полі пошуку до введення запиту користувачем.';
+$string['pluginadministration'] = 'Адміністрування пошуку по курсу';
+$string['pluginname'] = 'Пошук по курсу';
+$string['previous'] = 'Попередня';
+$string['privacy:metadata'] = 'Модуль пошуку по курсу не зберігає жодних особистих даних користувачів. Він зберігає лише конфігурацію екземпляра активності, таку як назва, опис, область пошуку та параметри відображення.';
+$string['quicksearch'] = 'Швидкий пошук';
+$string['resultsperpage'] = 'Результатів на сторінці';
+$string['resultsperpage_desc'] = 'Кількість результатів пошуку, що відображаються на одній сторінці.';
+$string['search'] = 'Пошук';
+$string['searchresults'] = 'Результати пошуку для "{$a}"';
+$string['searchresultscount'] = 'Знайдено {$a->count} результатів для "{$a->query}"';
+$string['searchresultsfor'] = 'Результати пошуку для "{$a}"';
 $string['searchresultsrange'] = 'Показано розділи {$a->start}-{$a->end} з {$a->total}';
 $string['searchresultsrange_ungrouped'] = 'Показано результати {$a->start}-{$a->end} з {$a->total}';
-
-// Section grouping strings.
+$string['searchscope'] = 'Область пошуку';
+$string['searchscope_activities'] = 'Лише активності';
+$string['searchscope_all'] = 'Весь вміст курсу';
+$string['searchscope_course'] = 'Лише вміст курсу';
+$string['searchscope_forums'] = 'Лише форуми';
+$string['searchscope_help'] = 'Визначте, який вміст має бути включено в результати пошуку.';
+$string['searchscope_resources'] = 'Лише ресурси';
 $string['sectionmatch'] = 'Збіг у розділі';
 $string['subsectionmatch'] = 'Збіг у підрозділі';
-$string['generalsection'] = 'Загальне';
-
-// Activity grouping strings.
-$string['matchcount'] = '{$a} збігів';
-$string['expandmatches'] = 'Розгорнути збіги';
-$string['collapsematches'] = 'Згорнути збіги';
-$string['matchof'] = 'Збіг {$a->index} з {$a->total}';
-
-// Floating widget strings.
-$string['quicksearch'] = 'Швидкий пошук';
-
-// Privacy.
-$string['privacy:metadata'] = 'Модуль пошуку по курсу не зберігає жодних особистих даних користувачів. Він зберігає лише конфігурацію екземпляра активності, таку як назва, опис, область пошуку та параметри відображення.';
+$string['title'] = 'назві';
