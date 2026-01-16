@@ -1,5 +1,10 @@
 # Changelog
 
+## Changes in version 1.4.4 (Build: 2026011601)
+
+- **Fixed**: Correct multilang fallback order (`userlang -> other -> en -> first available`) to prevent empty titles
+- **Fixed**: Apply multilang processing to grouped activity accordion titles
+
 ## Changes in version 1.4.3 (Build: 2026011600)
 
 - **Fixed**: Removed deprecated dynamic properties on `cached_cm_info` by using `customdata` flags (PHP 8.2+ compatibility)

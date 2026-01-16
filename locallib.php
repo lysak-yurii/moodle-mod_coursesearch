@@ -1534,54 +1534,33 @@ function coursesearch_process_multilang($content) {
     // Process multilanguage tags.
     $pattern = '/\{mlang\s+([\w\-_]+)\}(.*?)\{mlang\}/s';
 
-    // Use preg_replace_callback to process EACH multilang block independently.
-    // This ensures ALL blocks matching the user's language are kept, not just the first one.
-    $content = preg_replace_callback($pattern, function ($match) use ($userlang) {
-        $lang = $match[1];
-        $text = $match[2];
+    // If there are no multilang tags, return content as-is.
+    if (!preg_match_all($pattern, $content, $matches, PREG_SET_ORDER)) {
+        return $content;
+    }
 
-        // If this block matches user's language, return its text.
-        if ($lang === $userlang) {
-            return $text;
-        }
+    // Collect available languages and choose the best match.
+    $availablelangs = [];
+    foreach ($matches as $match) {
+        $availablelangs[] = $match[1];
+    }
+    $availablelangs = array_values(array_unique($availablelangs));
 
-        // For blocks that don't match, return empty to remove them.
-        // We'll handle fallback languages in subsequent passes if needed.
-        return '';
-    }, $content);
-
-    // Handle fallback languages: if content still has multilang blocks (meaning
-    // no blocks matched the user's language), try fallback languages.
-    if (preg_match($pattern, $content)) {
-        // Try 'en' as fallback.
-        $content = preg_replace_callback($pattern, function ($match) {
-            $lang = $match[1];
-            $text = $match[2];
-            if ($lang === 'en') {
-                return $text;
-            }
-            return '';
-        }, $content);
-
-        // If still has multilang blocks, try 'other'.
-        if (preg_match($pattern, $content)) {
-            $content = preg_replace_callback($pattern, function ($match) {
-                $lang = $match[1];
-                $text = $match[2];
-                if ($lang === 'other') {
-                    return $text;
-                }
-                return '';
-            }, $content);
-        }
-
-        // If still has multilang blocks, use first available language.
-        if (preg_match($pattern, $content)) {
-            $content = preg_replace_callback($pattern, function ($match) {
-                return $match[2]; // Return text from first available language.
-            }, $content);
+    $selectedlang = null;
+    foreach ([$userlang, 'other', 'en'] as $lang) {
+        if (in_array($lang, $availablelangs, true)) {
+            $selectedlang = $lang;
+            break;
         }
     }
+    if ($selectedlang === null) {
+        $selectedlang = $availablelangs[0];
+    }
+
+    // Keep all blocks for the selected language, remove others.
+    $content = preg_replace_callback($pattern, function ($match) use ($selectedlang) {
+        return ($match[1] === $selectedlang) ? $match[2] : '';
+    }, $content);
 
     return $content;
 }

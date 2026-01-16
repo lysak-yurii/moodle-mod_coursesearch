@@ -24,12 +24,11 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version   = 2026011600;       // The current module version (Date: YYYYMMDDXX).
+$plugin->version   = 2026011601;       // The current module version (Date: YYYYMMDDXX).
 $plugin->requires  = 2024042200;       // Requires this Moodle version (Moodle 4.4+).
 $plugin->component = 'mod_coursesearch'; // Full name of the plugin (used for diagnostics).
 $plugin->cron      = 0;
 $plugin->maturity  = MATURITY_STABLE;
-// Version 1.4.3 - Fixed: Removed deprecated dynamic properties on cached_cm_info
-// by moving flags to customdata for PHP 8.2+ compatibility.
+// Version 1.4.4 - Fixed: Multilang fallback order and grouped activity titles.
 
-$plugin->release   = '1.4.3';
+$plugin->release   = '1.4.4';

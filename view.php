@@ -551,6 +551,11 @@ function coursesearch_group_raw_results_by_activity(array $rawresults, $course):
                 $activityname = $firstmatch['forum_name'];
             }
 
+            // Process multilanguage tags and strip any HTML tags for display safety.
+            if (!empty($activityname)) {
+                $activityname = strip_tags(coursesearch_process_multilang($activityname));
+            }
+
             // Try to get main activity URL (without post-specific params).
             if ($activityurl instanceof moodle_url && $modname === 'forum') {
                 // For forums, try to get the forum view URL instead of post URL.
@@ -738,6 +743,11 @@ function coursesearch_group_results_by_activity(array $results, $course): array 
                     // Use forum name as activity name for better grouping.
                     $activityname = $forumname;
                 }
+            }
+
+            // Process multilanguage tags and strip any HTML tags for display safety.
+            if (!empty($activityname)) {
+                $activityname = strip_tags(coursesearch_process_multilang($activityname));
             }
 
             $urlprop = $reflection->getProperty('url');
