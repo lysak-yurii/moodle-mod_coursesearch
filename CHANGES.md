@@ -1,5 +1,9 @@
 # Changelog
 
+## Changes in version 1.4.5 (Build: 2026011602)
+
+- **Fixed**: Removed highlighting from title-only matches to avoid highlighting when only content is visible
+
 ## Changes in version 1.4.4 (Build: 2026011601)
 
 - **Fixed**: Correct multilang fallback order (`userlang -> other -> en -> first available`) to prevent empty titles

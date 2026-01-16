@@ -24,11 +24,11 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version   = 2026011601;       // The current module version (Date: YYYYMMDDXX).
+$plugin->version   = 2026011602;       // The current module version (Date: YYYYMMDDXX).
 $plugin->requires  = 2024042200;       // Requires this Moodle version (Moodle 4.4+).
 $plugin->component = 'mod_coursesearch'; // Full name of the plugin (used for diagnostics).
 $plugin->cron      = 0;
 $plugin->maturity  = MATURITY_STABLE;
-// Version 1.4.4 - Fixed: Multilang fallback order and grouped activity titles.
+// Version 1.4.5 - Fixed: Remove highlighting from title-only matches.
 
-$plugin->release   = '1.4.4';
+$plugin->release   = '1.4.5';

@@ -134,6 +134,7 @@ if (!empty($query)) {
     // Process results and create search_result objects.
     $resultobjects = [];
 
+    $titlematchlabel = get_string('title', 'mod_coursesearch');
     foreach ($groupedrawresults as $result) {
         // Process multilanguage tags in the result name.
         $resultname = isset($result['name']) ? coursesearch_process_multilang($result['name']) : '';
@@ -151,8 +152,8 @@ if (!empty($query)) {
         // Get the URL - use the original URL from search if valid, only fall back if missing.
         $resulturl = null;
         if (isset($result['url']) && $result['url'] instanceof moodle_url) {
-            // Use the original URL from the search - it already has correct section parameter.
-            $resulturl = $result['url'];
+            // Use a cloned URL to avoid mutating shared moodle_url instances.
+            $resulturl = new moodle_url($result['url']->out(false));
         } else if (isset($result['url']) && !empty($result['url'])) {
             // URL exists but isn't a moodle_url object.
             $resulturl = new moodle_url($result['url']);
@@ -164,13 +165,21 @@ if (!empty($query)) {
         // Only add highlight parameter for content/description matches, NOT for title matches.
         // Highlighting titles on the page makes no sense - the title is already visible.
         $matchtype = isset($result['match']) ? $result['match'] : '';
-        $istitlematch = (stripos($matchtype, 'title') !== false);
+        $istitlematch = ($matchtype === $titlematchlabel);
+
+        if ($istitlematch && $resulturl instanceof moodle_url) {
+            $resulturl->remove_params('cs_highlight', 'cs_highlight_all', 'cs_occurrence');
+        }
 
         if ($highlightenabled && !$istitlematch && $resulturl instanceof moodle_url && !empty($query)) {
             $params = $resulturl->params();
             if (!isset($params['cs_highlight'])) {
                 $cleanquery = clean_param($query, PARAM_TEXT);
                 $resulturl->param('cs_highlight', $cleanquery);
+            }
+            // For section/subsection description matches, highlight all occurrences.
+            if (in_array($result['modname'], ['section', 'subsection'], true)) {
+                $resulturl->param('cs_highlight_all', '1');
             }
         }
 
@@ -218,7 +227,7 @@ if (!empty($query)) {
                 // Get URL for match.
                 $matchurl = null;
                 if (isset($matchdata['url']) && $matchdata['url'] instanceof moodle_url) {
-                    $matchurl = $matchdata['url'];
+                    $matchurl = new moodle_url($matchdata['url']->out(false));
                 } else if (isset($matchdata['url']) && !empty($matchdata['url'])) {
                     $matchurl = new moodle_url($matchdata['url']);
                 } else {
@@ -227,7 +236,11 @@ if (!empty($query)) {
 
                 // Add highlight if needed.
                 $matchmatchtype = isset($matchdata['match']) ? $matchdata['match'] : '';
-                $matchistitlematch = (stripos($matchmatchtype, 'title') !== false);
+                $matchistitlematch = ($matchmatchtype === $titlematchlabel);
+                if ($matchistitlematch && $matchurl instanceof moodle_url) {
+                    $matchurl->remove_params('cs_highlight', 'cs_highlight_all', 'cs_occurrence');
+                }
+
                 if ($highlightenabled && !$matchistitlematch && $matchurl instanceof moodle_url && !empty($query)) {
                     $params = $matchurl->params();
                     if (!isset($params['cs_highlight'])) {
@@ -282,12 +295,25 @@ if (!empty($query)) {
             // Use section info from the result array (from first match), not from processed variables.
             $activityname = $result['activityname'] ?? $resultname;
             $activityurl = isset($result['activityurl']) && $result['activityurl'] instanceof moodle_url
-                ? $result['activityurl']
+                ? new moodle_url($result['activityurl']->out(false))
                 : ($resulturl ?: new moodle_url('/course/view.php', ['id' => $course->id]));
 
             // Add highlight and highlight_all parameters to activity URL for accordion header click.
             // This enables highlighting ALL occurrences when clicking the grouped result header.
-            if ($highlightenabled && $activityurl instanceof moodle_url && !empty($query)) {
+            $groupedhascontentmatch = false;
+            foreach ($result['matches'] as $matchdata) {
+                $groupmatchtype = isset($matchdata['match']) ? $matchdata['match'] : '';
+                if ($groupmatchtype !== $titlematchlabel) {
+                    $groupedhascontentmatch = true;
+                    break;
+                }
+            }
+
+            if ($activityurl instanceof moodle_url && !$groupedhascontentmatch) {
+                $activityurl->remove_params('cs_highlight', 'cs_highlight_all', 'cs_occurrence');
+            }
+
+            if ($highlightenabled && $groupedhascontentmatch && $activityurl instanceof moodle_url && !empty($query)) {
                 $cleanquery = clean_param($query, PARAM_TEXT);
                 $activityurl->param('cs_highlight', $cleanquery);
                 $activityurl->param('cs_highlight_all', '1');
