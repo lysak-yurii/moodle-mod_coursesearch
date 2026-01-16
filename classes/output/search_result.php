@@ -87,6 +87,23 @@ class search_result implements renderable, templatable {
     protected $matches;
 
     /**
+     * Get a human-readable result type label for tooltips.
+     *
+     * @return string
+     */
+    protected function get_result_type_label(): string {
+        if ($this->modname === 'section') {
+            return get_string('section');
+        }
+
+        if ($this->modname === 'subsection') {
+            return get_string('modulename', 'subsection');
+        }
+
+        return get_string('modulename', $this->modname);
+    }
+
+    /**
      * Constructor
      *
      * @param string $name The result name
@@ -181,6 +198,7 @@ class search_result implements renderable, templatable {
                 'hasactivityurl' => ($this->activityurl !== null),
                 'activityiconurl' => $activityiconurlstr,
                 'activitymodname' => $this->modname,
+                'resulttype' => $this->get_result_type_label(),
                 'matchcount' => $this->matchcount,
                 'hasmatches' => !empty($exportedmatches),
                 'matches' => $exportedmatches,
@@ -217,6 +235,7 @@ class search_result implements renderable, templatable {
             'modname' => $this->modname,
             'iconurl' => $iconurlstr,
             'iconalt' => $this->issection ? get_string('section') : $this->modname,
+            'resulttype' => $this->get_result_type_label(),
             'snippet' => $this->snippet,
             'hassnippet' => $showsnippet,
             'matchtype' => $this->matchtype,

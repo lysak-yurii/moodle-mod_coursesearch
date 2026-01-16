@@ -12,6 +12,12 @@
 /* Results container */
 .coursesearch-results-container {
     margin-top: 30px;
+    --coursesearch-theme-color: var(--bs-primary, var(--primary, #0d6efd));
+    --coursesearch-theme-bg: color-mix(in srgb, var(--coursesearch-theme-color) 10%, #fff 90%);
+    --coursesearch-theme-border: color-mix(in srgb, var(--coursesearch-theme-color) 30%, #fff 70%);
+    --coursesearch-theme-snippet: color-mix(in srgb, var(--coursesearch-theme-color) 45%, #fff 55%);
+    --coursesearch-theme-badge: color-mix(in srgb, var(--coursesearch-theme-color) 80%, #000 20%);
+    --coursesearch-theme-text: color-mix(in srgb, var(--coursesearch-theme-color) 70%, #000 30%);
 }
 
 .coursesearch-results-heading {
@@ -85,15 +91,15 @@
 
 /* Section matched - highlight the header */
 .coursesearch-section-matched .coursesearch-section-header {
-    background-color: #e7f3ff;
-    border-bottom-color: #b8d4f0;
+    background-color: var(--coursesearch-theme-bg);
+    border-bottom-color: var(--coursesearch-theme-border);
 }
 
 .coursesearch-section-snippet {
     margin-top: 8px;
     padding: 8px 12px;
     background-color: #fff;
-    border-left: 3px solid #adb5bd;
+    border-left: 3px solid var(--coursesearch-theme-snippet, #adb5bd);
     font-size: 0.9rem;
     color: #495057;
     line-height: 1.5;
@@ -166,19 +172,30 @@
 
 /* Subsection matched - highlight the header */
 .coursesearch-subsection-matched .coursesearch-subsection-header {
-    background-color: #e3f2fd;
-    border-bottom-color: #90caf9;
+    background-color: var(--coursesearch-theme-bg);
+    border-bottom-color: var(--coursesearch-theme-border);
 }
 
 .coursesearch-subsection-snippet {
     margin-top: 6px;
     padding: 6px 10px;
     background-color: #fff;
-    border-left: 3px solid #90caf9;
+    border-left: 3px solid var(--coursesearch-theme-snippet, #90caf9);
     font-size: 0.85rem;
     color: #495057;
     line-height: 1.4;
     border-radius: 0 4px 4px 0;
+}
+
+/* Section/subsection badges with theme shades */
+.coursesearch-section-header .badge-info,
+.coursesearch-subsection-header .badge-primary,
+.coursesearch-section-count.badge,
+.coursesearch-subsection-count.badge,
+.coursesearch-group-matchcount.badge {
+    background-color: color-mix(in srgb, var(--coursesearch-theme-color) 80%, #fff 20%);
+    color: #fff;
+    border: none;
 }
 
 /* Individual result item */
@@ -190,6 +207,7 @@
     border-radius: 4px;
     background-color: #fff;
     transition: background-color 0.2s;
+    position: relative;
 }
 
 .coursesearch-result:last-child {
@@ -229,13 +247,13 @@
 
 .coursesearch-result-title a {
     font-weight: 600;
-    color: #0d6efd;
+    color: var(--bs-link-color, var(--link-color, var(--primary, #0d6efd)));
     text-decoration: none;
     word-break: break-word;
 }
 
 .coursesearch-result-title a:hover {
-    color: #0a58ca;
+    color: color-mix(in srgb, var(--bs-link-color, var(--link-color, var(--primary, #0d6efd))) 85%, #000 15%);
     text-decoration: underline;
 }
 
@@ -385,6 +403,34 @@ span.coursesearch-highlight-temp {
     border-bottom: 1px solid #e9ecef;
     border-radius: 4px 4px 0 0;
     transition: background-color 0.2s;
+    position: relative;
+}
+
+/* Result type tooltip on hover */
+.coursesearch-result[data-result-type]::after,
+.coursesearch-group-header[data-result-type]::after {
+    content: attr(data-result-type);
+    position: absolute;
+    top: 0;
+    right: 8px;
+    transform: translateY(-6px);
+    background-color: color-mix(in srgb, var(--coursesearch-theme-color) 85%, #000 15%);
+    color: #fff;
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 2px 6px;
+    border-radius: 3px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.15s ease, transform 0.15s ease;
+    white-space: nowrap;
+    z-index: 2;
+}
+
+.coursesearch-result[data-result-type]:hover::after,
+.coursesearch-group-header[data-result-type]:hover::after {
+    opacity: 1;
+    transform: translateY(-10px);
 }
 
 .coursesearch-group-header:hover {
@@ -413,12 +459,12 @@ span.coursesearch-highlight-temp {
 }
 
 .coursesearch-group-activity-link {
-    color: #0d6efd;
+    color: var(--bs-link-color, var(--link-color, var(--primary, #0d6efd)));
     text-decoration: none;
 }
 
 .coursesearch-group-activity-link:hover {
-    color: #0a58ca;
+    color: color-mix(in srgb, var(--bs-link-color, var(--link-color, var(--primary, #0d6efd))) 85%, #000 15%);
     text-decoration: underline;
 }
 

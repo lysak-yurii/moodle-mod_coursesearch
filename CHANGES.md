@@ -1,5 +1,11 @@
 # Changelog
 
+## Changes in version 1.4.6 (Build: 2026011603)
+
+- **Updated**: Theme-aware styling for activity links and badges
+- **Updated**: Section/subsection match highlights now follow theme color shades
+- **Updated**: Added hover tooltips with result type labels
+
 ## Changes in version 1.4.5 (Build: 2026011602)
 
 - **Fixed**: Removed highlighting from title-only matches to avoid highlighting when only content is visible
