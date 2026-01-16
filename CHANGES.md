@@ -1,5 +1,9 @@
 # Changelog
 
+## Changes in version 1.4.3 (Build: 2026011600)
+
+- **Fixed**: Removed deprecated dynamic properties on `cached_cm_info` by using `customdata` flags (PHP 8.2+ compatibility)
+
 ## Changes in version 1.4.3 (Build: 2026011401)
 
 - **Fixed**: Critical bug causing "The theme has already been set up for this page" error for non-admin users (teachers, students) when viewing course pages or using search functionality

@@ -179,13 +179,13 @@ function coursesearch_get_coursemodule_info($coursemodule) {
     if (!empty($coursesearch->embedded)) {
         $info->content = $info->content ?? '';
 
-        // Set a custom flag to indicate this module should be rendered inline.
-        $info->customdata = ['embedded' => true];
-
-        // This is the key part - tell Moodle to use our custom renderer.
-        $info->content_items_online = true;
-        $info->content_online = true;
-        $info->onclick_online = true;
+        // Set custom flags to indicate this module should be rendered inline.
+        $info->customdata = [
+            'embedded' => true,
+            'content_items_online' => true,
+            'content_online' => true,
+            'onclick_online' => true,
+        ];
     }
 
     return $info;
