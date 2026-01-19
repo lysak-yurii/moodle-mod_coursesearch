@@ -81,7 +81,7 @@ $string['maxoccurrences_invalid'] = 'Maximale Vorkommen müssen 0 oder größer 
 $string['maxoccurrences_warning'] = 'Warnung: Wenn Sie dies auf 0 setzen, werden alle Vorkommen gefunden, was in großen Kursen zu Leistungsproblemen und überwältigenden Ergebnislisten führen kann.';
 $string['missingidandcmid'] = 'Fehlende Kursmodul-ID oder Kurssuche-ID';
 $string['modulename'] = 'Kurssuche';
-$string['modulename_help'] = 'Das Kurssuche-Modul ermöglicht es Lehrenden, eine Suchfunktion in ihren Kurs einzubinden, damit Lernende leicht Inhalte im Kurs finden können.';
+$string['modulename_help'] = 'Das Kurssuche-Modul ermöglicht es Lehrenden, eine Suchfunktion in ihren Kurs einzubinden, damit Lernende leicht Inhalte im Kurs finden können.<br><br><a href="https://moodle.org/plugins/mod_coursesearch"><i class="icon fa fa-info-circle" aria-hidden="true"></i> Mehr Infos auf Moodle.org</a>';
 $string['modulenameplural'] = 'Kurssuchen';
 $string['next'] = 'Weiter';
 $string['nocourseinstances'] = 'Es gibt keine Kurssuche-Instanzen in diesem Kurs';

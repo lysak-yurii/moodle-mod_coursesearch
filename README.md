@@ -220,7 +220,7 @@ When clicking on search results, the plugin automatically:
 
 ## Version
 
-Current version: **1.4.6** (Build: 2026011603, Stable)
+Current version: **1.4.6** (Build: 2026011900, Stable)
 
 For detailed version history, see [CHANGES.md](CHANGES.md).
 

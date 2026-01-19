@@ -1,5 +1,9 @@
 # Changelog
 
+## Changes in version 1.4.6 (Build: 2026011900)
+
+- **Updated**: Added Moodle.org info link to the activity description help
+
 ## Changes in version 1.4.6 (Build: 2026011603)
 
 - **Updated**: Theme-aware styling for activity links and badges

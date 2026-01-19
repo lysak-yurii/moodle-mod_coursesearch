@@ -81,7 +81,7 @@ $string['maxoccurrences_invalid'] = 'Maximum occurrences must be 0 or greater.';
 $string['maxoccurrences_warning'] = 'Warning: Setting this to 0 will find all occurrences, which may cause performance issues and overwhelming result lists in large courses.';
 $string['missingidandcmid'] = 'Missing course module ID or course search ID';
 $string['modulename'] = 'Course Search';
-$string['modulename_help'] = 'The course search module enables a teacher to add a search bar to a course that allows students to search through course content.';
+$string['modulename_help'] = 'The course search module enables a teacher to add a search bar to a course that allows students to search through course content.<br><br><a href="https://moodle.org/plugins/mod_coursesearch"><i class="icon fa fa-info-circle" aria-hidden="true"></i> More info on Moodle.org</a>';
 $string['modulenameplural'] = 'Course Searches';
 $string['next'] = 'Next';
 $string['nocourseinstances'] = 'There are no course search instances in this course';
