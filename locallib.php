@@ -127,9 +127,10 @@ function coursesearch_get_section_info($mod, $sections) {
  * @param string $query The search query
  * @param object $course The course object
  * @param string $filter The filter to apply (all, title, content, description, sections, activities, resources, forums)
+ * @param array $modtypes The module types to include (empty for all)
  * @return array The search results
  */
-function coursesearch_perform_search($query, $course, $filter = 'all') {
+function coursesearch_perform_search($query, $course, $filter = 'all', $modtypes = []) {
     global $DB;
 
     // Trim the query to remove leading and trailing whitespace.
@@ -144,6 +145,11 @@ function coursesearch_perform_search($query, $course, $filter = 'all') {
 
     $results = [];
 
+    $modtypes = array_values(array_unique(array_filter(array_map(function ($modtype) {
+        return clean_param($modtype, PARAM_ALPHANUMEXT);
+    }, (array)$modtypes))));
+    $modtypeslookup = !empty($modtypes) ? array_fill_keys($modtypes, true) : [];
+
     // Fetch sections ONCE - will be reused in coursesearch_search_course_index() to avoid duplicate query.
     // Include component and itemid to detect subsections and find their parent sections.
     $sections = $DB->get_records(
@@ -154,7 +160,7 @@ function coursesearch_perform_search($query, $course, $filter = 'all') {
     );
 
     // Search course sections - only if not specifically looking for other content types.
-    if ($filter == 'all' || $filter == 'sections') {
+    if (empty($modtypeslookup) && ($filter == 'all' || $filter == 'sections')) {
         foreach ($sections as $section) {
             // Check if this section is a subsection and get its parent info.
             $parentinfo = coursesearch_get_parent_section_info($section, $course->id, $sections);
@@ -261,7 +267,7 @@ function coursesearch_perform_search($query, $course, $filter = 'all') {
     $modinfo = get_fast_modinfo($course);
 
     // Bulk fetch all module records to avoid N+1 queries when searching descriptions.
-    $moduledata = coursesearch_bulk_fetch_module_data($modinfo);
+    $moduledata = coursesearch_bulk_fetch_module_data($modinfo, $modtypes);
 
     foreach ($modinfo->get_cms() as $mod) {
         // Skip if the module is not visible or the user can't access it.
@@ -273,6 +279,10 @@ function coursesearch_perform_search($query, $course, $filter = 'all') {
         // already found by the section search. Including them here causes duplicates
         // with wrong URLs (they get grouped under parent section instead of their own).
         if ($mod->modname === 'subsection') {
+            continue;
+        }
+
+        if (!empty($modtypeslookup) && !isset($modtypeslookup[$mod->modname])) {
             continue;
         }
 
@@ -429,7 +439,8 @@ function coursesearch_perform_search($query, $course, $filter = 'all') {
     // Additional fallback: Direct database search for all labels in the course.
     // This ensures we don't miss any labels that might not be in modinfo or are being filtered out.
     // Only search if filter allows content search.
-    if ($filter == 'all' || $filter == 'content') {
+    $allowlabelsearch = empty($modtypeslookup) || isset($modtypeslookup['label']);
+    if ($allowlabelsearch && ($filter == 'all' || $filter == 'content')) {
         $labelresults = coursesearch_search_all_labels_direct($query, $course, $sections, $modinfo);
         // Merge results, avoiding duplicates by cmid.
         $existingcmids = [];
@@ -517,6 +528,17 @@ function coursesearch_perform_search($query, $course, $filter = 'all') {
         $results = $filteredresults;
     }
 
+    if (!empty($modtypeslookup)) {
+        $filteredresults = [];
+        foreach ($results as $result) {
+            $modname = $result['modname'] ?? '';
+            if (!empty($modname) && isset($modtypeslookup[$modname])) {
+                $filteredresults[] = $result;
+            }
+        }
+        $results = $filteredresults;
+    }
+
     // Fix the issue with search results that have 'match' set to 'title' by ensuring they all have valid URLs.
     foreach ($results as &$result) {
         if ($result['match'] == get_string('title', 'mod_coursesearch') && empty($result['url'])) {
@@ -534,13 +556,15 @@ function coursesearch_perform_search($query, $course, $filter = 'all') {
  * to avoid N+1 query problems when searching module descriptions.
  *
  * @param course_modinfo $modinfo The course module info object
+ * @param array $modtypes Optional module types to include
  * @return array Associative array indexed by modname then instance id
  */
-function coursesearch_bulk_fetch_module_data($modinfo) {
+function coursesearch_bulk_fetch_module_data($modinfo, $modtypes = []) {
     global $DB;
 
     $moduledata = [];
     $modulesbytype = [];
+    $modtypeslookup = !empty($modtypes) ? array_fill_keys($modtypes, true) : [];
 
     // Group module instances by type.
     foreach ($modinfo->get_cms() as $mod) {
@@ -550,6 +574,9 @@ function coursesearch_bulk_fetch_module_data($modinfo) {
         // Validate module name to prevent SQL injection.
         $modname = clean_param($mod->modname, PARAM_PLUGIN);
         if (empty($modname) || $modname !== $mod->modname) {
+            continue;
+        }
+        if (!empty($modtypeslookup) && !isset($modtypeslookup[$modname])) {
             continue;
         }
         $modulesbytype[$modname][] = $mod->instance;

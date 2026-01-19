@@ -24,11 +24,11 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version   = 2026011900;       // The current module version (Date: YYYYMMDDXX).
+$plugin->version   = 2026011901;       // The current module version (Date: YYYYMMDDXX).
 $plugin->requires  = 2024042200;       // Requires this Moodle version (Moodle 4.4+).
 $plugin->component = 'mod_coursesearch'; // Full name of the plugin (used for diagnostics).
 $plugin->cron      = 0;
 $plugin->maturity  = MATURITY_STABLE;
-// Version 1.4.6 - Added Moodle.org info link to the activity description help.
+// Version 1.4.7 - Added module type filter with chip-based UI for filtering by activity/resource types.
 
-$plugin->release   = '1.4.6';
+$plugin->release   = '1.4.7';

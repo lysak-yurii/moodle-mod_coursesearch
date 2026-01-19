@@ -24,6 +24,7 @@
 
 defined('MOODLE_INTERNAL') || die();
 
+$string['activity'] = 'Activity';
 $string['collapsematches'] = 'Collapse matches';
 $string['content'] = 'content';
 $string['coursesearch:addinstance'] = 'Add a new course search';
@@ -97,18 +98,14 @@ $string['quicksearch'] = 'Quick search';
 $string['resultsperpage'] = 'Results per page';
 $string['resultsperpage_desc'] = 'The number of search results to display per page.';
 $string['search'] = 'Search';
+$string['searchmodtypes'] = 'Filter';
+$string['searchmodtypes_help'] = 'Filter search results to specific activity or resource types.';
 $string['searchresults'] = 'Search results for "{$a}"';
 $string['searchresultscount'] = '{$a->count} results found for "{$a->query}"';
 $string['searchresultsfor'] = 'Search results for "{$a}"';
 $string['searchresultsrange'] = 'Showing sections {$a->start}-{$a->end} of {$a->total}';
 $string['searchresultsrange_ungrouped'] = 'Showing results {$a->start}-{$a->end} of {$a->total}';
 $string['searchscope'] = 'Search scope';
-$string['searchscope_activities'] = 'Activities only';
-$string['searchscope_all'] = 'All course content';
-$string['searchscope_course'] = 'Course content only';
-$string['searchscope_forums'] = 'Forums only';
-$string['searchscope_help'] = 'Define what content should be included in the search results.';
-$string['searchscope_resources'] = 'Resources only';
 $string['sectionmatch'] = 'Section match';
 $string['subsectionmatch'] = 'Subsection match';
 $string['title'] = 'title';

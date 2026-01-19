@@ -24,6 +24,7 @@
 
 defined('MOODLE_INTERNAL') || die();
 
+$string['activity'] = 'Aktivität';
 $string['collapsematches'] = 'Treffer einklappen';
 $string['content'] = 'Inhalt';
 $string['coursesearch:addinstance'] = 'Eine neue Kurssuche hinzufügen';
@@ -97,18 +98,14 @@ $string['quicksearch'] = 'Schnellsuche';
 $string['resultsperpage'] = 'Ergebnisse pro Seite';
 $string['resultsperpage_desc'] = 'Die Anzahl der Suchergebnisse, die pro Seite angezeigt werden.';
 $string['search'] = 'Suchen';
+$string['searchmodtypes'] = 'Filter';
+$string['searchmodtypes_help'] = 'Suchergebnisse nach bestimmten Aktivitäts- oder Ressourcentypen filtern.';
 $string['searchresults'] = 'Suchergebnisse für "{$a}"';
 $string['searchresultscount'] = '{$a->count} Ergebnisse gefunden für "{$a->query}"';
 $string['searchresultsfor'] = 'Suchergebnisse für "{$a}"';
 $string['searchresultsrange'] = 'Zeige Abschnitte {$a->start}-{$a->end} von {$a->total}';
 $string['searchresultsrange_ungrouped'] = 'Zeige Ergebnisse {$a->start}-{$a->end} von {$a->total}';
 $string['searchscope'] = 'Suchbereich';
-$string['searchscope_activities'] = 'Nur Aktivitäten';
-$string['searchscope_all'] = 'Alle Kursinhalte';
-$string['searchscope_course'] = 'Nur Kursinhalte';
-$string['searchscope_forums'] = 'Nur Foren';
-$string['searchscope_help'] = 'Definieren Sie, welche Inhalte in den Suchergebnissen enthalten sein sollen.';
-$string['searchscope_resources'] = 'Nur Materialien';
 $string['sectionmatch'] = 'Abschnitts-Treffer';
 $string['subsectionmatch'] = 'Unterabschnitts-Treffer';
 $string['title'] = 'Titel';

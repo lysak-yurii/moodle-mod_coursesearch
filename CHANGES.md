@@ -1,5 +1,11 @@
 # Changelog
 
+## Changes in version 1.4.7 (Build: 2026011901)
+
+- **New Feature**: Added module type filter with chip-based UI - users can now filter search results by specific activity or resource types (e.g., only Assignments, Quizzes, Pages, etc.)
+- **Updated**: Removed old "Search scope" filter (All/Forums only) in favor of more flexible module type filtering
+- **Updated**: Removed unused language strings (searchscope_* variants)
+
 ## Changes in version 1.4.6 (Build: 2026011900)
 
 - **Updated**: Added Moodle.org info link to the activity description help

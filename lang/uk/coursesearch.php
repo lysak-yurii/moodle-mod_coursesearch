@@ -24,6 +24,7 @@
 
 defined('MOODLE_INTERNAL') || die();
 
+$string['activity'] = 'Активність';
 $string['collapsematches'] = 'Згорнути збіги';
 $string['content'] = 'вмісті';
 $string['coursesearch:addinstance'] = 'Додати новий пошук по курсу';
@@ -97,18 +98,14 @@ $string['quicksearch'] = 'Швидкий пошук';
 $string['resultsperpage'] = 'Результатів на сторінці';
 $string['resultsperpage_desc'] = 'Кількість результатів пошуку, що відображаються на одній сторінці.';
 $string['search'] = 'Пошук';
+$string['searchmodtypes'] = 'Фільтр';
+$string['searchmodtypes_help'] = 'Фільтрувати результати пошуку за конкретними типами активностей або ресурсів.';
 $string['searchresults'] = 'Результати пошуку для "{$a}"';
 $string['searchresultscount'] = 'Знайдено {$a->count} результатів для "{$a->query}"';
 $string['searchresultsfor'] = 'Результати пошуку для "{$a}"';
 $string['searchresultsrange'] = 'Показано розділи {$a->start}-{$a->end} з {$a->total}';
 $string['searchresultsrange_ungrouped'] = 'Показано результати {$a->start}-{$a->end} з {$a->total}';
 $string['searchscope'] = 'Область пошуку';
-$string['searchscope_activities'] = 'Лише активності';
-$string['searchscope_all'] = 'Весь вміст курсу';
-$string['searchscope_course'] = 'Лише вміст курсу';
-$string['searchscope_forums'] = 'Лише форуми';
-$string['searchscope_help'] = 'Визначте, який вміст має бути включено в результати пошуку.';
-$string['searchscope_resources'] = 'Лише ресурси';
 $string['sectionmatch'] = 'Збіг у розділі';
 $string['subsectionmatch'] = 'Збіг у підрозділі';
 $string['title'] = 'назві';

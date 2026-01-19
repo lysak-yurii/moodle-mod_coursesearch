@@ -3,7 +3,7 @@
 ![Moodle](https://img.shields.io/badge/Moodle-4.4+-orange?logo=moodle)
 ![PHP](https://img.shields.io/badge/PHP-7.4+-777BB4?logo=php&logoColor=white)
 ![License](https://img.shields.io/badge/License-GPL%20v3-green?logo=gnu)
-![Version](https://img.shields.io/badge/Version-1.4.6-blue)
+![Version](https://img.shields.io/badge/Version-1.4.7-blue)
 
 A comprehensive Moodle activity module that enables teachers to add a search bar to courses, allowing students to search through course content with automatic highlighting of search terms.
 
@@ -11,7 +11,7 @@ A comprehensive Moodle activity module that enables teachers to add a search bar
 
 ### Core Search Functionality
 - **Comprehensive Search**: Searches through all course content types
-- **Search Filter**: Filter between "All content" or "Forums only" on the search page
+- **Module Type Filter**: Filter search results by specific activity or resource types using an intuitive chip-based interface. Select multiple types to narrow down results (e.g., only Assignments and Quizzes, or only Pages and Books)
 - **Embedded Mode**: Option to embed search bar directly in course page ([screenshot](screenshots/interface_embedded_view_and_quick_access_widget.png))
 - **Results Grouping**: Optional grouping of search results by course sections (can be enabled/disabled per activity) ([grouped](screenshots/search_interface_grouped_mode.png) | [flat](screenshots/search_interface_flat_mode.png))
 - **Activity Grouping**: Automatic collapsible grouping of multiple matches within the same activity (e.g., multiple forum posts, book chapters, or content occurrences) ([screenshot](screenshots/search_interface_grouped_mode_activity_expanded.png))
@@ -167,8 +167,8 @@ The search covers the following content types:
 ### Searching
 
 1. Open the Course Search activity (or use the embedded search bar)
-2. Enter search terms
-3. Select filter: "All" or "Forums only"
+2. (Optional) Click **"Filter"** to expand module type options and select specific activity or resource types to search
+3. Enter search terms
 4. Click **"Search"**
 5. Browse results (grouped by sections if enabled, or as a flat list if disabled)
 6. Use pagination controls to navigate through multiple pages of results
@@ -220,7 +220,7 @@ When clicking on search results, the plugin automatically:
 
 ## Version
 
-Current version: **1.4.6** (Build: 2026011900, Stable)
+Current version: **1.4.7** (Build: 2026011901, Stable)
 
 For detailed version history, see [CHANGES.md](CHANGES.md).
 

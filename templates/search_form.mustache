@@ -27,6 +27,8 @@
     * embedded - Whether the form is embedded in the course page
     * hasfilters - Whether there are filter options
     * filters - Array of filter options with: value, label, id, checked
+    * hasmodtypes - Whether there are module type options
+    * modtypes - Array of module type options with: value, label, id, checked
 
     Example context (json):
     {
@@ -39,6 +41,10 @@
         "filters": [
             {"value": "all", "label": "All course content", "id": "filter_all", "checked": true},
             {"value": "forums", "label": "Forums only", "id": "filter_forums", "checked": false}
+        ],
+        "modtypes": [
+            {"value": "assign", "label": "Assignment", "id": "modtype_assign", "checked": true},
+            {"value": "quiz", "label": "Quiz", "id": "modtype_quiz", "checked": false}
         ],
         "hasintro": true,
         "intro": "<p>Search through this course content.</p>"
@@ -54,24 +60,64 @@
     <form action="{{formurl}}" method="get" class="coursesearch-form">
         <input type="hidden" name="id" value="{{cmid}}">
 
-        {{#hasfilters}}
+        {{#hasmodtypes}}
         {{^embedded}}
-        <div class="coursesearch-filters mb-3">
-            <label class="mr-2">{{#str}} searchscope, mod_coursesearch {{/str}}:</label>
-            {{#filters}}
-            <span class="mr-3">
-                <input type="radio"
-                       name="filter"
-                       id="{{id}}"
-                       value="{{value}}"
-                       class="mr-1"
-                       {{#checked}}checked="checked"{{/checked}}>
-                <label for="{{id}}" class="mr-2">{{label}}</label>
-            </span>
-            {{/filters}}
+        <div class="coursesearch-modtypes-wrapper mb-3">
+            <details class="coursesearch-modtypes"{{#hasselectedmodtypes}} open{{/hasselectedmodtypes}}>
+                <summary class="coursesearch-modtypes-summary">
+                    <span class="coursesearch-modtypes-icon">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M2 4h12M4 8h8M6 12h4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
+                    </span>
+                    <span class="coursesearch-modtypes-title">{{#str}} searchmodtypes, mod_coursesearch {{/str}}</span>
+                    <span class="coursesearch-modtypes-arrow">
+                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </span>
+                </summary>
+            </details>
+            <div class="coursesearch-modtypes-content" id="coursesearch-modtypes-content-{{cmid}}">
+                <div class="coursesearch-chipset">
+                    {{#modtypes}}
+                    <label class="coursesearch-chip" for="{{id}}">
+                        <input type="checkbox"
+                               name="modtypes[]"
+                               id="{{id}}"
+                               value="{{value}}"
+                               {{#checked}}checked="checked"{{/checked}}>
+                        <span class="coursesearch-chip-label">
+                            <span class="coursesearch-chip-text">{{label}}</span>
+                            <span class="coursesearch-chip-checkmark">
+                                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M11.6667 3.5L5.25 9.91667L2.33334 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </span>
+                        </span>
+                    </label>
+                    {{/modtypes}}
+                </div>
+                <div class="coursesearch-modtypes-help">
+                    {{#str}} searchmodtypes_help, mod_coursesearch {{/str}}
+                </div>
+            </div>
         </div>
+        <script>
+        (function() {
+            var details = document.querySelector('.coursesearch-modtypes-wrapper .coursesearch-modtypes');
+            var content = document.getElementById('coursesearch-modtypes-content-{{cmid}}');
+            if (details && content) {
+                var updateVisibility = function() {
+                    content.style.display = details.open ? 'block' : 'none';
+                };
+                details.addEventListener('toggle', updateVisibility);
+                updateVisibility();
+            }
+        })();
+        </script>
         {{/embedded}}
-        {{/hasfilters}}
+        {{/hasmodtypes}}
 
         <div class="input-group">
             <input type="text"

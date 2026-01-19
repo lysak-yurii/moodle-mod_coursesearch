@@ -35,6 +35,7 @@ $id = optional_param('id', 0, PARAM_INT); // Course Module ID.
 $cs = optional_param('cs', 0, PARAM_INT);  // CourseSearch instance ID.
 $query = optional_param('query', '', PARAM_TEXT); // Search query.
 $filter = optional_param('filter', 'all', PARAM_ALPHA); // Content filter (title, content, description).
+$modtypes = optional_param_array('modtypes', [], PARAM_ALPHANUMEXT); // Selected module types.
 $page = optional_param('page', 0, PARAM_INT); // Pagination page number (0-indexed).
 
 // Validate filter parameter against whitelist to prevent injection.
@@ -75,11 +76,31 @@ $PAGE->set_context($context);
 // Get the placeholder text from language string.
 $placeholder = get_string('defaultplaceholder', 'coursesearch');
 
-// Prepare filter options.
-$filteroptions = [
-    'all' => get_string('searchscope_all', 'coursesearch'),
-    'forums' => get_string('searchscope_forums', 'coursesearch'),
-];
+// Prepare filter options (none for now; scope selector removed from UI).
+$filteroptions = [];
+
+// Prepare module type options for filtering.
+$modtypeoptions = [];
+$modinfo = get_fast_modinfo($course);
+foreach ($modinfo->get_cms() as $mod) {
+    if (!$mod->uservisible) {
+        continue;
+    }
+    if ($mod->modname === 'subsection' || $mod->modname === 'coursesearch') {
+        continue;
+    }
+    $label = $mod->modfullname ?? $mod->modname;
+    $modtypeoptions[$mod->modname] = $label;
+}
+if (!empty($modtypeoptions)) {
+    asort($modtypeoptions, SORT_NATURAL | SORT_FLAG_CASE);
+}
+
+// Keep only valid selected module types.
+$selectedmodtypes = [];
+if (!empty($modtypes)) {
+    $selectedmodtypes = array_values(array_intersect($modtypes, array_keys($modtypeoptions)));
+}
 
 // Create the form URL.
 $formurl = new moodle_url('/mod/coursesearch/view.php', ['id' => $cm->id]);
@@ -99,6 +120,8 @@ $searchform = new search_form(
     $filter,
     false, // Not embedded.
     $filteroptions,
+    $modtypeoptions,
+    $selectedmodtypes,
     $intro
 );
 
@@ -122,7 +145,7 @@ if (!empty($query)) {
     $event->trigger();
 
     // Include the filter parameter in the search.
-    $rawresults = coursesearch_perform_search($query, $course, $filter);
+    $rawresults = coursesearch_perform_search($query, $course, $filter, $selectedmodtypes);
 
     // Group raw results by activity before processing.
     $groupedrawresults = coursesearch_group_raw_results_by_activity($rawresults, $course);
@@ -378,6 +401,9 @@ if (!empty($query)) {
         'query' => $query,
         'filter' => $filter,
     ]);
+    foreach ($selectedmodtypes as $modtype) {
+        $baseurl->param('modtypes[]', $modtype);
+    }
 
     // Get grouping setting (default to 1 if not set for backward compatibility).
     $grouped = isset($coursesearch->grouped) ? (bool)$coursesearch->grouped : true;

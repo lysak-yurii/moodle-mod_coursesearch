@@ -50,6 +50,12 @@ class search_form implements renderable, templatable {
     /** @var array The filter options */
     protected $filteroptions;
 
+    /** @var array The module type options */
+    protected $modtypeoptions;
+
+    /** @var array The selected module types */
+    protected $selectedmodtypes;
+
     /** @var string The intro/description HTML content */
     protected $intro;
 
@@ -63,6 +69,8 @@ class search_form implements renderable, templatable {
      * @param string $filter The current filter value
      * @param bool $embedded Whether the form is embedded
      * @param array $filteroptions The filter options (value => label)
+     * @param array $modtypeoptions The module type options (value => label)
+     * @param array $selectedmodtypes The selected module types
      * @param string $intro The intro/description HTML content
      */
     public function __construct(
@@ -73,6 +81,8 @@ class search_form implements renderable, templatable {
         string $filter = 'all',
         bool $embedded = false,
         array $filteroptions = [],
+        array $modtypeoptions = [],
+        array $selectedmodtypes = [],
         string $intro = ''
     ) {
         $this->formurl = $formurl;
@@ -82,6 +92,8 @@ class search_form implements renderable, templatable {
         $this->filter = $filter;
         $this->embedded = $embedded;
         $this->filteroptions = $filteroptions;
+        $this->modtypeoptions = $modtypeoptions;
+        $this->selectedmodtypes = $selectedmodtypes;
         $this->intro = $intro;
     }
 
@@ -103,6 +115,16 @@ class search_form implements renderable, templatable {
             ];
         }
 
+        $modtypes = [];
+        foreach ($this->modtypeoptions as $value => $label) {
+            $modtypes[] = [
+                'value' => $value,
+                'label' => $label,
+                'id' => 'modtype_' . $value,
+                'checked' => in_array($value, $this->selectedmodtypes, true),
+            ];
+        }
+
         return [
             'formurl' => $this->formurl->out(false),
             'cmid' => $this->cmid,
@@ -111,6 +133,9 @@ class search_form implements renderable, templatable {
             'embedded' => $this->embedded,
             'hasfilters' => !empty($filters),
             'filters' => $filters,
+            'hasmodtypes' => !empty($modtypes),
+            'modtypes' => $modtypes,
+            'hasselectedmodtypes' => !empty($this->selectedmodtypes),
             'hasintro' => !empty($this->intro),
             'intro' => $this->intro,
         ];
