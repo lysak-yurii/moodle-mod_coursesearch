@@ -11,7 +11,7 @@ A comprehensive Moodle activity module that enables teachers to add a search bar
 
 ### Core Search Functionality
 - **Comprehensive Search**: Searches through all course content types
-- **Module Type Filter**: Filter search results by specific activity or resource types using an intuitive chip-based interface. Select multiple types to narrow down results (e.g., only Assignments and Quizzes, or only Pages and Books)
+- **Module Type Filter**: Filter search results by specific activity or resource types using an intuitive chip-based interface. Select multiple types to narrow down results (e.g., only Assignments and Quizzes, or only Pages and Books) ([screenshot](screenshots/search_interface_filter.png))
 - **Embedded Mode**: Option to embed search bar directly in course page ([screenshot](screenshots/interface_embedded_view_and_quick_access_widget.png))
 - **Results Grouping**: Optional grouping of search results by course sections (can be enabled/disabled per activity) ([grouped](screenshots/search_interface_grouped_mode.png) | [flat](screenshots/search_interface_flat_mode.png))
 - **Activity Grouping**: Automatic collapsible grouping of multiple matches within the same activity (e.g., multiple forum posts, book chapters, or content occurrences) ([screenshot](screenshots/search_interface_grouped_mode_activity_expanded.png))
@@ -56,7 +56,12 @@ The search bar can be embedded directly on the course page. The floating quick-a
 The main search interface with results grouped by course sections and collapsible activity grouping.
 
 <details>
-<summary>📸 More search interface screenshots</summary>
+<summary><strong>📸 More search interface screenshots ▼</strong></summary>
+
+#### Module Type Filter
+![Module Type Filter](screenshots/search_interface_filter.png)
+
+The collapsible filter panel allows users to select specific activity or resource types to narrow down search results. Selected filters are highlighted with theme colors.
 
 #### Flat Mode
 ![Flat Mode](screenshots/search_interface_flat_mode.png)
@@ -72,7 +77,7 @@ The main search interface with results grouped by course sections and collapsibl
 </details>
 
 <details>
-<summary>📸 Highlighting screenshots</summary>
+<summary><strong>📸 Highlighting screenshots ▼</strong></summary>
 
 #### Single Occurrence Highlight
 ![Single Occurrence](screenshots/scrollhighlighted_single_occurrence.png)
@@ -83,7 +88,7 @@ The main search interface with results grouped by course sections and collapsibl
 </details>
 
 <details>
-<summary>📸 Settings screenshots</summary>
+<summary><strong>📸 Settings screenshots ▼</strong></summary>
 
 #### Admin Settings
 ![Admin Settings](screenshots/admin_settings.png)
@@ -220,18 +225,19 @@ When clicking on search results, the plugin automatically:
 
 ## Version
 
-Current version: **1.4.7** (Build: 2026011901, Stable)
+Current version: **1.4.7** (Build: 2026011902, Stable)
 
 For detailed version history, see [CHANGES.md](CHANGES.md).
 
 <details>
-<summary>View enhancement history</summary>
+<summary><strong>📜 View enhancement history ▼</strong></summary>
 
 ### Enhancements (December 2025)
 - Extended highlighting support to Pages, Books, Lessons, Wiki, Forums, Glossary, and Database activities
 - Added search results pagination and grouping by sections
 
 ### Enhancements (January 2026)
+- Added module type filter with chip-based UI - users can now filter search results by specific activity or resource types (e.g., only Assignments, Quizzes, Pages, etc.)
 - Added floating quick-access search widget with admin settings for enabling/disabling it and configuring its vertical offset position
 - Added optional grouping toggle allowing teachers to choose between grouped or flat list result display
 - Fixed HTML tag and placeholder matching bugs, improving search accuracy
