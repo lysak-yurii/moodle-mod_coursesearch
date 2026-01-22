@@ -1,5 +1,9 @@
 # Changelog
 
+## Changes in version 1.4.8 (Build: 2026012200)
+
+- **Fixed**: Floating quick-access widget now shifts to the left when Moodle's block drawer is opened, preventing it from being hidden behind the drawer
+
 ## Changes in version 1.4.7 (Build: 2026011901)
 
 - **New Feature**: Added module type filter with chip-based UI - users can now filter search results by specific activity or resource types (e.g., only Assignments, Quizzes, Pages, etc.)

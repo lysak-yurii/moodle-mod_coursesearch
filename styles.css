@@ -771,6 +771,13 @@ span.coursesearch-highlight-temp {
     right: 20px;
     z-index: 1000;
     font-family: inherit;
+    transition: right 0.2s ease;
+}
+
+/* Shift floating widget when block drawer is open */
+.drawer-right.show .coursesearch-floating-widget,
+.show-drawer-right .coursesearch-floating-widget {
+    right: calc(315px + 20px);
 }
 
 .coursesearch-floating-widget-toggle {
