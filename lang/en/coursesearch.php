@@ -41,6 +41,7 @@ $string['enablefloatingwidget'] = 'Enable floating quick-access widget';
 $string['enablefloatingwidget_desc'] = 'When enabled, a floating search widget will appear on course pages, allowing quick access to course search without navigating to the search activity page.';
 $string['enablehighlight'] = 'Enable scrolling and highlighting';
 $string['enablehighlight_desc'] = 'When enabled, clicking on search results will automatically scroll to and highlight the matched text on the course page.';
+$string['eventcoursemoduleviewed'] = 'Course search activity viewed';
 $string['eventcoursesearched'] = 'Course searched';
 $string['excludedplaceholders'] = 'Excluded placeholder patterns';
 $string['excludedplaceholders_desc'] = 'Regular expression patterns (one per line) for internal placeholders that should be excluded from search. These are internal markers not visible to users and should not be searchable.

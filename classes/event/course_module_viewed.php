@@ -53,13 +53,22 @@ class course_module_viewed extends \core\event\course_module_viewed {
     }
 
     /**
-     * Return the legacy event log data.
+     * Return the localised name of the event.
      *
-     * @return array
+     * @return string
      */
-    protected function get_legacy_logdata() {
-        return [$this->courseid, 'coursesearch', 'view', 'view.php?id=' . $this->contextinstanceid,
-            $this->objectid, $this->contextinstanceid];
+    public static function get_name() {
+        return \get_string('eventcoursemoduleviewed', 'coursesearch');
+    }
+
+    /**
+     * Return the description of the event.
+     *
+     * @return string
+     */
+    public function get_description() {
+        return "The user with id '{$this->userid}' viewed the course search activity with instance id '{$this->objectid}' " .
+            "in the course with id '{$this->courseid}'.";
     }
 
     /**

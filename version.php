@@ -24,11 +24,11 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version   = 2026051200;       // The current module version (Date: YYYYMMDDXX).
+$plugin->version   = 2026051201;       // The current module version (Date: YYYYMMDDXX).
 $plugin->requires  = 2024042200;       // Requires this Moodle version (Moodle 4.4+).
 $plugin->component = 'mod_coursesearch'; // Full name of the plugin (used for diagnostics).
 $plugin->cron      = 0;
 $plugin->maturity  = MATURITY_STABLE;
-// Version 1.4.9 - Fix floating widget close label string
+// Version 1.4.10 - Remove legacy logdata from course_module_viewed event.
 
-$plugin->release   = '1.4.9';
+$plugin->release   = '1.4.10';

@@ -41,6 +41,7 @@ $string['enablefloatingwidget'] = 'Schwebendes Schnellzugriffs-Widget aktivieren
 $string['enablefloatingwidget_desc'] = 'Wenn aktiviert, erscheint ein schwebendes Such-Widget auf Kursseiten, das schnellen Zugriff auf die Kurssuche ermöglicht, ohne zur Suchaktivitätsseite zu navigieren.';
 $string['enablehighlight'] = 'Scrollen und Hervorheben aktivieren';
 $string['enablehighlight_desc'] = 'Wenn aktiviert, wird beim Klicken auf Suchergebnisse automatisch zum gefundenen Text gescrollt und dieser auf der Kursseite hervorgehoben.';
+$string['eventcoursemoduleviewed'] = 'Kurssuche-Aktivität angesehen';
 $string['eventcoursesearched'] = 'Kurs durchsucht';
 $string['excludedplaceholders'] = 'Ausgeschlossene Platzhalter-Muster';
 $string['excludedplaceholders_desc'] = 'Reguläre Ausdrucksmuster (eine pro Zeile) für interne Platzhalter, die von der Suche ausgeschlossen werden sollen. Dies sind interne Markierungen, die für Benutzer nicht sichtbar sind und nicht durchsuchbar sein sollten.

@@ -1,9 +1,12 @@
 # Changelog
 
+## Changes in version 1.4.10 (Build: 2026051201)
+
+- **Updated**: Removed legacy logdata from `course_module_viewed` event
+
 ## Changes in version 1.4.9 (Build: 2026051200)
 
 - **Fixed**: Floating quick-access widget close label string
-- **Updated**: `version.php` version metadata is now accurate
 
 ## Changes in version 1.4.8 (Build: 2026012200)
 
