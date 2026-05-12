@@ -1,5 +1,10 @@
 # Changelog
 
+## Changes in version 1.4.9 (Build: 2026051200)
+
+- **Fixed**: Floating quick-access widget close label string
+- **Updated**: `version.php` version metadata is now accurate
+
 ## Changes in version 1.4.8 (Build: 2026012200)
 
 - **Fixed**: Floating quick-access widget now shifts to the left when Moodle's block drawer is opened, preventing it from being hidden behind the drawer

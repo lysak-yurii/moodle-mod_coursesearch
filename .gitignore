@@ -25,6 +25,9 @@ node_modules/
 package-lock.json
 yarn.lock
 
+# docs
+docs/
+
 # Temporary files
 *.tmp
 *.bak

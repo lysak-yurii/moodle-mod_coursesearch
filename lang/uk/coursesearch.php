@@ -25,6 +25,7 @@
 defined('MOODLE_INTERNAL') || die();
 
 $string['activity'] = 'Активність';
+$string['closebuttontitle'] = 'Закрити';
 $string['collapsematches'] = 'Згорнути збіги';
 $string['content'] = 'вмісті';
 $string['coursesearch:addinstance'] = 'Додати новий пошук по курсу';

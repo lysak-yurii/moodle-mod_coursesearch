@@ -34,7 +34,7 @@
     user-select: none;
     border: 1px solid #d1d5db;
     border-radius: 6px;
-    background-color: #ffffff;
+    background-color: #fff;
     transition: all 0.2s ease;
     list-style: none;
 }
@@ -133,7 +133,7 @@
     padding: 6px 14px;
     font-size: 0.875rem;
     font-weight: 500;
-    background-color: #ffffff;
+    background-color: #fff;
     color: #495057;
     transition: all 0.2s ease;
     user-select: none;

@@ -25,6 +25,7 @@
 defined('MOODLE_INTERNAL') || die();
 
 $string['activity'] = 'Activity';
+$string['closebuttontitle'] = 'Close';
 $string['collapsematches'] = 'Collapse matches';
 $string['content'] = 'content';
 $string['coursesearch:addinstance'] = 'Add a new course search';
