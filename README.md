@@ -225,7 +225,7 @@ When clicking on search results, the plugin automatically:
 
 ## Version
 
-Current version: **1.4.10** (Build: 2026051201, Stable)
+Current version: **1.4.10** (Build: 2026060401, Stable)
 
 For detailed version history, see [CHANGES.md](CHANGES.md).
 
@@ -260,4 +260,10 @@ HNEE (Hochschule für nachhaltige Entwicklung Eberswalde)
 
 ## Support
 
-For issues, feature requests, or contributions, please contact your Moodle administrator.
+### Bug Reports & Feature Requests
+
+Please use the [GitHub issue tracker](https://github.com/lysak-yurii/moodle-mod_coursesearch/issues) to report bugs or suggest new features. Before opening a new issue, check if one already exists.
+
+### Discussion & Feedback
+
+The plugin is listed on the [Moodle plugins directory](https://moodle.org/plugins/mod_coursesearch) — feel free to leave reviews or comments there.
