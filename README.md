@@ -9,39 +9,27 @@ A comprehensive Moodle activity module that enables teachers to add a search bar
 
 ## Features
 
-### Core Search Functionality
-- **Comprehensive Search**: Searches through all course content types
-- **Module Type Filter**: Filter search results by specific activity or resource types using an intuitive chip-based interface. Select multiple types to narrow down results (e.g., only Assignments and Quizzes, or only Pages and Books) ([screenshot](screenshots/search_interface_filter.png))
-- **Embedded Mode**: Option to embed search bar directly in course page ([screenshot](screenshots/interface_embedded_view_and_quick_access_widget.png))
-- **Results Grouping**: Optional grouping of search results by course sections (can be enabled/disabled per activity) ([grouped](screenshots/search_interface_grouped_mode.png) | [flat](screenshots/search_interface_flat_mode.png))
-- **Activity Grouping**: Automatic collapsible grouping of multiple matches within the same activity (e.g., multiple forum posts, book chapters, or content occurrences) ([screenshot](screenshots/search_interface_grouped_mode_activity_expanded.png))
-- **Multiple Occurrences**: Finds multiple occurrences of search terms in content (configurable limit per content item, default: 5) for comprehensive results. Administrators can configure this limit or disable it in admin settings.
-- **Pagination**: Large result sets are paginated for improved performance and usability (works for both grouped and ungrouped views)
+**Search**
+- Searches across all supported course content types (see [Supported content](#supported-content)).
+- **Module type filter** — narrow results to specific activity or resource types via a
+  chip-based panel.
+- **Embedded mode** — show the search bar inline on the course page.
+- **Floating widget** — a quick-access search box on every course page, with a configurable
+  vertical offset and automatic theme colors.
+- **Result grouping** — group results by course section or show a flat list (per activity);
+  multiple matches in one activity collapse into a single expandable entry.
+- **Pagination** for large result sets, in both grouped and flat views.
 
-### Search Term Highlighting
-- **Automatic Scrolling**: Automatically scrolls to matched content when clicking search results
-- **Visual Highlighting**: Highlights search terms with a yellow background for 3 seconds (or until user clicks elsewhere for grouped results)
-- **Multi-Occurrence Highlighting**: ([single](screenshots/scrollhighlighted_single_occurrence.png) | [multiple](screenshots/scrollhighlighted_multiple_occurrences.png))
-  - Opening grouped activity result highlights ALL occurrences of the search term. All-occurrence highlights persist until the user clicks anywhere on the page
-  - Opening individual match items highlights the SPECIFIC occurrence that was clicked
+**Highlighting**
+- Scrolls to and highlights matched text, expanding any collapsible/accordion sections.
+- Opening a grouped result highlights *all* occurrences (until you click away); an individual
+  match highlights just that one (3 seconds).
+- Falls back to the parent element when inline text can't be highlighted directly.
 
-- **Smart Fallback**: If direct text highlighting fails (e.g., text inside links), highlights the parent element
-- **Wide Activity Support**: Highlighting works on Pages, Books, Lessons, Wiki, Forums, Glossary, Database, and Labels
-- **Accordion Support**: Automatically expands Bootstrap accordions/collapsible sections to reveal and highlight text inside
-
-### Floating Quick-Access Widget ([screenshot](screenshots/interface_embedded_view_and_quick_access_widget.png))
-- **Quick Search Access**: A floating search widget appears on all course pages (course view, module pages, etc.) providing instant access to course search without navigating to the search activity page
-- **Smart Positioning**: Configurable vertical offset to avoid overlap with other page elements (e.g., Moodle's infobutton)
-- **Theme Integration**: Widget automatically adapts to Moodle's theme colors
-- **Universal Availability**: Appears on all course pages where a coursesearch activity exists (excludes H5P pages to prevent duplication)
-
-### Admin Settings ([screenshot](screenshots/admin_settings.png))
-- **Enable/Disable Highlighting**: Global setting to turn scrolling and highlighting on or off (Site Administration > Plugins > Activity modules > Course Search)
-- **Enable/Disable Floating Widget**: Global setting to turn the floating quick-access widget on or off
-- **Floating Widget Vertical Offset**: Configure the vertical position of the floating widget in pixels from the bottom of the page (default: 80px)
-- **Results Per Page**: Configure the number of search results displayed per page
-- **Maximum Occurrences Per Content Item**: Configure how many occurrences of a search term to find per content item (default: 5). Set to 0 to disable the limit and find all occurrences (not recommended for large courses as it may impact performance)
-- **Excluded Placeholder Patterns**: Configure regex patterns to exclude internal Moodle placeholders (like @@PLUGINFILE@@) from search results to prevent false matches
+**Configuration** *(Site administration → Plugins → Activity modules → Course Search)*
+- Toggle highlighting and the floating widget on or off; set the widget's vertical offset.
+- Set results per page and the maximum occurrences matched per content item (`0` = unlimited).
+- Define regex patterns to exclude internal placeholders (e.g. `@@PLUGINFILE@@`) from results.
 
 ## Screenshots
 
@@ -98,18 +86,12 @@ The collapsible filter panel allows users to select specific activity or resourc
 
 </details>
 
-## Supported Content Types
+## Supported content
 
-The search covers the following content types:
+Section names and summaries, and every activity/resource title and description are searched.
+Per-activity coverage:
 
-### Course Structure
-- Course Sections (names and summaries)
-- Activity and resource titles
-- Descriptions and introductions
-
-### Activities & Resources
-
-| Activity | Searchable Content | Highlighting |
+| Activity | Searchable content | Highlighting |
 |----------|-------------------|--------------|
 | **Pages** (mod_page) | Title and content | Yes |
 | **Books** (mod_book) | Chapter titles and content | Yes |
@@ -130,23 +112,11 @@ The search covers the following content types:
 
 ## Installation
 
-### Method 1: Via Moodle Admin Interface (Recommended)
-
-1. Download `mod_coursesearch.zip`
-2. Log in to Moodle as administrator
-3. Navigate to: **Site administration -> Plugins -> Install plugins**
-4. Click **"Choose a file"** and upload `mod_coursesearch.zip`
-5. Click **"Install plugin from the ZIP file"**
-6. Review the validation report and click **"Continue"**
-7. Follow the on-screen prompts to complete installation
-
-### Method 2: Manual Installation
-
-1. Extract the `mod_coursesearch.zip` file
-2. Upload the `coursesearch` folder to `/path/to/moodle/mod/`
-3. Set proper permissions: `chown -R www-data:www-data coursesearch`
-4. Visit **Site administration -> Notifications**
-5. Follow the upgrade prompts
+1. Install the plugin either way:
+   - **Admin UI:** *Site administration → Plugins → Install plugins*, then upload
+     `mod_coursesearch.zip`.
+   - **Manual:** extract the `coursesearch` folder into `/path/to/moodle/mod/`.
+2. Visit *Site administration → Notifications* and complete the upgrade prompts.
 
 ## Usage
 
@@ -163,44 +133,19 @@ The search covers the following content types:
    - **Group results by section**: Enable to organize results by course sections, or disable for a flat list view
 6. Save and display
 
-### Supported Languages
-
-- English
-- German
-- Ukrainian
-
 ### Searching
 
-1. Open the Course Search activity (or use the embedded search bar)
-2. (Optional) Click **"Filter"** to expand module type options and select specific activity or resource types to search
-3. Enter search terms
-4. Click **"Search"**
-5. Browse results (grouped by sections if enabled, or as a flat list if disabled)
-6. Use pagination controls to navigate through multiple pages of results
-7. Click on any result to navigate to the content
+Open the activity (or use the embedded/floating search bar), optionally click **Filter** to
+limit results to specific activity types, enter your terms, and search. Results appear grouped
+by section or as a flat list (per the activity setting) and are paginated. Click any result to
+jump to the content.
 
 ### Highlighting
 
-When clicking on search results, the plugin automatically:
-- Scrolls to the matched text
-- Highlights the text with a yellow background
-- Expands Bootstrap accordions/collapsible sections if needed
-
-**Highlighting Modes:**
-- **All Occurrences**: When opening a group activity result (e.g., "Activity Name - 3 matches"), all occurrences of the search term are highlighted and remain visible until you click anywhere on the page
-- **Specific Occurrence**: When opening an individual match from an expanded accordion, only that specific occurrence is highlighted (auto-removes after 3 seconds)
-
-**Highlighting works on:**
-- Course page (Labels, Sections)
-- Pages, Books, Lessons
-- Wiki pages
-- Forum discussions and posts
-- Glossary entries
-- Database records
-
-**Highlighting does NOT work on:**
-- H5P activities (content is rendered in an iframe)
-- Folder files (links to file downloads)
+Clicking a result scrolls to the matched text, highlights it with a yellow background, and
+expands any collapsible sections as needed. Opening a grouped result highlights *all*
+occurrences (until you click away); opening an individual match highlights just that one (for
+3 seconds). See [Features](#features) for the full list of supported activities.
 
 ## Performance
 
@@ -211,43 +156,19 @@ When clicking on search results, the plugin automatically:
 
 ## Troubleshooting
 
-### Highlighting doesn't work
-- Clear browser cache (Ctrl+Shift+Delete)
-- Purge Moodle caches: **Site administration -> Development -> Purge all caches**
-- Ensure JavaScript is enabled
-- Check if highlighting is enabled in admin settings
-- Note: Highlighting does NOT work on H5P activities (iframe limitation) or Folder files (file downloads)
+**Highlighting doesn't work** — ensure JavaScript is enabled and highlighting is on in the
+admin settings, then clear your browser cache and purge Moodle caches
+(*Site administration → Development → Purge all caches*). Note that highlighting is not
+supported on H5P (iframe) or Folder (file download) activities.
 
-### No search results
-- Verify content is visible to the user
-- Try different search terms
-- Check if the content type is supported
+**No search results** — confirm the content is visible to the user, the content type is
+supported, and try alternative search terms.
 
 ## Version
 
-Current version: **1.4.10** (Build: 2026060401, Stable)
+Current version: **1.4.10** (Build: 2026061501, Stable)
 
 For detailed version history, see [CHANGES.md](CHANGES.md).
-
-<details>
-<summary><strong>📜 View enhancement history ▼</strong></summary>
-
-### Enhancements (December 2025)
-- Extended highlighting support to Pages, Books, Lessons, Wiki, Forums, Glossary, and Database activities
-- Added search results pagination and grouping by sections
-
-### Enhancements (January 2026)
-- Added module type filter with chip-based UI - users can now filter search results by specific activity or resource types (e.g., only Assignments, Quizzes, Pages, etc.)
-- Added floating quick-access search widget with admin settings for enabling/disabling it and configuring its vertical offset position
-- Added optional grouping toggle allowing teachers to choose between grouped or flat list result display
-- Fixed HTML tag and placeholder matching bugs, improving search accuracy
-- Added configurable placeholder filtering for administrators
-- Added collapsible activity grouping for multiple matches within the same activity
-- Enhanced search to find all occurrences of search terms in content & added configuration for admins to limit maximum occurrences per content item
-- Improved search logic across all activity types for better result coverage
-- Added multi-occurrence highlighting - opening grouped result highlights all occurrences (persists until click), opening individual match highlights specific occurrences
-
-</details>
 
 ## License
 
@@ -258,12 +179,20 @@ This plugin is licensed under the [GNU GPL v3 or later](LICENSE).
 Original plugin: Yurii Lysak (2025)
 HNEE (Hochschule für nachhaltige Entwicklung Eberswalde)
 
-## Support
+## Contributing & Support
 
-### Bug Reports & Feature Requests
+### Bug reports & feature requests
 
-Please use the [GitHub issue tracker](https://github.com/lysak-yurii/moodle-mod_coursesearch/issues) to report bugs or suggest new features. Before opening a new issue, check if one already exists.
+Use the [GitHub issue tracker](https://github.com/lysak-yurii/moodle-mod_coursesearch/issues)
+to report bugs or suggest features. Please check for an existing issue before opening a new one.
 
-### Discussion & Feedback
+### Contributing
 
-The plugin is listed on the [Moodle plugins directory](https://moodle.org/plugins/mod_coursesearch) — feel free to leave reviews or comments there.
+Contributions are welcome — fork the repo, create a feature branch, and open a pull request.
+Translations are especially appreciated (the plugin currently ships English, German, and
+Ukrainian). By contributing you agree that your work is licensed under the GNU GPL v3 or later.
+
+### Discussion & feedback
+
+The plugin is listed on the [Moodle plugins directory](https://moodle.org/plugins/mod_coursesearch)
+— feel free to leave reviews or comments there.
