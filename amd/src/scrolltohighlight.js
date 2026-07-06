@@ -656,8 +656,10 @@ define(['jquery'], function($) {
         // Mark as highlighted to prevent re-runs.
         hasHighlighted = true;
 
-        // Decode the text.
-        const searchText = decodeURIComponent(highlightText).trim();
+        // The value is already decoded (URLSearchParams decodes URL params, and the sessionStorage
+        // path stores an already-decoded value), so do NOT decode again: decodeURIComponent() would
+        // double-decode and throw a URIError on any literal '%' in the query (e.g. "100% cotton").
+        const searchText = highlightText.trim();
         if (!searchText) {
             return;
         }
