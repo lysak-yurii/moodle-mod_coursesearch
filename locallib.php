@@ -729,7 +729,14 @@ function coursesearch_search_book($mod, $query, $filter) {
     global $DB;
 
     $results = [];
-    $bookchapters = $DB->get_records('book_chapters', ['bookid' => $mod->instance]);
+
+    // Respect hidden chapters: only expose them to users who may view hidden chapters.
+    $conditions = ['bookid' => $mod->instance];
+    $context = context_module::instance($mod->id);
+    if (!has_capability('mod/book:viewhiddenchapters', $context)) {
+        $conditions['hidden'] = 0;
+    }
+    $bookchapters = $DB->get_records('book_chapters', $conditions);
 
     foreach ($bookchapters as $chapter) {
         // First check if the chapter title matches the query.
@@ -859,6 +866,19 @@ function coursesearch_search_all_labels_direct($query, $course, $sections, $modi
     $labelmodules = $DB->get_records_sql($sql, ['courseid' => $course->id]);
 
     foreach ($labelmodules as $labelmod) {
+        // Respect per-user availability. The SQL above only filters on cm.visible, which does not
+        // account for "Restrict access" rules (dates, groups, completion). Defer to modinfo, which
+        // computes uservisible for the current user, and skip anything they cannot see.
+        try {
+            $labelcm = $modinfo->get_cm($labelmod->cmid);
+            if (!$labelcm->uservisible) {
+                continue;
+            }
+        } catch (Exception $e) {
+            // Not in modinfo (deleted/inaccessible) - skip to be safe.
+            continue;
+        }
+
         // Use the standard relevance check which handles HTML conversion and multilang processing.
         $isrelevant = false;
         if (!empty($labelmod->intro)) {
@@ -967,7 +987,7 @@ function coursesearch_search_lesson($mod, $query) {
  * @return array The search results
  */
 function coursesearch_search_forum($mod, $query, $filter) {
-    global $DB;
+    global $DB, $USER, $CFG;
 
     $results = [];
 
@@ -980,6 +1000,43 @@ function coursesearch_search_forum($mod, $query, $filter) {
     $forum = $DB->get_record('forum', ['id' => $mod->instance], 'id, name');
     $forumname = $forum ? $forum->name : $mod->name;
 
+    $context = context_module::instance($mod->id);
+    $params = ['forumid' => $mod->instance];
+    $where = 'd.forum = :forumid';
+
+    // Respect separate-groups mode: a user may only see discussions for groups they belong to
+    // (plus "all groups" discussions), unless they can access all groups.
+    if (groups_get_activity_groupmode($mod) == SEPARATEGROUPS && !has_capability('moodle/site:accessallgroups', $context)) {
+        $mygroups = groups_get_all_groups($mod->course, $USER->id, $mod->groupingid);
+        if (!empty($mygroups)) {
+            [$ingroupsql, $ingroupparams] = $DB->get_in_or_equal(array_keys($mygroups), SQL_PARAMS_NAMED, 'grp');
+            $where .= " AND (d.groupid = -1 OR d.groupid $ingroupsql)";
+            $params += $ingroupparams;
+        } else {
+            $where .= ' AND d.groupid = -1';
+        }
+    }
+
+    // Respect timed discussions: hide not-yet-started / expired discussions from users who cannot
+    // view hidden timed posts (own discussions are always visible to their author).
+    if (!empty($CFG->forum_enabletimedposts) && !has_capability('mod/forum:viewhiddentimedposts', $context)) {
+        $now = time();
+        $where .= ' AND ((d.timestart <= :nowstart AND (d.timeend = 0 OR d.timeend > :nowend))'
+                . ' OR d.userid = :ownuserid)';
+        $params['nowstart'] = $now;
+        $params['nowend'] = $now;
+        $params['ownuserid'] = $USER->id;
+    }
+
+    // Respect private replies: only the author, the intended recipient, or users who can read
+    // private replies may see them.
+    if (!has_capability('mod/forum:readprivatereplies', $context)) {
+        $where .= ' AND (p.privatereplyto = 0 OR p.privatereplyto = :prrecipient'
+                . ' OR p.userid = :prauthor)';
+        $params['prrecipient'] = $USER->id;
+        $params['prauthor'] = $USER->id;
+    }
+
     // Single JOIN query to fetch all discussions and posts at once.
     // This replaces multiple queries: one for discussions + N queries for posts.
     // IMPORTANT: Use post ID as the first column so get_records_sql uses it as the key,
@@ -988,9 +1045,9 @@ function coursesearch_search_forum($mod, $query, $filter) {
                    p.parent, p.subject, p.message
             FROM {forum_discussions} d
             JOIN {forum_posts} p ON p.discussion = d.id
-            WHERE d.forum = :forumid
+            WHERE $where
             ORDER BY d.id, p.parent, p.id";
-    $rows = $DB->get_records_sql($sql, ['forumid' => $mod->instance]);
+    $rows = $DB->get_records_sql($sql, $params);
 
     // Organize data into structures for efficient processing.
     $discussions = [];
@@ -1173,19 +1230,47 @@ function coursesearch_search_folder($mod, $query) {
  * @return array The search results
  */
 function coursesearch_search_wiki($mod, $query, $filter) {
-    global $DB;
+    global $CFG, $DB;
+
+    require_once($CFG->dirroot . '/mod/wiki/locallib.php');
 
     $results = [];
 
+    // Load the wiki so we know its mode (collaborative/individual) for the visibility check.
+    $wiki = $DB->get_record('wiki', ['id' => $mod->instance], 'id, course, wikimode');
+    if (!$wiki) {
+        return $results;
+    }
+
     // Single JOIN query replaces 2 nested loops (subwikis -> pages).
     // This fetches all wiki pages across all subwikis in one query.
-    $sql = "SELECT wp.id, wp.title, wp.cachedcontent
+    // Include the owning subwiki's group/user so we can enforce per-subwiki visibility below.
+    $sql = "SELECT wp.id, wp.title, wp.cachedcontent,
+                   ws.id AS subwikiid, ws.wikiid, ws.groupid, ws.userid
             FROM {wiki_subwikis} ws
             JOIN {wiki_pages} wp ON wp.subwikiid = ws.id
             WHERE ws.wikiid = :wikiid";
     $wikipages = $DB->get_records_sql($sql, ['wikiid' => $mod->instance]);
 
+    // Cache the visibility decision per subwiki (individual/group wikis are private to their owner).
+    $subwikivisible = [];
+
     foreach ($wikipages as $wikipage) {
+        // Enforce per-subwiki access: in individual or separate-groups wikis, users must not see
+        // subwikis belonging to other users/groups. Defer to mod_wiki's own visibility logic.
+        if (!array_key_exists($wikipage->subwikiid, $subwikivisible)) {
+            $subwiki = (object)[
+                'id' => $wikipage->subwikiid,
+                'wikiid' => $wikipage->wikiid,
+                'groupid' => $wikipage->groupid,
+                'userid' => $wikipage->userid,
+            ];
+            $subwikivisible[$wikipage->subwikiid] = wiki_user_can_view($subwiki, $wiki);
+        }
+        if (!$subwikivisible[$wikipage->subwikiid]) {
+            continue;
+        }
+
         // First check if the page title matches.
         if (($filter == 'all' || $filter == 'title') && coursesearch_mb_stripos($wikipage->title, $query) !== false) {
             // Wiki URLs should use pageid only, not both id and pageid.
@@ -1244,14 +1329,28 @@ function coursesearch_search_wiki($mod, $query, $filter) {
  * @return array The search results
  */
 function coursesearch_search_glossary($mod, $query, $filter) {
-    global $DB;
+    global $DB, $USER;
 
     $results = [];
     $glossary = $DB->get_record('glossary', ['id' => $mod->instance], 'id, name');
 
     if ($glossary) {
-        // Get all entries in this glossary.
-        $entries = $DB->get_records('glossary_entries', ['glossaryid' => $glossary->id], '', 'id, concept, definition');
+        // Only expose approved entries, unless the user may approve them or owns the entry.
+        // Mirrors mod_glossary's own visibility rule: (approved <> 0 OR userid = current user).
+        $context = context_module::instance($mod->id);
+        $params = ['glossaryid' => $glossary->id];
+        $approvedsql = '';
+        if (!has_capability('mod/glossary:approve', $context)) {
+            $approvedsql = ' AND (ge.approved <> 0 OR ge.userid = :userid)';
+            $params['userid'] = $USER->id;
+        }
+        // Get entries in this glossary the current user is allowed to see.
+        $entries = $DB->get_records_sql(
+            "SELECT ge.id, ge.concept, ge.definition
+               FROM {glossary_entries} ge
+              WHERE ge.glossaryid = :glossaryid" . $approvedsql,
+            $params
+        );
         foreach ($entries as $entry) {
             // First check if the entry concept (term) matches.
             if (($filter == 'all' || $filter == 'title') && coursesearch_mb_stripos($entry->concept, $query) !== false) {
@@ -1310,12 +1409,29 @@ function coursesearch_search_glossary($mod, $query, $filter) {
  * @return array The search results
  */
 function coursesearch_search_database($mod, $query) {
-    global $DB;
+    global $DB, $USER;
 
     $results = [];
 
+    // Load the database instance so we know whether it requires approval.
+    $data = $DB->get_record('data', ['id' => $mod->instance], 'id, approval');
+    if (!$data) {
+        return $results;
+    }
+
     // Get all fields for this database (for field name lookups).
     $fields = $DB->get_records('data_fields', ['dataid' => $mod->instance], '', 'id, name, type');
+
+    // When the database requires approval, only expose approved records, unless the user may
+    // approve entries or owns the record. Mirrors mod_data's own visibility rule (see data lib.php:
+    // $data->approval && !$record->approved && !isowner && !mod/data:approve).
+    $context = context_module::instance($mod->id);
+    $params = ['dataid' => $mod->instance];
+    $approvedsql = '';
+    if (!empty($data->approval) && !has_capability('mod/data:approve', $context)) {
+        $approvedsql = ' AND (r.approved = 1 OR r.userid = :userid)';
+        $params['userid'] = $USER->id;
+    }
 
     // Single JOIN query to fetch all records with their content at once.
     // This replaces N+1 queries (one per record for content).
@@ -1323,9 +1439,9 @@ function coursesearch_search_database($mod, $query) {
                    c.id as contentid, c.fieldid, c.content, c.content1, c.content2, c.content3, c.content4
             FROM {data_records} r
             JOIN {data_content} c ON c.recordid = r.id
-            WHERE r.dataid = :dataid
+            WHERE r.dataid = :dataid" . $approvedsql . "
             ORDER BY r.id, c.id";
-    $rows = $DB->get_records_sql($sql, ['dataid' => $mod->instance]);
+    $rows = $DB->get_records_sql($sql, $params);
 
     // Group content by record ID for efficient processing.
     $contentbyrecord = [];
@@ -1441,14 +1557,19 @@ function coursesearch_search_h5pactivity($mod, $query) {
 
     $results = [];
     $context = context_module::instance($mod->id);
-    $h5pcontent = $DB->get_record_sql(
+    // Use get_records_sql with a limit instead of a hardcoded "LIMIT 1": the DML layer translates
+    // the limit portably (raw LIMIT syntax breaks on Oracle/SQL Server).
+    $records = $DB->get_records_sql(
         "SELECT h.id, h.jsoncontent
          FROM {h5p} h
          JOIN {files} f ON f.contenthash = h.contenthash
          WHERE f.contextid = ? AND f.component = 'mod_h5pactivity' AND f.filearea = 'package'
-         LIMIT 1",
-        [$context->id]
+         ORDER BY h.id",
+        [$context->id],
+        0,
+        1
     );
+    $h5pcontent = $records ? reset($records) : null;
 
     if ($h5pcontent && !empty($h5pcontent->jsoncontent)) {
         $h5ptext = coursesearch_extract_h5p_text($h5pcontent->jsoncontent);
