@@ -1738,19 +1738,6 @@ function coursesearch_mb_stripos($haystack, $needle) {
 }
 
 /**
- * Count occurrences of a substring in a string, case-insensitive and multibyte-safe
- *
- * @param string $haystack The string to search in
- * @param string $needle The string to search for
- * @return int Number of occurrences
- */
-function coursesearch_mb_substr_count($haystack, $needle) {
-    $haystacklower = mb_strtolower($haystack, 'UTF-8');
-    $needlelower = mb_strtolower($needle, 'UTF-8');
-    return mb_substr_count($haystacklower, $needlelower, 'UTF-8');
-}
-
-/**
  * Check if content is relevant to the search query
  *
  * @param string $content The content to check
@@ -1758,56 +1745,22 @@ function coursesearch_mb_substr_count($haystack, $needle) {
  * @return bool Whether the content is relevant
  */
 function coursesearch_is_relevant($content, $query) {
-    // Process multilanguage tags.
+    // Process multilanguage tags and reduce HTML to plain text.
     $content = coursesearch_process_multilang($content);
-
-    // Extract text from HTML more effectively.
     $plaincontent = coursesearch_html_to_text($content);
 
-    // Normalize the query - trim and collapse multiple spaces.
+    // Normalize the query - trim and collapse whitespace.
     $query = trim($query);
     $query = preg_replace('/\s+/u', ' ', $query);
 
-    // Additional check for exact phrase match.
+    // Content is relevant when the query appears as a case-insensitive substring. The first check
+    // is a fast normalized match; the second is a multibyte-safe fallback that also handles case
+    // folding for non-Latin alphabets (e.g. Cyrillic).
     $plaincontentnormalized = preg_replace('/\s+/u', ' ', $plaincontent);
     if (mb_stripos($plaincontentnormalized, $query) !== false) {
         return true;
     }
-
-    // Standard check if query is found in content using multibyte-safe function.
-    $pos = coursesearch_mb_stripos($plaincontent, $query);
-    if ($pos === false) {
-        return false;
-    }
-
-    // For short queries (3 chars or less), ensure it's a whole word match or part of a word.
-    if (mb_strlen($query, 'UTF-8') <= 3) {
-        // For Cyrillic and other non-Latin alphabets, we need a different approach.
-        $words = preg_split('/\s+/u', $plaincontent);
-        $foundmatch = false;
-
-        foreach ($words as $word) {
-            if (coursesearch_mb_stripos($word, $query) !== false) {
-                $foundmatch = true;
-                break;
-            }
-        }
-
-        if (!$foundmatch) {
-            return false;
-        }
-    }
-
-    // For longer content, check if the query appears at least once per 1000 characters.
-    if (mb_strlen($plaincontent, 'UTF-8') > 500) {
-        $occurrences = coursesearch_mb_substr_count($plaincontent, $query);
-        $expectedmin = max(1, floor(mb_strlen($plaincontent, 'UTF-8') / 1000));
-        if ($occurrences < $expectedmin) {
-            return false;
-        }
-    }
-
-    return true;
+    return coursesearch_mb_stripos($plaincontent, $query) !== false;
 }
 
 /**
