@@ -122,6 +122,37 @@ function coursesearch_get_section_info($mod, $sections) {
 }
 
 /**
+ * Build the result URL for a course module found by the search.
+ *
+ * Labels and similar inline content, as well as any module that has no view
+ * page of its own (cm_info::get_url() returns null, e.g. activities that render
+ * inline on the course page), are linked to the course page with an anchor to
+ * the module. All other modules are linked to their own view URL.
+ *
+ * @param cm_info|object $mod The course module (needs ->modname, ->url, ->id and ->sectionnum/->section).
+ * @param object $course The course object (needs ->id).
+ * @return moodle_url The URL to use for the search result.
+ */
+function coursesearch_build_module_url($mod, $course) {
+    // For labels and similar inline content, or any module without its own
+    // view page ($mod->url is null), link to the course page with an anchor.
+    if ($mod->modname === 'label' || $mod->modname === 'html' || empty($mod->url)) {
+        // Include section parameter to ensure the correct section is displayed.
+        $sectionnum = isset($mod->sectionnum) ? $mod->sectionnum : (isset($mod->section) ? $mod->section : null);
+        $urlparams = ['id' => $course->id];
+        if ($sectionnum !== null) {
+            $urlparams['section'] = $sectionnum;
+        }
+        $moduleurl = new moodle_url('/course/view.php', $urlparams);
+        $moduleurl->set_anchor('module-' . $mod->id);
+        return $moduleurl;
+    }
+
+    // For other module types, use the module's own view URL.
+    return $mod->url;
+}
+
+/**
  * Perform a course search based on the given query and filter
  *
  * @param string $query The search query
@@ -299,20 +330,7 @@ function coursesearch_perform_search($query, $course, $filter = 'all', $modtypes
 
         // Check if the module name contains the search query (only if filter is 'all' or 'title').
         if (($filter == 'all' || $filter == 'title') && coursesearch_mb_stripos($mod->name, $query) !== false) {
-            // For labels and similar inline content, we need to create a URL with an anchor.
-            if ($mod->modname === 'label' || $mod->modname === 'html') {
-                // Include section parameter to ensure the correct section is displayed.
-                $sectionnum = isset($mod->sectionnum) ? $mod->sectionnum : (isset($mod->section) ? $mod->section : null);
-                $urlparams = ['id' => $course->id];
-                if ($sectionnum !== null) {
-                    $urlparams['section'] = $sectionnum;
-                }
-                $moduleurl = new moodle_url('/course/view.php', $urlparams);
-                $moduleurl->set_anchor('module-' . $mod->id);
-            } else {
-                // For other module types, use the module's URL.
-                $moduleurl = $mod->url;
-            }
+            $moduleurl = coursesearch_build_module_url($mod, $course);
 
             $sectioninfo = coursesearch_get_section_info($mod, $sections);
             $result = [
@@ -368,20 +386,7 @@ function coursesearch_perform_search($query, $course, $filter = 'all', $modtypes
         // Search in the description if we found one.
         if (!empty($description)) {
             if (coursesearch_is_relevant($description, $query)) {
-                // For labels and similar inline content, we need to create a URL with an anchor.
-                if ($mod->modname === 'label' || $mod->modname === 'html') {
-                    // Include section parameter to ensure the correct section is displayed.
-                    $sectionnum = isset($mod->sectionnum) ? $mod->sectionnum : (isset($mod->section) ? $mod->section : null);
-                    $urlparams = ['id' => $course->id];
-                    if ($sectionnum !== null) {
-                        $urlparams['section'] = $sectionnum;
-                    }
-                    $moduleurl = new moodle_url('/course/view.php', $urlparams);
-                    $moduleurl->set_anchor('module-' . $mod->id);
-                } else {
-                    // For other module types, use the module's URL.
-                    $moduleurl = $mod->url;
-                }
+                $moduleurl = coursesearch_build_module_url($mod, $course);
 
                 // Extract multiple snippets for all occurrences (limit from admin settings).
                 $maxoccurrences = get_config('mod_coursesearch', 'maxoccurrences');
@@ -1653,7 +1658,7 @@ function coursesearch_search_course_index($query, $course, $results, $sections =
                 $results[] = [
                     'type' => 'course_index_title',
                     'name' => $cm->name,
-                    'url' => $cm->url,
+                    'url' => coursesearch_build_module_url($cm, $course),
                     'modname' => $cm->modname,
                     'icon' => $cm->get_icon_url(),
                     'match' => get_string('title', 'mod_coursesearch'),
