@@ -1,5 +1,9 @@
 # Changelog
 
+## Changes in version 1.4.12 (Build: 2026070710)
+
+- **Fixed**: Highlighted text is now always readable on dark backgrounds - the highlight forces a dark text color together with the yellow background instead of inheriting the theme's (possibly light) text color
+
 ## Changes in version 1.4.11 (Build: 2026070708)
 
 - **Fixed**: Highlighted text on target pages now always inherits the surrounding typography (font size, family, weight, line height); themes with generic span rules could previously shrink or restyle the highlighted text

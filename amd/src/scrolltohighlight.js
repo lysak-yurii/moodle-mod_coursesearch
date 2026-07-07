@@ -212,12 +212,28 @@ define(['jquery'], function($) {
      */
     function applyHighlight(el) {
         const originalBg = el.style.backgroundColor;
+        const originalColor = el.style.color;
+        const originalShadow = el.style.textShadow;
+        // Force background and text color as a pair: inheriting the color would
+        // render light theme text unreadably on the yellow background.
         el.style.setProperty('background-color', '#ffff99', 'important');
+        el.style.setProperty('color', '#212529', 'important');
+        el.style.setProperty('text-shadow', 'none', 'important');
         setTimeout(function() {
             if (originalBg) {
                 el.style.setProperty('background-color', originalBg);
             } else {
                 el.style.removeProperty('background-color');
+            }
+            if (originalColor) {
+                el.style.setProperty('color', originalColor);
+            } else {
+                el.style.removeProperty('color');
+            }
+            if (originalShadow) {
+                el.style.setProperty('text-shadow', originalShadow);
+            } else {
+                el.style.removeProperty('text-shadow');
             }
         }, 3000);
     }
@@ -604,10 +620,14 @@ define(['jquery'], function($) {
      */
     function createHighlightSpan() {
         const span = document.createElement('span');
+        // Background and text color are forced as a pair (like the browser's own
+        // find-in-page marker): inheriting the color would render light theme text
+        // (e.g. white on a dark card) unreadably on the yellow background.
         span.style.setProperty('background-color', '#ffff99', 'important');
+        span.style.setProperty('color', '#212529', 'important');
+        span.style.setProperty('text-shadow', 'none', 'important');
         span.style.setProperty('padding', '2px', 'important');
         span.style.setProperty('border-radius', '2px', 'important');
-        span.style.setProperty('color', 'inherit', 'important');
         span.style.setProperty('display', 'inline', 'important');
         span.style.setProperty('font', 'inherit', 'important');
         span.style.setProperty('font-size', 'inherit', 'important');
