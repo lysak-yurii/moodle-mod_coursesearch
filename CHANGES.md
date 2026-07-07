@@ -1,5 +1,16 @@
 # Changelog
 
+## Changes in version 1.4.11 (Build: 2026070702)
+
+- **Fixed**: Result links now highlight the correct occurrence on the target page. Each link carries the surrounding text context of its occurrence (`cs_prefix`/`cs_suffix`, following the W3C Text Fragments disambiguation model), so the highlight lands on the exact match the snippet came from
+- **Fixed**: Highlighting no longer matches page chrome - breadcrumbs, page header, navigation, drawers, course index and footer are excluded from the client-side search, and the search is scoped to the main content region instead of the whole page
+- **Fixed**: Occurrences spanning multiple inline elements (e.g. text split by `<strong>` or links) are now found and highlighted across element boundaries
+- **Fixed**: Inconsistent occurrence numbering (0-based vs 1-based) between search functions and result rendering; `cs_occurrence` is now 0-based everywhere and out-of-range indices fall back to the first content occurrence instead of the last one
+- **Fixed**: Search results now respect per-user visibility of activity content (hidden book chapters, unapproved glossary/database entries, other users' or groups' wiki subwikis are no longer exposed)
+- **Fixed**: Highlight query with special characters (e.g. a literal `%`) is no longer double-decoded on target pages
+- **Fixed**: Section names now follow the course format (e.g. weekly dates) instead of showing a generic "Section 0"
+- **Fixed**: Prevented an error when cloning result URLs for modules without a view page
+
 ## Changes in version 1.4.10 (Build: 2026051201)
 
 - **Updated**: Removed legacy logdata from `course_module_viewed` event

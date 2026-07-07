@@ -191,7 +191,7 @@ if (!empty($query)) {
         $istitlematch = ($matchtype === $titlematchlabel);
 
         if ($istitlematch && $resulturl instanceof moodle_url) {
-            $resulturl->remove_params('cs_highlight', 'cs_highlight_all', 'cs_occurrence');
+            $resulturl->remove_params('cs_highlight', 'cs_highlight_all', 'cs_occurrence', 'cs_prefix', 'cs_suffix');
         }
 
         if ($highlightenabled && !$istitlematch && $resulturl instanceof moodle_url && !empty($query)) {
@@ -241,7 +241,6 @@ if (!empty($query)) {
         if (isset($result['matches']) && is_array($result['matches']) && count($result['matches']) >= 2) {
             // This is a grouped result - create grouped search_result object.
             $matches = [];
-            $occurrenceindex = 0;
             foreach ($result['matches'] as $matchdata) {
                 // Process each match in the group.
                 $matchresultname = isset($matchdata['name']) ? coursesearch_process_multilang($matchdata['name']) : '';
@@ -261,7 +260,7 @@ if (!empty($query)) {
                 $matchmatchtype = isset($matchdata['match']) ? $matchdata['match'] : '';
                 $matchistitlematch = ($matchmatchtype === $titlematchlabel);
                 if ($matchistitlematch && $matchurl instanceof moodle_url) {
-                    $matchurl->remove_params('cs_highlight', 'cs_highlight_all', 'cs_occurrence');
+                    $matchurl->remove_params('cs_highlight', 'cs_highlight_all', 'cs_occurrence', 'cs_prefix', 'cs_suffix');
                 }
 
                 if ($highlightenabled && !$matchistitlematch && $matchurl instanceof moodle_url && !empty($query)) {
@@ -270,10 +269,9 @@ if (!empty($query)) {
                         $cleanquery = clean_param($query, PARAM_TEXT);
                         $matchurl->param('cs_highlight', $cleanquery);
                     }
-                    // Add occurrence index for specific match highlighting.
-                    // Only increment for content matches, not title matches.
-                    $matchurl->param('cs_occurrence', $occurrenceindex);
-                    $occurrenceindex++;
+                    // The per-occurrence params (cs_occurrence/cs_prefix/cs_suffix) set by the
+                    // search functions in locallib.php are preserved as-is: they identify the
+                    // exact occurrence within the target content field.
                 }
 
                 // Process snippet.
@@ -333,11 +331,13 @@ if (!empty($query)) {
             }
 
             if ($activityurl instanceof moodle_url && !$groupedhascontentmatch) {
-                $activityurl->remove_params('cs_highlight', 'cs_highlight_all', 'cs_occurrence');
+                $activityurl->remove_params('cs_highlight', 'cs_highlight_all', 'cs_occurrence', 'cs_prefix', 'cs_suffix');
             }
 
             if ($highlightenabled && $groupedhascontentmatch && $activityurl instanceof moodle_url && !empty($query)) {
                 $cleanquery = clean_param($query, PARAM_TEXT);
+                // Highlight-all mode targets every occurrence, so per-occurrence params are dropped.
+                $activityurl->remove_params('cs_occurrence', 'cs_prefix', 'cs_suffix');
                 $activityurl->param('cs_highlight', $cleanquery);
                 $activityurl->param('cs_highlight_all', '1');
             }

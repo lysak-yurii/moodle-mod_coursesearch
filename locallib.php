@@ -23,6 +23,12 @@
  */
 
 /**
+ * Characters of surrounding plain-text context captured on each side of an
+ * occurrence for context-anchored highlighting (cs_prefix / cs_suffix params).
+ */
+define('COURSESEARCH_CONTEXT_LENGTH', 40);
+
+/**
  * Check whether scroll/highlight feature is enabled in admin settings.
  *
  * Note: This controls adding the `highlight` URL parameter which triggers the
@@ -418,18 +424,17 @@ function coursesearch_perform_search($query, $course, $filter = 'all', $modtypes
             if (coursesearch_is_relevant($description, $query)) {
                 $moduleurl = coursesearch_build_module_url($mod, $course);
 
-                // Extract multiple snippets for all occurrences (limit from admin settings).
+                // Extract all occurrences with context (limit from admin settings).
                 $maxoccurrences = get_config('mod_coursesearch', 'maxoccurrences');
                 $maxoccurrences = ($maxoccurrences === false || $maxoccurrences === null) ? 5 : (int)$maxoccurrences;
-                $snippets = coursesearch_extract_multiple_snippets($description, $query, 150, $maxoccurrences);
+                $occurrences = coursesearch_extract_occurrences($description, $query, 150, $maxoccurrences);
                 $sectioninfo = coursesearch_get_section_info($mod, $sections);
 
-                // Create one result per snippet occurrence.
-                foreach ($snippets as $index => $snippet) {
-                    // For multiple occurrences, add occurrence parameter to URL.
+                // Create one result per occurrence.
+                foreach ($occurrences as $occ) {
                     $resulturl = clone $moduleurl;
-                    if ($index > 0) {
-                        $resulturl->param('cs_occurrence', $index + 1);
+                    if (coursesearch_is_highlight_enabled()) {
+                        coursesearch_add_occurrence_params($resulturl, $occ);
                     }
 
                     $result = [
@@ -439,7 +444,7 @@ function coursesearch_perform_search($query, $course, $filter = 'all', $modtypes
                         'modname' => $mod->modname,
                         'icon' => $mod->get_icon_url(),
                         'match' => get_string('matchdescriptionorcontent', 'mod_coursesearch'),
-                        'snippet' => $snippet,
+                        'snippet' => $occ['snippet'],
                         'cmid' => $mod->id,
                         'section_number' => $sectioninfo['section_number'],
                         'section_name' => $sectioninfo['section_name'],
@@ -720,20 +725,17 @@ function coursesearch_search_page($mod, $query) {
     $page = $DB->get_record('page', ['id' => $mod->instance], 'id, name, content');
 
     if ($page && coursesearch_is_relevant($page->content, $query)) {
-        // Extract multiple snippets for all occurrences (limit from admin settings).
+        // Extract all occurrences with context (limit from admin settings).
         $maxoccurrences = get_config('mod_coursesearch', 'maxoccurrences');
         $maxoccurrences = ($maxoccurrences === false || $maxoccurrences === null) ? 5 : (int)$maxoccurrences;
-        $snippets = coursesearch_extract_multiple_snippets($page->content, $query, 150, $maxoccurrences);
+        $occurrences = coursesearch_extract_occurrences($page->content, $query, 150, $maxoccurrences);
 
-        // Create one result per snippet occurrence.
-        foreach ($snippets as $index => $snippet) {
+        // Create one result per occurrence.
+        foreach ($occurrences as $occ) {
             $pageurl = new moodle_url('/mod/page/view.php', ['id' => $mod->id]);
             if (coursesearch_is_highlight_enabled() && !empty($query)) {
                 $pageurl->param('cs_highlight', $query);
-            }
-            // Add occurrence index to URL to distinguish multiple matches (optional, for future use).
-            if ($index > 0) {
-                $pageurl->param('cs_occurrence', $index + 1);
+                coursesearch_add_occurrence_params($pageurl, $occ);
             }
 
             $results[] = [
@@ -743,7 +745,7 @@ function coursesearch_search_page($mod, $query) {
                 'modname' => $mod->modname,
                 'icon' => $mod->get_icon_url(),
                 'match' => get_string('content', 'mod_coursesearch'),
-                'snippet' => $snippet,
+                'snippet' => $occ['snippet'],
                 'cmid' => $mod->id,
             ];
         }
@@ -795,10 +797,11 @@ function coursesearch_search_book($mod, $query, $filter) {
 
         // Then check if the chapter content matches the query.
         if (($filter == 'all' || $filter == 'content') && coursesearch_is_relevant($chapter->content, $query)) {
-            $snippet = coursesearch_extract_snippet($chapter->content, $query);
+            $occ = coursesearch_extract_first_context($chapter->content, $query);
             $chapterurl = new moodle_url('/mod/book/view.php', ['id' => $mod->id, 'chapterid' => $chapter->id]);
             if (coursesearch_is_highlight_enabled() && !empty($query)) {
                 $chapterurl->param('cs_highlight', $query);
+                coursesearch_add_occurrence_params($chapterurl, $occ);
             }
             $results[] = [
                 'type' => 'book_content',
@@ -807,7 +810,7 @@ function coursesearch_search_book($mod, $query, $filter) {
                 'modname' => $mod->modname,
                 'icon' => $mod->get_icon_url(),
                 'match' => get_string('content', 'mod_coursesearch'),
-                'snippet' => $snippet,
+                'snippet' => $occ['snippet'],
                 'cmid' => $mod->id,
             ];
         }
@@ -835,26 +838,23 @@ function coursesearch_search_label($mod, $query, $course) {
         $isrelevant = coursesearch_is_relevant($label->intro, $query);
 
         if ($isrelevant) {
-            // Extract multiple snippets for all occurrences (limit from admin settings).
+            // Extract all occurrences with context (limit from admin settings).
             $maxoccurrences = get_config('mod_coursesearch', 'maxoccurrences');
             $maxoccurrences = ($maxoccurrences === false || $maxoccurrences === null) ? 5 : (int)$maxoccurrences;
-            $snippets = coursesearch_extract_multiple_snippets($label->intro, $query, 150, $maxoccurrences);
+            $occurrences = coursesearch_extract_occurrences($label->intro, $query, 150, $maxoccurrences);
 
-            // Create one result per snippet occurrence.
-            foreach ($snippets as $index => $snippet) {
+            // Create one result per occurrence.
+            foreach ($occurrences as $occ) {
                 $sectionnum = isset($mod->sectionnum) ? $mod->sectionnum : (isset($mod->section) ? $mod->section : null);
                 $urlparams = ['id' => $course->id];
                 if ($sectionnum !== null) {
                     $urlparams['section'] = $sectionnum;
                 }
-                if (coursesearch_is_highlight_enabled() && !empty($query)) {
-                    $urlparams['cs_highlight'] = $query;
-                }
-                // Add occurrence index to distinguish multiple matches.
-                if ($index > 0) {
-                    $urlparams['cs_occurrence'] = $index + 1;
-                }
                 $moduleurl = new moodle_url('/course/view.php', $urlparams);
+                if (coursesearch_is_highlight_enabled() && !empty($query)) {
+                    $moduleurl->param('cs_highlight', $query);
+                    coursesearch_add_occurrence_params($moduleurl, $occ);
+                }
                 $moduleurl->set_anchor('module-' . $mod->id);
                 $results[] = [
                     'type' => 'label_content',
@@ -864,7 +864,7 @@ function coursesearch_search_label($mod, $query, $course) {
                     'icon' => $mod->get_icon_url(),
                     // For labels, intro IS the content, so use "description or content" to match user expectations.
                     'match' => get_string('matchdescriptionorcontent', 'mod_coursesearch'),
-                    'snippet' => $snippet,
+                    'snippet' => $occ['snippet'],
                     'cmid' => $mod->id,
                 ];
             }
@@ -940,13 +940,15 @@ function coursesearch_search_all_labels_direct($query, $course, $sections, $modi
             if ($sectioninfo['section_number'] > 0) {
                 $urlparams['section'] = $sectioninfo['section_number'];
             }
-            if (coursesearch_is_highlight_enabled() && !empty($query)) {
-                $urlparams['cs_highlight'] = $query;
-            }
+            $occ = coursesearch_extract_first_context($labelmod->intro, $query);
             $moduleurl = new moodle_url('/course/view.php', $urlparams);
+            if (coursesearch_is_highlight_enabled() && !empty($query)) {
+                $moduleurl->param('cs_highlight', $query);
+                coursesearch_add_occurrence_params($moduleurl, $occ);
+            }
             $moduleurl->set_anchor('module-' . $labelmod->cmid);
 
-            $snippet = coursesearch_extract_snippet($labelmod->intro, $query);
+            $snippet = $occ['snippet'];
 
             // Get icon URL from modinfo if available.
             $iconurl = '';
@@ -992,10 +994,11 @@ function coursesearch_search_lesson($mod, $query) {
 
     foreach ($lessonpages as $page) {
         if (coursesearch_is_relevant($page->contents, $query)) {
-            $snippet = coursesearch_extract_snippet($page->contents, $query);
+            $occ = coursesearch_extract_first_context($page->contents, $query);
             $pageurl = new moodle_url('/mod/lesson/view.php', ['id' => $mod->id, 'pageid' => $page->id]);
             if (coursesearch_is_highlight_enabled() && !empty($query)) {
                 $pageurl->param('cs_highlight', $query);
+                coursesearch_add_occurrence_params($pageurl, $occ);
             }
             $results[] = [
                 'type' => 'lesson_content',
@@ -1004,7 +1007,7 @@ function coursesearch_search_lesson($mod, $query) {
                 'modname' => $mod->modname,
                 'icon' => $mod->get_icon_url(),
                 'match' => get_string('content', 'mod_coursesearch'),
-                'snippet' => $snippet,
+                'snippet' => $occ['snippet'],
                 'cmid' => $mod->id,
             ];
         }
@@ -1189,10 +1192,11 @@ function coursesearch_search_forum($mod, $query, $filter) {
 
             // Check post content.
             if ($searchforumcontent && coursesearch_is_relevant($post->message, $query)) {
-                $snippet = coursesearch_extract_snippet($post->message, $query);
+                $occ = coursesearch_extract_first_context($post->message, $query);
                 $posturl = new moodle_url('/mod/forum/discuss.php', ['d' => $discussion->id, 'p' => $post->id]);
                 if (coursesearch_is_highlight_enabled() && !empty($query)) {
                     $posturl->param('cs_highlight', $query);
+                    coursesearch_add_occurrence_params($posturl, $occ);
                 }
                 $posturl->set_anchor('p' . $post->id);
 
@@ -1203,7 +1207,7 @@ function coursesearch_search_forum($mod, $query, $filter) {
                     'modname' => $mod->modname,
                     'icon' => $mod->get_icon_url(),
                     'match' => get_string('content', 'mod_coursesearch'),
-                    'snippet' => $snippet,
+                    'snippet' => $occ['snippet'],
                     'forum_name' => $forumname,
                     'cmid' => $mod->id,
                 ];
@@ -1335,12 +1339,13 @@ function coursesearch_search_wiki($mod, $query, $filter) {
         $hascon = !empty($wikipage->cachedcontent);
         $relevant = $hascon && coursesearch_is_relevant($wikipage->cachedcontent, $query);
         if ($filterok && $relevant) {
-            $snippet = coursesearch_extract_snippet($wikipage->cachedcontent, $query);
+            $occ = coursesearch_extract_first_context($wikipage->cachedcontent, $query);
 
             // Wiki URLs should use pageid only, not both id and pageid.
             $pageurl = new moodle_url('/mod/wiki/view.php', ['pageid' => $wikipage->id]);
             if (coursesearch_is_highlight_enabled() && !empty($query)) {
                 $pageurl->param('cs_highlight', $query);
+                coursesearch_add_occurrence_params($pageurl, $occ);
             }
             $results[] = [
                 'type' => 'wiki_page_content',
@@ -1349,7 +1354,7 @@ function coursesearch_search_wiki($mod, $query, $filter) {
                 'modname' => $mod->modname,
                 'icon' => $mod->get_icon_url(),
                 'match' => get_string('content', 'mod_coursesearch'),
-                'snippet' => $snippet,
+                'snippet' => $occ['snippet'],
                 'cmid' => $mod->id,
             ];
         }
@@ -1414,10 +1419,11 @@ function coursesearch_search_glossary($mod, $query, $filter) {
             $hasdef = !empty($entry->definition);
             $relevant = $hasdef && coursesearch_is_relevant($entry->definition, $query);
             if ($filterok && $relevant) {
-                $snippet = coursesearch_extract_snippet($entry->definition, $query);
+                $occ = coursesearch_extract_first_context($entry->definition, $query);
                 $entryurl = new moodle_url('/mod/glossary/showentry.php', ['eid' => $entry->id, 'displayformat' => 'dictionary']);
                 if (coursesearch_is_highlight_enabled() && !empty($query)) {
                     $entryurl->param('cs_highlight', $query);
+                    coursesearch_add_occurrence_params($entryurl, $occ);
                 }
                 $results[] = [
                     'type' => 'glossary_entry_content',
@@ -1426,7 +1432,7 @@ function coursesearch_search_glossary($mod, $query, $filter) {
                     'modname' => $mod->modname,
                     'icon' => $mod->get_icon_url(),
                     'match' => get_string('content', 'mod_coursesearch'),
-                    'snippet' => $snippet,
+                    'snippet' => $occ['snippet'],
                     'cmid' => $mod->id,
                 ];
             }
@@ -1517,10 +1523,12 @@ function coursesearch_search_database($mod, $query) {
         }
 
         if ($recordmatched) {
-            $snippet = coursesearch_extract_snippet($matchedcontent, $query);
+            $occ = coursesearch_extract_first_context($matchedcontent, $query);
+            $snippet = $occ['snippet'];
             $recordurl = new moodle_url('/mod/data/view.php', ['d' => $mod->instance, 'rid' => $recordid]);
             if (coursesearch_is_highlight_enabled() && !empty($query)) {
                 $recordurl->param('cs_highlight', $query);
+                coursesearch_add_occurrence_params($recordurl, $occ);
             }
 
             // Try to get a meaningful name for the record.
@@ -1844,15 +1852,23 @@ function coursesearch_extract_snippet($content, $query, $length = 150) {
 }
 
 /**
- * Extract multiple snippets for all occurrences of a search term
+ * Extract all occurrences of a search term with snippet and surrounding context.
+ *
+ * For each occurrence the surrounding plain-text context (prefix/suffix) is
+ * captured so target pages can locate the exact occurrence by context instead
+ * of relying on a fragile occurrence index (same disambiguation model as W3C
+ * Text Fragments). The plain text is whitespace-collapsed by
+ * coursesearch_html_to_text(), which is the normalization the client-side
+ * matcher reproduces.
  *
  * @param string $content The full content to extract from
  * @param string $query The search term to find
  * @param int $length The approximate length of each snippet
- * @param int $maxresults Maximum number of snippets to return
- * @return array Array of snippets, one for each occurrence
+ * @param int $maxresults Maximum number of occurrences to return
+ * @return array[] One element per occurrence:
+ *                 ['snippet' => string, 'index' => int (0-based), 'prefix' => string, 'suffix' => string]
  */
-function coursesearch_extract_multiple_snippets($content, $query, $length = 150, $maxresults = 5) {
+function coursesearch_extract_occurrences($content, $query, $length = 150, $maxresults = 5) {
     // Process multilanguage tags before extracting snippets.
     $content = coursesearch_process_multilang($content);
 
@@ -1860,7 +1876,7 @@ function coursesearch_extract_multiple_snippets($content, $query, $length = 150,
     $plaincontent = coursesearch_html_to_text($content);
 
     // Find all positions of the search term (case-insensitive) with multibyte support.
-    $snippets = [];
+    $occurrences = [];
     $contentlower = mb_strtolower($plaincontent, 'UTF-8');
     $querylower = mb_strtolower($query, 'UTF-8');
     $querylen = mb_strlen($querylower, 'UTF-8');
@@ -1898,19 +1914,97 @@ function coursesearch_extract_multiple_snippets($content, $query, $length = 150,
         $replacement = '<span class="highlight">$1</span>';
         $snippet = preg_replace($pattern, $replacement, $snippet);
 
-        $snippets[] = $snippet;
+        // Capture the surrounding context for context-anchored highlighting.
+        $contextstart = max(0, $foundpos - COURSESEARCH_CONTEXT_LENGTH);
+        $contextprefix = mb_substr($plaincontent, $contextstart, $foundpos - $contextstart, 'UTF-8');
+        $contextsuffix = mb_substr($plaincontent, $foundpos + $querylen, COURSESEARCH_CONTEXT_LENGTH, 'UTF-8');
+
+        // When truncated, drop the leading/trailing partial word so the context
+        // aligns with word boundaries in the rendered text.
+        if ($contextstart > 0) {
+            $trimmed = preg_replace('/^\S+\s/u', '', $contextprefix);
+            if ($trimmed !== null && $trimmed !== '') {
+                $contextprefix = $trimmed;
+            }
+        }
+        if ($foundpos + $querylen + COURSESEARCH_CONTEXT_LENGTH < $contentlen) {
+            $trimmed = preg_replace('/\s\S+$/u', '', $contextsuffix);
+            if ($trimmed !== null && $trimmed !== '') {
+                $contextsuffix = $trimmed;
+            }
+        }
+
+        $occurrences[] = [
+            'snippet' => $snippet,
+            'index' => $occurrence,
+            'prefix' => $contextprefix,
+            'suffix' => $contextsuffix,
+        ];
 
         // Move position past this occurrence.
         $pos = $foundpos + $querylen;
         $occurrence++;
     }
 
-    // If no snippets found, return at least one from the beginning.
-    if (empty($snippets)) {
-        $snippets[] = mb_substr($plaincontent, 0, $length, 'UTF-8') . '...';
+    // If no occurrences found, return at least one snippet from the beginning.
+    if (empty($occurrences)) {
+        $occurrences[] = [
+            'snippet' => mb_substr($plaincontent, 0, $length, 'UTF-8') . '...',
+            'index' => 0,
+            'prefix' => '',
+            'suffix' => '',
+        ];
     }
 
-    return $snippets;
+    return $occurrences;
+}
+
+/**
+ * Extract multiple snippets for all occurrences of a search term
+ *
+ * @param string $content The full content to extract from
+ * @param string $query The search term to find
+ * @param int $length The approximate length of each snippet
+ * @param int $maxresults Maximum number of snippets to return
+ * @return array Array of snippets, one for each occurrence
+ */
+function coursesearch_extract_multiple_snippets($content, $query, $length = 150, $maxresults = 5) {
+    return array_column(coursesearch_extract_occurrences($content, $query, $length, $maxresults), 'snippet');
+}
+
+/**
+ * Extract the context (prefix/suffix) of the first occurrence of a search term.
+ *
+ * Convenience helper for module types that produce a single result link.
+ *
+ * @param string $content The full content to extract from
+ * @param string $query The search term to find
+ * @return array ['snippet' => string, 'index' => int, 'prefix' => string, 'suffix' => string]
+ */
+function coursesearch_extract_first_context($content, $query) {
+    $occurrences = coursesearch_extract_occurrences($content, $query, 150, 1);
+    return $occurrences[0];
+}
+
+/**
+ * Append context-anchored highlight parameters for one occurrence to a URL.
+ *
+ * cs_occurrence is 0-based and always emitted; cs_prefix/cs_suffix carry the
+ * surrounding plain-text context used by the client to disambiguate which
+ * occurrence to highlight.
+ *
+ * @param moodle_url $url The URL to add parameters to
+ * @param array $occ One element from coursesearch_extract_occurrences()
+ * @return void
+ */
+function coursesearch_add_occurrence_params(moodle_url $url, array $occ) {
+    $url->param('cs_occurrence', $occ['index']);
+    if ($occ['prefix'] !== '') {
+        $url->param('cs_prefix', $occ['prefix']);
+    }
+    if ($occ['suffix'] !== '') {
+        $url->param('cs_suffix', $occ['suffix']);
+    }
 }
 
 /**

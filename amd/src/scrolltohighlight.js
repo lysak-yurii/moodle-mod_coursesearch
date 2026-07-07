@@ -32,18 +32,55 @@ define(['jquery'], function($) {
     // Flag to prevent multiple executions.
     let hasHighlighted = false;
 
+    // Page-chrome regions that must never be searched or highlighted. The server computes
+    // occurrences over the stored content field only, so matches in breadcrumbs, navigation,
+    // drawers etc. would shift the occurrence index and highlight the wrong text.
+    // Note: .activity-header is deliberately NOT excluded - it contains the activity
+    // description, which is a legitimate search target (module_description results).
+    const EXCLUDED_SELECTORS = [
+        '.breadcrumb', // Breadcrumb trail.
+        '#page-header', // Page header: page/course title, context header.
+        '.secondary-navigation', // Course/activity tabs.
+        '.activity-navigation', // Prev/next activity links (inside region-main in Boost).
+        'nav.navbar', // Top navbar.
+        '.drawer', // Boost drawers: course index + blocks drawer.
+        '.drawercontent',
+        '#nav-drawer', // Older Boost nav drawer.
+        '#page-footer',
+        '.courseindex'
+    ].join(',');
+
+    /**
+     * Determine the root element to search within.
+     * Priority: the course-module element (course pages) > the main content region > body.
+     * @param {string|null} moduleId Course module id from the URL hash or sessionStorage
+     * @return {HTMLElement} The element to search within
+     */
+    function getSearchRoot(moduleId) {
+        if (moduleId) {
+            const moduleElement = document.getElementById('module-' + moduleId);
+            if (moduleElement) {
+                return moduleElement;
+            }
+        }
+        return document.querySelector('#region-main') ||
+               document.querySelector('[role="main"]') ||
+               document.body;
+    }
+
     /**
      * Expand Bootstrap accordion/collapse if text is found inside a collapsed section
      * Returns a promise that resolves when accordion is expanded (or immediately if not needed)
      * @param {string} searchText The search text to look for
+     * @param {HTMLElement} root Element whose collapsed sections should be considered
      * @return {Promise} Promise that resolves when accordion is expanded
      */
-    function expandAccordionIfNeeded(searchText) {
+    function expandAccordionIfNeeded(searchText, root) {
         return new Promise(function(resolve) {
             const searchLower = searchText.toLowerCase();
 
             // Find all collapsed sections (Bootstrap 4 uses .collapse:not(.show)).
-            const collapsedSections = document.querySelectorAll('.collapse:not(.show)');
+            const collapsedSections = (root || document).querySelectorAll('.collapse:not(.show)');
 
             let foundInCollapsed = null;
             let triggerButton = null;
@@ -145,6 +182,10 @@ define(['jquery'], function($) {
                 acceptNode: function(node) {
                     // Skip empty text nodes.
                     if (!node.textContent.trim()) {
+                        return NodeFilter.FILTER_REJECT;
+                    }
+                    // Skip nodes inside page chrome (breadcrumb, nav, header, drawers...).
+                    if (node.parentElement && node.parentElement.closest(EXCLUDED_SELECTORS)) {
                         return NodeFilter.FILTER_REJECT;
                     }
                     // Skip nodes inside hidden elements.
@@ -364,78 +405,185 @@ define(['jquery'], function($) {
     }
 
     /**
-     * Find all occurrences of search text and return array of text nodes with their positions
-     * @param {HTMLElement} element The element to search within
-     * @param {string} searchText The text to search for
-     * @return {Array} Array of objects with textNode, startIndex, and parent element
+     * Normalize text the same way the server-side plain text is normalized:
+     * whitespace/NBSP runs collapsed to a single space, lowercased.
+     * @param {string} text The text to normalize
+     * @return {string} Normalized text
      */
-    function findAllOccurrences(element, searchText) {
-        if (!element || !searchText) {
-            return [];
-        }
-
-        const textNodes = getVisibleTextNodes(element);
-        const searchLower = searchText.toLowerCase();
-        const normalizedSearch = searchLower.replace(/[\u00A0\s]+/g, ' ');
-        const occurrences = [];
-
-        for (let i = 0; i < textNodes.length; i++) {
-            const nodeText = textNodes[i].textContent;
-            const nodeTextLower = nodeText.replace(/[\u00A0\s]+/g, ' ').toLowerCase();
-            let startPos = 0;
-
-            // Find all occurrences within this text node.
-            let index = nodeTextLower.indexOf(normalizedSearch, startPos);
-            while (index !== -1) {
-                // Find the actual index in the original text (accounting for space normalization).
-                const originalIndex = findOriginalIndex(nodeText, nodeTextLower, index);
-
-                occurrences.push({
-                    textNode: textNodes[i],
-                    startIndex: originalIndex,
-                    length: searchText.length,
-                    nodeIndex: i
-                });
-
-                startPos = index + normalizedSearch.length;
-                index = nodeTextLower.indexOf(normalizedSearch, startPos);
-            }
-        }
-
-        return occurrences;
+    function normalizeText(text) {
+        return text.replace(/[\u00A0\s]+/g, ' ').toLowerCase();
     }
 
     /**
-     * Find the original index in the text accounting for space normalization
-     * @param {string} original The original text
-     * @param {string} normalized The normalized text (spaces collapsed)
-     * @param {number} normalizedIndex Index in the normalized text
-     * @return {number} Index in the original text
+     * Build a searchable index of the visible text under root: one combined normalized
+     * string plus a per-character map back to the source (text node, offset).
+     *
+     * The normalization mirrors the server side (coursesearch_html_to_text collapses
+     * whitespace; comparison is lowercased), so occurrences found here line up with the
+     * occurrences the server counted - including matches that span multiple inline
+     * elements, which a per-text-node search would miss.
+     *
+     * @param {HTMLElement} root The element to index
+     * @return {{text: string, map: Array}} Normalized text and char->source map
      */
-    function findOriginalIndex(original, normalized, normalizedIndex) {
-        // Simple case: if no difference in length, return same index.
-        if (original.length === normalized.length) {
-            return normalizedIndex;
-        }
+    function buildTextIndex(root) {
+        const textNodes = getVisibleTextNodes(root);
+        const chars = [];
+        const map = [];
+        let pendingSpace = null;
+        let emitted = false;
 
-        // Map from normalized position to original position.
-        let normalizedPos = 0;
-        let originalPos = 0;
-        const originalLower = original.toLowerCase();
-
-        while (normalizedPos < normalizedIndex && originalPos < original.length) {
-            // Check if we're at whitespace.
-            if (/[\u00A0\s]/.test(originalLower[originalPos])) {
-                // Skip consecutive whitespace in original.
-                while (originalPos < original.length - 1 && /[\u00A0\s]/.test(originalLower[originalPos + 1])) {
-                    originalPos++;
+        for (let n = 0; n < textNodes.length; n++) {
+            const node = textNodes[n];
+            const text = node.textContent;
+            for (let i = 0; i < text.length; i++) {
+                if (/[\u00A0\s]/.test(text[i])) {
+                    // Remember where the whitespace run started; emit at most one space.
+                    if (pendingSpace === null) {
+                        pendingSpace = {node: node, offset: i};
+                    }
+                    continue;
                 }
+                if (pendingSpace !== null) {
+                    // Collapse the run to a single space (skip leading whitespace entirely).
+                    if (emitted) {
+                        chars.push(' ');
+                        map.push(pendingSpace);
+                    }
+                    pendingSpace = null;
+                }
+                // Iterate code points: lowercasing can expand a character (e.g. '\u0130').
+                const lower = text[i].toLowerCase();
+                for (const lch of lower) {
+                    chars.push(lch);
+                    map.push({node: node, offset: i});
+                }
+                emitted = true;
             }
-            originalPos++;
-            normalizedPos++;
         }
 
-        return originalPos;
+        return {text: chars.join(''), map: map};
+    }
+
+    /**
+     * Find all non-overlapping matches of the search text in the index.
+     * Mirrors the server-side mb_strpos walk (advance by needle length).
+     * @param {{text: string, map: Array}} indexObj Result of buildTextIndex()
+     * @param {string} searchText The text to search for
+     * @return {Array} Array of {start, end} offsets into indexObj.text
+     */
+    function findMatches(indexObj, searchText) {
+        const matches = [];
+        const needle = normalizeText(searchText).trim();
+        if (!needle) {
+            return matches;
+        }
+        let from = 0;
+        let pos;
+        while ((pos = indexObj.text.indexOf(needle, from)) !== -1) {
+            matches.push({start: pos, end: pos + needle.length});
+            from = pos + needle.length;
+        }
+        return matches;
+    }
+
+    /**
+     * Length of the common suffix of two strings (used for partial prefix-context scores).
+     * @param {string} a First string
+     * @param {string} b Second string
+     * @return {number} Number of equal trailing characters
+     */
+    function commonSuffixLen(a, b) {
+        let len = 0;
+        while (len < a.length && len < b.length && a[a.length - 1 - len] === b[b.length - 1 - len]) {
+            len++;
+        }
+        return len;
+    }
+
+    /**
+     * Length of the common prefix of two strings (used for partial suffix-context scores).
+     * @param {string} a First string
+     * @param {string} b Second string
+     * @return {number} Number of equal leading characters
+     */
+    function commonPrefixLen(a, b) {
+        let len = 0;
+        while (len < a.length && len < b.length && a[len] === b[len]) {
+            len++;
+        }
+        return len;
+    }
+
+    /**
+     * Pick which match to highlight.
+     *
+     * When the result link carries the surrounding context of the occurrence
+     * (cs_prefix/cs_suffix, same disambiguation model as W3C Text Fragments),
+     * each match is scored by how well the text around it agrees with that
+     * context; exact containment scores double so it always beats partial
+     * overlaps. The occurrence index is only a tiebreaker. Without context,
+     * fall back to the plain 0-based index, clamped to the first occurrence.
+     *
+     * @param {{text: string, map: Array}} indexObj Result of buildTextIndex()
+     * @param {Array} matches Result of findMatches()
+     * @param {string} contextPrefix Expected text immediately before the match
+     * @param {string} contextSuffix Expected text immediately after the match
+     * @param {number} occurrenceIndex 0-based occurrence index from the result link
+     * @return {number} Index into matches of the best candidate
+     */
+    function selectCandidate(indexObj, matches, contextPrefix, contextSuffix, occurrenceIndex) {
+        const prefix = normalizeText(contextPrefix || '').trim();
+        const suffix = normalizeText(contextSuffix || '').trim();
+
+        if (!prefix && !suffix) {
+            // Index-only mode: out-of-range indices fall back to the first occurrence
+            // in the content region rather than an arbitrary last one.
+            return (occurrenceIndex >= 0 && occurrenceIndex < matches.length) ? occurrenceIndex : 0;
+        }
+
+        let best = 0;
+        let bestScore = -1;
+        for (let i = 0; i < matches.length; i++) {
+            const match = matches[i];
+            const before = indexObj.text.slice(Math.max(0, match.start - prefix.length - 1), match.start).trim();
+            const after = indexObj.text.slice(match.end, match.end + suffix.length + 1).trim();
+            let score = 0;
+            if (prefix) {
+                score += before.endsWith(prefix) ? prefix.length * 2 : commonSuffixLen(before, prefix);
+            }
+            if (suffix) {
+                score += after.startsWith(suffix) ? suffix.length * 2 : commonPrefixLen(after, suffix);
+            }
+            if (score > bestScore || (score === bestScore && i === occurrenceIndex)) {
+                bestScore = score;
+                best = i;
+            }
+        }
+        return best;
+    }
+
+    /**
+     * Convert a match into per-text-node [start, end) intervals.
+     * A match may span several text nodes (e.g. across inline elements).
+     * @param {{text: string, map: Array}} indexObj Result of buildTextIndex()
+     * @param {{start: number, end: number}} match One match from findMatches()
+     * @return {Array} Array of {node, start, end} intervals in document order
+     */
+    function matchToIntervals(indexObj, match) {
+        const intervals = [];
+        let current = null;
+        for (let i = match.start; i < match.end; i++) {
+            const entry = indexObj.map[i];
+            if (current && current.node === entry.node) {
+                current.start = Math.min(current.start, entry.offset);
+                current.end = Math.max(current.end, entry.offset + 1);
+            } else {
+                current = {node: entry.node, start: entry.offset, end: entry.offset + 1};
+                intervals.push(current);
+            }
+        }
+        return intervals;
     }
 
     /**
@@ -453,6 +601,48 @@ define(['jquery'], function($) {
     }
 
     /**
+     * Create the styled temporary highlight span element.
+     * @return {HTMLElement} The span element
+     */
+    function createHighlightSpan() {
+        const span = document.createElement('span');
+        span.style.setProperty('background-color', '#ffff99', 'important');
+        span.style.setProperty('padding', '2px', 'important');
+        span.style.setProperty('border-radius', '2px', 'important');
+        span.style.setProperty('color', 'inherit', 'important');
+        span.style.setProperty('display', 'inline', 'important');
+        span.className = 'coursesearch-highlight-temp';
+        return span;
+    }
+
+    /**
+     * Wrap one match in highlight spans. A match spanning several text nodes gets
+     * one span per node. Intervals are processed in reverse document order so
+     * wrapping (which splits the text node) cannot invalidate earlier offsets.
+     * @param {{text: string, map: Array}} indexObj Result of buildTextIndex()
+     * @param {{start: number, end: number}} match The match to highlight
+     * @return {Array} The highlight span elements in document order (may be empty)
+     */
+    function highlightMatch(indexObj, match) {
+        const intervals = matchToIntervals(indexObj, match);
+        const spans = [];
+        for (let i = intervals.length - 1; i >= 0; i--) {
+            const interval = intervals[i];
+            try {
+                const range = document.createRange();
+                range.setStart(interval.node, interval.start);
+                range.setEnd(interval.node, Math.min(interval.end, interval.node.textContent.length));
+                const span = createHighlightSpan();
+                range.surroundContents(span);
+                spans.unshift(span);
+            } catch (e) {
+                // Range operations can fail in some edge cases; keep the other sub-spans.
+            }
+        }
+        return spans;
+    }
+
+    /**
      * Highlight all occurrences of search text
      * Highlights persist until user clicks somewhere on the page
      * @param {HTMLElement} element The element to search within
@@ -460,19 +650,20 @@ define(['jquery'], function($) {
      * @return {boolean} True if any occurrences were highlighted
      */
     function highlightAllOccurrences(element, searchText) {
-        const occurrences = findAllOccurrences(element, searchText);
+        const indexObj = buildTextIndex(element);
+        const matches = findMatches(indexObj, searchText);
 
-        if (occurrences.length === 0) {
+        if (matches.length === 0) {
             return false;
         }
 
-        // Highlight each occurrence (process in reverse to avoid index shifting).
+        // Highlight each match (process in reverse document order so wrapping one
+        // match cannot shift the offsets of matches before it in the same node).
         const highlightedElements = [];
-        for (let i = occurrences.length - 1; i >= 0; i--) {
-            const occ = occurrences[i];
-            const highlighted = highlightOccurrence(occ.textNode, occ.startIndex, searchText.length);
-            if (highlighted) {
-                highlightedElements.unshift(highlighted);
+        for (let i = matches.length - 1; i >= 0; i--) {
+            const spans = highlightMatch(indexObj, matches[i]);
+            for (let j = spans.length - 1; j >= 0; j--) {
+                highlightedElements.unshift(spans[j]);
             }
         }
 
@@ -499,89 +690,52 @@ define(['jquery'], function($) {
     }
 
     /**
-     * Highlight a specific occurrence (by index) of search text
+     * Highlight a specific occurrence of the search text, located by its
+     * surrounding context (preferred) or by its 0-based occurrence index.
      * @param {HTMLElement} element The element to search within
      * @param {string} searchText The text to highlight
      * @param {number} occurrenceIndex Which occurrence to highlight (0-indexed)
-     * @return {boolean} True if the occurrence was highlighted
+     * @param {string} contextPrefix Plain-text context before the occurrence ('' if unknown)
+     * @param {string} contextSuffix Plain-text context after the occurrence ('' if unknown)
+     * @return {boolean} True if the occurrence was found
      */
-    function highlightNthOccurrence(element, searchText, occurrenceIndex) {
-        const occurrences = findAllOccurrences(element, searchText);
+    function highlightNthOccurrence(element, searchText, occurrenceIndex, contextPrefix, contextSuffix) {
+        const indexObj = buildTextIndex(element);
+        const matches = findMatches(indexObj, searchText);
 
-        if (occurrences.length === 0) {
+        if (matches.length === 0) {
             return false;
         }
 
-        // Clamp occurrence index to valid range (don't exceed available occurrences).
-        if (occurrenceIndex < 0 || occurrenceIndex >= occurrences.length) {
-            occurrenceIndex = Math.min(occurrenceIndex, occurrences.length - 1);
-            if (occurrenceIndex < 0) {
-                occurrenceIndex = 0;
-            }
-        }
+        const selected = selectCandidate(indexObj, matches, contextPrefix, contextSuffix, occurrenceIndex);
+        const spans = highlightMatch(indexObj, matches[selected]);
 
-        const occ = occurrences[occurrenceIndex];
-        const highlighted = highlightOccurrence(occ.textNode, occ.startIndex, searchText.length);
-
-        if (highlighted) {
-            const rect = highlighted.getBoundingClientRect();
+        if (spans.length > 0) {
+            const rect = spans[0].getBoundingClientRect();
             const scrollY = window.scrollY + rect.top - 100;
             window.scrollTo({top: scrollY, behavior: 'smooth'});
 
             // Remove highlight after delay.
             setTimeout(function() {
-                if (highlighted.parentNode) {
-                    const parent = highlighted.parentNode;
-                    parent.replaceChild(document.createTextNode(highlighted.textContent), highlighted);
-                    parent.normalize();
-                }
+                removeAllHighlights(spans);
             }, 3000);
 
             return true;
         }
 
-        // Even if highlighting failed, return true if we found occurrences
-        // to prevent the fallback from running and causing double-highlight.
-        // The text exists, we just couldn't visually highlight it.
-        return occurrences.length > 0;
-    }
-
-    /**
-     * Create a highlight span around text in a text node
-     * @param {Node} textNode The text node containing the text
-     * @param {number} startIndex Start index within the text node
-     * @param {number} length Length of text to highlight
-     * @return {HTMLElement|null} The highlight span element or null if failed
-     */
-    function highlightOccurrence(textNode, startIndex, length) {
-        try {
-            const text = textNode.textContent;
-
-            // Validate indices.
-            if (startIndex < 0 || startIndex >= text.length) {
-                return null;
-            }
-
-            const endIndex = Math.min(startIndex + length, text.length);
-
-            const range = document.createRange();
-            range.setStart(textNode, startIndex);
-            range.setEnd(textNode, endIndex);
-
-            const span = document.createElement('span');
-            span.style.setProperty('background-color', '#ffff99', 'important');
-            span.style.setProperty('padding', '2px', 'important');
-            span.style.setProperty('border-radius', '2px', 'important');
-            span.style.setProperty('color', 'inherit', 'important');
-            span.style.setProperty('display', 'inline', 'important');
-            span.className = 'coursesearch-highlight-temp';
-
-            range.surroundContents(span);
-            return span;
-        } catch (e) {
-            // Range operations can fail in some edge cases.
-            return null;
+        // Wrapping failed entirely: highlight the closest block parent instead so the
+        // user still sees where the match is, then report success to prevent the
+        // legacy fallback from double-highlighting.
+        const startEntry = indexObj.map[matches[selected].start];
+        const blockTags = ['P', 'DIV', 'LI', 'TD', 'TH', 'BLOCKQUOTE', 'ARTICLE', 'SECTION'];
+        const parent = findHighlightParent(startEntry.node, element, blockTags);
+        if (parent) {
+            const rect = parent.getBoundingClientRect();
+            const scrollY = window.scrollY + rect.top - 100;
+            window.scrollTo({top: scrollY, behavior: 'smooth'});
+            applyHighlight(parent);
         }
+        return true;
     }
 
     /**
@@ -599,6 +753,42 @@ define(['jquery'], function($) {
         let highlightText = urlParams.get('cs_highlight');
         let highlightAll = urlParams.get('cs_highlight_all') === '1';
         let occurrenceIndex = parseInt(urlParams.get('cs_occurrence') || '0', 10);
+        let contextPrefix = urlParams.get('cs_prefix') || '';
+        let contextSuffix = urlParams.get('cs_suffix') || '';
+
+        /**
+         * Parse a JSON.stringify'd sessionStorage string value back to a string.
+         * @param {string|null} stored The raw sessionStorage value
+         * @return {string|null} The parsed string, or null
+         */
+        const parseStoredString = function(stored) {
+            if (!stored) {
+                return null;
+            }
+            try {
+                const parsed = JSON.parse(stored);
+                return (typeof parsed === 'string') ? parsed : null;
+            } catch (e) {
+                // If JSON parsing fails, use it directly (backwards compatibility).
+                return stored;
+            }
+        };
+
+        const storageKeys = [
+            'coursesearch_highlight',
+            'coursesearch_moduleId',
+            'coursesearch_timestamp',
+            'coursesearch_shouldScroll',
+            'coursesearch_highlight_all',
+            'coursesearch_occurrence',
+            'coursesearch_prefix',
+            'coursesearch_suffix'
+        ];
+        const clearStorage = function() {
+            storageKeys.forEach(function(key) {
+                sessionStorage.removeItem(key);
+            });
+        };
 
         // If not in URL, check sessionStorage (set by coursesearch module).
         let storedModuleId = null;
@@ -608,44 +798,30 @@ define(['jquery'], function($) {
             const timestamp = sessionStorage.getItem('coursesearch_timestamp');
             const storedHighlightAll = sessionStorage.getItem('coursesearch_highlight_all');
             const storedOccurrence = sessionStorage.getItem('coursesearch_occurrence');
+            const storedPrefix = sessionStorage.getItem('coursesearch_prefix');
+            const storedSuffix = sessionStorage.getItem('coursesearch_suffix');
 
             // Check if timestamp is recent (within 10 seconds).
             if (timestamp && Date.now() - parseInt(timestamp, 10) > 10000) {
                 // Data is too old, clear it.
-                sessionStorage.removeItem('coursesearch_highlight');
-                sessionStorage.removeItem('coursesearch_moduleId');
-                sessionStorage.removeItem('coursesearch_timestamp');
-                sessionStorage.removeItem('coursesearch_shouldScroll');
-                sessionStorage.removeItem('coursesearch_highlight_all');
-                sessionStorage.removeItem('coursesearch_occurrence');
+                clearStorage();
                 return;
             }
 
             if (storedHighlight) {
-                // The value was stored using JSON.stringify, so parse it back safely.
-                try {
-                    highlightText = JSON.parse(storedHighlight);
-                    if (typeof highlightText !== 'string') {
-                        highlightText = null;
-                    }
-                } catch (e) {
-                    // If JSON parsing fails, try using it directly (backwards compatibility).
-                    highlightText = storedHighlight;
-                }
+                // The values were stored using JSON.stringify, so parse them back safely.
+                highlightText = parseStoredString(storedHighlight);
 
-                // Get highlight_all and occurrence from sessionStorage.
+                // Get highlight_all, occurrence and context from sessionStorage.
                 highlightAll = storedHighlightAll === 'true';
                 if (storedOccurrence && /^\d+$/.test(storedOccurrence)) {
                     occurrenceIndex = parseInt(storedOccurrence, 10);
                 }
+                contextPrefix = parseStoredString(storedPrefix) || '';
+                contextSuffix = parseStoredString(storedSuffix) || '';
 
                 // Clear it after use.
-                sessionStorage.removeItem('coursesearch_highlight');
-                sessionStorage.removeItem('coursesearch_moduleId');
-                sessionStorage.removeItem('coursesearch_timestamp');
-                sessionStorage.removeItem('coursesearch_shouldScroll');
-                sessionStorage.removeItem('coursesearch_highlight_all');
-                sessionStorage.removeItem('coursesearch_occurrence');
+                clearStorage();
             }
         }
 
@@ -668,49 +844,46 @@ define(['jquery'], function($) {
         $(document).ready(function() {
             // Small delay to ensure all content is rendered.
             setTimeout(function() {
-                // First, expand any accordion that contains the search text.
-                expandAccordionIfNeeded(searchText).then(function() {
-                    // Check if we have a moduleId from sessionStorage first, then URL hash.
-                    let moduleId = storedModuleId;
-                    const hash = window.location.hash;
+                // Check if we have a moduleId from sessionStorage first, then URL hash.
+                let moduleId = storedModuleId;
+                const hash = window.location.hash;
 
-                    if (!moduleId && hash) {
-                        // Extract module ID from hash (format: #module-123).
-                        const match = hash.match(/^#module-(\d+)$/);
-                        if (match) {
-                            moduleId = match[1];
-                        }
+                if (!moduleId && hash) {
+                    // Extract module ID from hash (format: #module-123).
+                    const match = hash.match(/^#module-(\d+)$/);
+                    if (match) {
+                        moduleId = match[1];
                     }
+                }
 
-                    // Validate moduleId is numeric only.
-                    if (moduleId && !/^\d+$/.test(moduleId)) {
-                        moduleId = null;
-                    }
+                // Validate moduleId is numeric only.
+                if (moduleId && !/^\d+$/.test(moduleId)) {
+                    moduleId = null;
+                }
 
-                    // Determine the search context element.
-                    let searchElement = document.body;
-                    if (moduleId) {
-                        const moduleElement = document.getElementById('module-' + moduleId);
-                        if (moduleElement) {
-                            searchElement = moduleElement;
-                        }
-                    }
+                // Determine the search context element: module element, main content
+                // region, or body - never page chrome (see EXCLUDED_SELECTORS).
+                const searchElement = getSearchRoot(moduleId);
 
+                // First, expand any accordion within the search root that contains the text.
+                expandAccordionIfNeeded(searchText, searchElement).then(function() {
                     // Apply the appropriate highlighting mode.
                     let success = false;
                     if (highlightAll) {
                         // Highlight all occurrences.
                         success = highlightAllOccurrences(searchElement, searchText);
-                        // If not found in module, try whole page.
+                        // If not found in the search root, try the whole page.
                         if (!success && searchElement !== document.body) {
                             success = highlightAllOccurrences(document.body, searchText);
                         }
                     } else {
-                        // Highlight specific occurrence.
-                        success = highlightNthOccurrence(searchElement, searchText, occurrenceIndex);
-                        // If not found in module, try whole page.
+                        // Highlight the specific occurrence (context-anchored).
+                        success = highlightNthOccurrence(
+                            searchElement, searchText, occurrenceIndex, contextPrefix, contextSuffix);
+                        // If not found in the search root, try the whole page.
                         if (!success && searchElement !== document.body) {
-                            success = highlightNthOccurrence(document.body, searchText, occurrenceIndex);
+                            success = highlightNthOccurrence(
+                                document.body, searchText, occurrenceIndex, contextPrefix, contextSuffix);
                         }
                     }
 

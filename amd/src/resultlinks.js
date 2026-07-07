@@ -46,6 +46,8 @@ define([], function() {
                     const highlight = url.searchParams.get('cs_highlight');
                     const occurrence = url.searchParams.get('cs_occurrence');
                     const highlightAll = url.searchParams.get('cs_highlight_all');
+                    const contextPrefix = url.searchParams.get('cs_prefix');
+                    const contextSuffix = url.searchParams.get('cs_suffix');
                     const hash = url.hash;
                     let moduleId = null;
 
@@ -82,6 +84,20 @@ define([], function() {
                                 sessionStorage.setItem('coursesearch_occurrence', occurrence);
                             } else {
                                 sessionStorage.removeItem('coursesearch_occurrence');
+                            }
+
+                            // Store the occurrence context (cs_prefix/cs_suffix) used to
+                            // disambiguate which occurrence to highlight on the target page.
+                            // Only relevant for single-occurrence mode.
+                            if (contextPrefix !== null && highlightAll !== '1') {
+                                sessionStorage.setItem('coursesearch_prefix', JSON.stringify(contextPrefix));
+                            } else {
+                                sessionStorage.removeItem('coursesearch_prefix');
+                            }
+                            if (contextSuffix !== null && highlightAll !== '1') {
+                                sessionStorage.setItem('coursesearch_suffix', JSON.stringify(contextSuffix));
+                            } else {
+                                sessionStorage.removeItem('coursesearch_suffix');
                             }
                         } catch (err) {
                             // Error escaping highlight data, continue without storing.
