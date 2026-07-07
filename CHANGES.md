@@ -1,7 +1,9 @@
 # Changelog
 
-## Changes in version 1.4.11 (Build: 2026070703)
+## Changes in version 1.4.11 (Build: 2026070707)
 
+- **Fixed**: Grouped results are now titled with the activity name (e.g. the folder name) instead of the first match's display name (e.g. "Folder: first-file.pdf"); applies to folder, book, lesson, wiki, glossary and database groups
+- **Fixed**: Clicking a grouped result header now opens the activity itself (e.g. the folder page) instead of following the first match's link (e.g. downloading the first file)
 - **Fixed**: Result snippets now highlight only the specific occurrence the result row links to, instead of every query match in the snippet
 - **Fixed**: Result links now highlight the correct occurrence on the target page. Each link carries the surrounding text context of its occurrence (`cs_prefix`/`cs_suffix`, following the W3C Text Fragments disambiguation model), so the highlight lands on the exact match the snippet came from
 - **Fixed**: Highlighting no longer matches page chrome - breadcrumbs, page header, navigation, drawers, course index and footer are excluded from the client-side search, and the search is scoped to the main content region instead of the whole page

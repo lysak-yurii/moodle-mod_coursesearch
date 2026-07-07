@@ -576,8 +576,10 @@ function coursesearch_group_raw_results_by_activity(array $rawresults, $course):
                 continue;
             }
 
-            // Extract common activity info.
-            $activityname = $firstmatch['name'] ?? '';
+            // Extract common activity info. Prefer the plain activity name over the
+            // per-match display name ("Activity: sub-item"), so a group of e.g. folder
+            // files is titled with the folder name, not the first matching file.
+            $activityname = $firstmatch['activityname'] ?? $firstmatch['name'] ?? '';
             $activityurl = $firstmatch['url'] ?? null;
             $activityicon = $firstmatch['icon'] ?? '';
             $modname = $firstmatch['modname'] ?? 'unknown';
@@ -592,21 +594,17 @@ function coursesearch_group_raw_results_by_activity(array $rawresults, $course):
                 $activityname = strip_tags(coursesearch_process_multilang($activityname));
             }
 
-            // Try to get main activity URL (without post-specific params).
-            if ($activityurl instanceof moodle_url && $modname === 'forum') {
-                // For forums, try to get the forum view URL instead of post URL.
-                // The cmid should be in the result.
-                if (isset($firstmatch['cmid'])) {
-                    try {
-                        $modinfo = get_fast_modinfo($course);
-                        $cm = $modinfo->get_cm($firstmatch['cmid']);
-                        if ($cm && $cm->url) {
-                            $activityurl = $cm->url;
-                        }
-                    } catch (Exception $e) {
-                        // Keep original URL if we can't get module URL.
-                        debugging('CM not found: ' . $e->getMessage(), DEBUG_DEVELOPER);
-                    }
+            // Link the group header to the activity's own view page instead of the
+            // first match's deep link (e.g. a folder file download, forum post or
+            // book chapter). Falls back to a course-page anchor for inline modules.
+            if (isset($firstmatch['cmid'])) {
+                try {
+                    $modinfo = get_fast_modinfo($course);
+                    $cm = $modinfo->get_cm($firstmatch['cmid']);
+                    $activityurl = coursesearch_build_module_url($cm, $course);
+                } catch (Exception $e) {
+                    // Keep the first match's URL if we can't get the module URL.
+                    debugging('CM not found: ' . $e->getMessage(), DEBUG_DEVELOPER);
                 }
             }
 

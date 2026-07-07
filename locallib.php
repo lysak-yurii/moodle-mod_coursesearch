@@ -785,6 +785,7 @@ function coursesearch_search_book($mod, $query, $filter) {
             $results[] = [
                 'type' => 'book_title',
                 'name' => $mod->name . ': ' . $chapter->title,
+                'activityname' => $mod->name,
                 'url' => $chapterurl,
                 'modname' => $mod->modname,
                 'icon' => $mod->get_icon_url(),
@@ -806,6 +807,7 @@ function coursesearch_search_book($mod, $query, $filter) {
             $results[] = [
                 'type' => 'book_content',
                 'name' => $mod->name . ': ' . $chapter->title,
+                'activityname' => $mod->name,
                 'url' => $chapterurl,
                 'modname' => $mod->modname,
                 'icon' => $mod->get_icon_url(),
@@ -1003,6 +1005,7 @@ function coursesearch_search_lesson($mod, $query) {
             $results[] = [
                 'type' => 'lesson_content',
                 'name' => $mod->name . ': ' . $page->title,
+                'activityname' => $mod->name,
                 'url' => $pageurl,
                 'modname' => $mod->modname,
                 'icon' => $mod->get_icon_url(),
@@ -1248,6 +1251,7 @@ function coursesearch_search_folder($mod, $query) {
             $results[] = [
                 'type' => 'folder_file',
                 'name' => $mod->name . ': ' . $filename,
+                'activityname' => $mod->name,
                 'url' => $fileurl,
                 'modname' => 'folder',
                 'icon' => $mod->get_icon_url(),
@@ -1323,6 +1327,7 @@ function coursesearch_search_wiki($mod, $query, $filter) {
             $results[] = [
                 'type' => 'wiki_page_title',
                 'name' => $mod->name . ': ' . $wikipage->title,
+                'activityname' => $mod->name,
                 'url' => $pageurl,
                 'modname' => $mod->modname,
                 'icon' => $mod->get_icon_url(),
@@ -1350,6 +1355,7 @@ function coursesearch_search_wiki($mod, $query, $filter) {
             $results[] = [
                 'type' => 'wiki_page_content',
                 'name' => $mod->name . ': ' . $wikipage->title,
+                'activityname' => $mod->name,
                 'url' => $pageurl,
                 'modname' => $mod->modname,
                 'icon' => $mod->get_icon_url(),
@@ -1404,6 +1410,7 @@ function coursesearch_search_glossary($mod, $query, $filter) {
                 $results[] = [
                     'type' => 'glossary_entry_title',
                     'name' => $mod->name . ': ' . $entry->concept,
+                    'activityname' => $mod->name,
                     'url' => $entryurl,
                     'modname' => $mod->modname,
                     'icon' => $mod->get_icon_url(),
@@ -1428,6 +1435,7 @@ function coursesearch_search_glossary($mod, $query, $filter) {
                 $results[] = [
                     'type' => 'glossary_entry_content',
                     'name' => $mod->name . ': ' . $entry->concept,
+                    'activityname' => $mod->name,
                     'url' => $entryurl,
                     'modname' => $mod->modname,
                     'icon' => $mod->get_icon_url(),
@@ -1540,6 +1548,7 @@ function coursesearch_search_database($mod, $query) {
             $results[] = [
                 'type' => 'data_entry',
                 'name' => $recordname,
+                'activityname' => $mod->name,
                 'url' => $recordurl,
                 'modname' => $mod->modname,
                 'icon' => $mod->get_icon_url(),
