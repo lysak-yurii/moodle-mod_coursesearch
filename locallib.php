@@ -83,7 +83,9 @@ function coursesearch_get_parent_section_info($section, $courseid, $allsections)
         if ($s->id == $parentsectionid) {
             return [
                 'parent_section_number' => $s->section,
-                'parent_section_name' => !empty($s->name) ? $s->name : get_string('section') . ' ' . $s->section,
+                'parent_section_name' => !empty($s->name)
+                    ? $s->name
+                    : coursesearch_get_section_display_name($courseid, $s->section),
                 'parent_section_id' => $s->id,
             ];
         }
@@ -106,19 +108,41 @@ function coursesearch_get_section_info($mod, $sections) {
     $sectionname = '';
     foreach ($sections as $section) {
         if ($section->section == $sectionnum) {
-            $sectionname = !empty($section->name) ? $section->name : get_string('section') . ' ' . $section->section;
+            $sectionname = !empty($section->name)
+                ? $section->name
+                : coursesearch_get_section_display_name($mod->course, $section->section);
             break;
         }
     }
 
     if (empty($sectionname)) {
-        $sectionname = get_string('section') . ' ' . $sectionnum;
+        $sectionname = coursesearch_get_section_display_name($mod->course, $sectionnum);
     }
 
     return [
         'section_number' => $sectionnum,
         'section_name' => $sectionname,
     ];
+}
+
+/**
+ * Get a human-friendly display name for a course section.
+ *
+ * Delegates to Moodle's format-aware get_section_name(), so that sections
+ * without a custom name show the course format's own default label
+ * (e.g. "General" for the top section, "Topic 3", "Week 3") instead of a
+ * generic "Section N", exactly matching what learners see on the course page.
+ *
+ * @param object|int $courseorid The course object or its ID.
+ * @param object|int $section A section record/section_info, or a section number.
+ * @return string The section display name.
+ */
+function coursesearch_get_section_display_name($courseorid, $section) {
+    global $CFG;
+    require_once($CFG->dirroot . '/course/lib.php');
+
+    $sectionnum = is_object($section) ? $section->section : $section;
+    return get_section_name($courseorid, $sectionnum);
 }
 
 /**
@@ -199,7 +223,8 @@ function coursesearch_perform_search($query, $course, $filter = 'all', $modtypes
 
             // Search in section name - use case-insensitive comparison.
             $namematches = !empty($section->name) && stripos($section->name, $query) !== false;
-            $nummatches = stripos(get_string('section') . ' ' . $section->section, $query) !== false;
+            $nummatches = stripos(get_string('section') . ' ' . $section->section, $query) !== false
+                || stripos(coursesearch_get_section_display_name($course, $section->section), $query) !== false;
             if (!empty($section->name) && ($namematches || $nummatches)) {
                 // Create a direct URL to this section with explicit section parameter.
                 $sectionurl = new moodle_url('/course/view.php', ['id' => $course->id, 'section' => $section->section]);
@@ -229,7 +254,9 @@ function coursesearch_perform_search($query, $course, $filter = 'all', $modtypes
             // Search in section summary - use case-insensitive comparison with relevance check.
             if (!empty($section->summary) && coursesearch_is_relevant($section->summary, $query)) {
                 $sectionurl = new moodle_url('/course/view.php', ['id' => $course->id, 'section' => $section->section]);
-                $sectionname = $section->name ? $section->name : get_string('section') . ' ' . $section->section;
+                $sectionname = $section->name
+                    ? $section->name
+                    : coursesearch_get_section_display_name($course, $section->section);
 
                 $result = [
                     'type' => 'section_summary',
@@ -253,10 +280,13 @@ function coursesearch_perform_search($query, $course, $filter = 'all', $modtypes
                 $results[] = $result;
             }
 
-            // If section has no name but number matches the query.
-            if (empty($section->name) && (stripos(get_string('section') . ' ' . $section->section, $query) !== false)) {
+            // If section has no name but its number or format default name matches the query.
+            $sectiondefaultname = coursesearch_get_section_display_name($course, $section->section);
+            $numbermatches = stripos(get_string('section') . ' ' . $section->section, $query) !== false
+                || stripos($sectiondefaultname, $query) !== false;
+            if (empty($section->name) && $numbermatches) {
                 $sectionurl = new moodle_url('/course/view.php', ['id' => $course->id, 'section' => $section->section]);
-                $sectionname = get_string('section') . ' ' . $section->section;
+                $sectionname = $sectiondefaultname;
 
                 $result = [
                     'type' => 'section_number',
@@ -891,12 +921,15 @@ function coursesearch_search_all_labels_direct($query, $course, $sections, $modi
         }
 
         if ($isrelevant) {
-            // Get section info.
-            $sectioninfo = ['section_number' => 0, 'section_name' => ''];
+            // Get section info. Default to the format-aware name of the top section
+            // so an unmatched lookup still yields a friendly label (e.g. "General").
+            $sectioninfo = ['section_number' => 0, 'section_name' => coursesearch_get_section_display_name($course, 0)];
             foreach ($sections as $section) {
                 if ($section->id == $labelmod->section) {
                     $sectioninfo['section_number'] = $section->section;
-                    $sectionname = !empty($section->name) ? $section->name : get_string('section') . ' ' . $section->section;
+                    $sectionname = !empty($section->name)
+                        ? $section->name
+                        : coursesearch_get_section_display_name($course, $section->section);
                     $sectioninfo['section_name'] = $sectionname;
                     break;
                 }
