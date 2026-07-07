@@ -351,13 +351,7 @@ define(['jquery'], function($) {
                         window.scrollTo({top: scrollY, behavior: 'smooth'});
 
                         // Highlight the text temporarily.
-                        const span = document.createElement('span');
-                        span.style.setProperty('background-color', '#ffff99', 'important');
-                        span.style.setProperty('padding', '2px', 'important');
-                        span.style.setProperty('border-radius', '2px', 'important');
-                        span.style.setProperty('color', 'inherit', 'important');
-                        span.style.setProperty('display', 'inline', 'important');
-                        span.className = 'coursesearch-highlight-temp';
+                        const span = createHighlightSpan();
 
                         let highlighted = false;
                         try {
@@ -602,6 +596,10 @@ define(['jquery'], function($) {
 
     /**
      * Create the styled temporary highlight span element.
+     *
+     * All typography is explicitly inherited with inline !important declarations so
+     * the highlighted text always renders exactly like the surrounding text - theme
+     * stylesheets (which may match generic spans) cannot shrink or restyle it.
      * @return {HTMLElement} The span element
      */
     function createHighlightSpan() {
@@ -611,6 +609,15 @@ define(['jquery'], function($) {
         span.style.setProperty('border-radius', '2px', 'important');
         span.style.setProperty('color', 'inherit', 'important');
         span.style.setProperty('display', 'inline', 'important');
+        span.style.setProperty('font', 'inherit', 'important');
+        span.style.setProperty('font-size', 'inherit', 'important');
+        span.style.setProperty('font-family', 'inherit', 'important');
+        span.style.setProperty('font-weight', 'inherit', 'important');
+        span.style.setProperty('font-style', 'inherit', 'important');
+        span.style.setProperty('line-height', 'inherit', 'important');
+        span.style.setProperty('letter-spacing', 'inherit', 'important');
+        span.style.setProperty('text-transform', 'inherit', 'important');
+        span.style.setProperty('vertical-align', 'baseline', 'important');
         span.className = 'coursesearch-highlight-temp';
         return span;
     }

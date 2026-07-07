@@ -1,7 +1,8 @@
 # Changelog
 
-## Changes in version 1.4.11 (Build: 2026070707)
+## Changes in version 1.4.11 (Build: 2026070708)
 
+- **Fixed**: Highlighted text on target pages now always inherits the surrounding typography (font size, family, weight, line height); themes with generic span rules could previously shrink or restyle the highlighted text
 - **Fixed**: Grouped results are now titled with the activity name (e.g. the folder name) instead of the first match's display name (e.g. "Folder: first-file.pdf"); applies to folder, book, lesson, wiki, glossary and database groups
 - **Fixed**: Clicking a grouped result header now opens the activity itself (e.g. the folder page) instead of following the first match's link (e.g. downloading the first file)
 - **Fixed**: Result snippets now highlight only the specific occurrence the result row links to, instead of every query match in the snippet
