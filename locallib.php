@@ -1901,18 +1901,20 @@ function coursesearch_extract_occurrences($content, $query, $length = 150, $maxr
         }
 
         // Calculate the start position of the snippet.
-        $start = max(0, $foundpos - floor($length / 2));
+        $start = (int)max(0, $foundpos - floor($length / 2));
 
         // If we're not starting from the beginning, add ellipsis.
         $prefix = ($start > 0) ? '...' : '';
 
-        // Extract the snippet.
-        $snippet = $prefix . mb_substr($plaincontent, $start, $length, 'UTF-8') . '...';
-
-        // Highlight the search term in the snippet.
-        $pattern = '/(' . preg_quote($query, '/') . ')/iu';
-        $replacement = '<span class="highlight">$1</span>';
-        $snippet = preg_replace($pattern, $replacement, $snippet);
+        // Extract the snippet window and highlight ONLY the focal occurrence.
+        // Each result row represents exactly one occurrence (and its link targets
+        // that occurrence), so other matches in the window stay plain text.
+        $window = mb_substr($plaincontent, $start, $length, 'UTF-8');
+        $offsetinwindow = $foundpos - $start;
+        $before = mb_substr($window, 0, $offsetinwindow, 'UTF-8');
+        $matchtext = mb_substr($window, $offsetinwindow, $querylen, 'UTF-8');
+        $after = mb_substr($window, $offsetinwindow + $querylen, null, 'UTF-8');
+        $snippet = $prefix . $before . '<span class="highlight">' . $matchtext . '</span>' . $after . '...';
 
         // Capture the surrounding context for context-anchored highlighting.
         $contextstart = max(0, $foundpos - COURSESEARCH_CONTEXT_LENGTH);
