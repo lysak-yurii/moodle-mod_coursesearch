@@ -1040,9 +1040,10 @@ function coursesearch_search_forum($mod, $query, $filter) {
     $searchforumcontent = ($filter == 'all' || $filter == 'content' || $filter == 'forums');
     $searchforumsubjects = ($filter == 'all' || $filter == 'title' || $filter == 'forums');
 
-    // Cache forum name ONCE (was previously queried multiple times per post).
-    $forum = $DB->get_record('forum', ['id' => $mod->instance], 'id, name');
-    $forumname = $forum ? $forum->name : $mod->name;
+    // The course module name is the forum name: modinfo stores the instance name, and mod_forum
+    // defines no cm_info name callback that could change it. Reading it from $mod avoids one
+    // query per forum, which added up on forum-heavy courses.
+    $forumname = $mod->name;
 
     $context = context_module::instance($mod->id);
     $params = ['forumid' => $mod->instance];
