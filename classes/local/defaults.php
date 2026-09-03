@@ -54,5 +54,4 @@ class defaults {
         }
         return ((int)$grouped === 1);
     }
-
 }

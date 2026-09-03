@@ -2280,243 +2280,242 @@ function coursesearch_build_result_objects(array $rawresults, $course, $query) {
         $resultobjects = [];
 
         $titlematchlabel = get_string('title', 'mod_coursesearch');
-        foreach ($groupedrawresults as $result) {
-            // Process multilanguage tags in the result name.
-            $resultname = isset($result['name']) ? coursesearch_process_multilang($result['name']) : '';
-            // Strip any HTML tags from the result name for safety (names should be plain text).
-            $resultname = strip_tags($resultname);
+    foreach ($groupedrawresults as $result) {
+        // Process multilanguage tags in the result name.
+        $resultname = isset($result['name']) ? coursesearch_process_multilang($result['name']) : '';
+        // Strip any HTML tags from the result name for safety (names should be plain text).
+        $resultname = strip_tags($resultname);
 
-            // For sections, remove 'Section: ' prefix from the displayed name to avoid duplication.
-            if ($result['modname'] === 'section') {
-                $sectionprefix = get_string('section') . ': ';
-                if (strpos($resultname, $sectionprefix) === 0) {
-                    $resultname = substr($resultname, strlen($sectionprefix));
-                }
-            }
-
-            // Get the URL - use the original URL from search if valid, only fall back if missing.
-            $resulturl = null;
-            if (isset($result['url']) && $result['url'] instanceof moodle_url) {
-                // Use a cloned URL to avoid mutating shared moodle_url instances.
-                $resulturl = new moodle_url($result['url']->out(false));
-            } else if (isset($result['url']) && !empty($result['url'])) {
-                // URL exists but isn't a moodle_url object.
-                $resulturl = new moodle_url($result['url']);
-            } else {
-                // No URL - fall back to processing.
-                $resulturl = coursesearch_process_result_url($result, $course);
-            }
-
-            // Only add highlight parameter for content/description matches, NOT for title matches.
-            // Highlighting titles on the page makes no sense - the title is already visible.
-            $matchtype = isset($result['match']) ? $result['match'] : '';
-            $istitlematch = ($matchtype === $titlematchlabel);
-
-            if ($istitlematch && $resulturl instanceof moodle_url) {
-                $resulturl->remove_params('cs_highlight', 'cs_highlight_all', 'cs_occurrence', 'cs_prefix', 'cs_suffix');
-            }
-
-            if ($highlightenabled && !$istitlematch && $resulturl instanceof moodle_url && !empty($query)) {
-                $params = $resulturl->params();
-                if (!isset($params['cs_highlight'])) {
-                    $cleanquery = clean_param($query, PARAM_TEXT);
-                    $resulturl->param('cs_highlight', $cleanquery);
-                }
-                // For section/subsection description matches, highlight all occurrences.
-                if (in_array($result['modname'], ['section', 'subsection'], true)) {
-                    $resulturl->param('cs_highlight_all', '1');
-                }
-            }
-
-            // Process snippet.
-            $snippet = '';
-            if (isset($result['snippet']) && !empty($result['snippet'])) {
-                $snippet = format_text($result['snippet'], FORMAT_HTML, ['noclean' => false, 'para' => false]);
-            }
-
-            // Get match type string.
-            $matchtype = isset($result['match']) ? s($result['match']) : '';
-
-            // Get forum name if applicable.
-            $forumname = null;
-            if ($result['modname'] === 'forum' && isset($result['forum_name'])) {
-                $forumname = s(coursesearch_process_multilang($result['forum_name']));
-            }
-
-            // Get icon URL.
-            $iconurl = $result['icon'] ?? '';
-
-            // Get section info.
-            $sectionnumber = $result['section_number'] ?? 0;
-            $sectionname = isset($result['section_name']) && !empty($result['section_name'])
-                ? coursesearch_process_multilang($result['section_name'])
-                : '';
-
-            // Get subsection info.
-            $issubsection = $result['is_subsection'] ?? false;
-            $parentsectionnumber = $result['parent_section_number'] ?? null;
-            $parentsectionname = isset($result['parent_section_name']) && !empty($result['parent_section_name'])
-                ? coursesearch_process_multilang($result['parent_section_name'])
-                : null;
-
-            // Check if this is a grouped result (has 'matches' key).
-            if (isset($result['matches']) && is_array($result['matches']) && count($result['matches']) >= 2) {
-                // This is a grouped result - create grouped search_result object.
-                $matches = [];
-                foreach ($result['matches'] as $matchdata) {
-                    // Process each match in the group.
-                    $matchresultname = isset($matchdata['name']) ? coursesearch_process_multilang($matchdata['name']) : '';
-                    $matchresultname = strip_tags($matchresultname);
-
-                    // Get URL for match.
-                    $matchurl = null;
-                    if (isset($matchdata['url']) && $matchdata['url'] instanceof moodle_url) {
-                        $matchurl = new moodle_url($matchdata['url']->out(false));
-                    } else if (isset($matchdata['url']) && !empty($matchdata['url'])) {
-                        $matchurl = new moodle_url($matchdata['url']);
-                    } else {
-                        $matchurl = coursesearch_process_result_url($matchdata, $course);
-                    }
-
-                    // Add highlight if needed.
-                    $matchmatchtype = isset($matchdata['match']) ? $matchdata['match'] : '';
-                    $matchistitlematch = ($matchmatchtype === $titlematchlabel);
-                    if ($matchistitlematch && $matchurl instanceof moodle_url) {
-                        $matchurl->remove_params('cs_highlight', 'cs_highlight_all', 'cs_occurrence', 'cs_prefix', 'cs_suffix');
-                    }
-
-                    if ($highlightenabled && !$matchistitlematch && $matchurl instanceof moodle_url && !empty($query)) {
-                        $params = $matchurl->params();
-                        if (!isset($params['cs_highlight'])) {
-                            $cleanquery = clean_param($query, PARAM_TEXT);
-                            $matchurl->param('cs_highlight', $cleanquery);
-                        }
-                        // The per-occurrence params (cs_occurrence/cs_prefix/cs_suffix) set by the
-                        // search functions in locallib.php are preserved as-is: they identify the
-                        // exact occurrence within the target content field.
-                    }
-
-                    // Process snippet.
-                    $matchsnippet = '';
-                    if (isset($matchdata['snippet']) && !empty($matchdata['snippet'])) {
-                        $matchsnippet = format_text($matchdata['snippet'], FORMAT_HTML, ['noclean' => false, 'para' => false]);
-                    }
-
-                    $matchmatchtype = isset($matchdata['match']) ? s($matchdata['match']) : '';
-                    $matchforumname = null;
-                    if (isset($matchdata['modname']) && $matchdata['modname'] === 'forum' && isset($matchdata['forum_name'])) {
-                        $matchforumname = s(coursesearch_process_multilang($matchdata['forum_name']));
-                    }
-                    $matchiconurl = $matchdata['icon'] ?? '';
-                    $matchsectionnumber = $matchdata['section_number'] ?? 0;
-                    $matchsectionname = isset($matchdata['section_name']) && !empty($matchdata['section_name'])
-                        ? coursesearch_process_multilang($matchdata['section_name'])
-                        : '';
-                    $matchissubsection = $matchdata['is_subsection'] ?? false;
-                    $matchparentsectionnumber = $matchdata['parent_section_number'] ?? null;
-                    $matchparentsectionname = isset($matchdata['parent_section_name']) && !empty($matchdata['parent_section_name'])
-                        ? coursesearch_process_multilang($matchdata['parent_section_name'])
-                        : null;
-
-                    $matches[] = new \mod_coursesearch\output\search_result(
-                        $matchresultname,
-                        $matchurl,
-                        $matchdata['modname'],
-                        $matchiconurl,
-                        $matchsnippet,
-                        $matchmatchtype,
-                        $matchforumname,
-                        $matchsectionnumber,
-                        $matchsectionname,
-                        $matchissubsection,
-                        $matchparentsectionnumber,
-                        $matchparentsectionname
-                    );
-                }
-
-                // Create grouped result.
-                // Use section info from the result array (from first match), not from processed variables.
-                $activityname = $result['activityname'] ?? $resultname;
-                $activityurl = isset($result['activityurl']) && $result['activityurl'] instanceof moodle_url
-                    ? new moodle_url($result['activityurl']->out(false))
-                    : ($resulturl ?: new moodle_url('/course/view.php', ['id' => $course->id]));
-
-                // Add highlight and highlight_all parameters to activity URL for accordion header click.
-                // This enables highlighting ALL occurrences when clicking the grouped result header.
-                $groupedhascontentmatch = false;
-                foreach ($result['matches'] as $matchdata) {
-                    $groupmatchtype = isset($matchdata['match']) ? $matchdata['match'] : '';
-                    if ($groupmatchtype !== $titlematchlabel) {
-                        $groupedhascontentmatch = true;
-                        break;
-                    }
-                }
-
-                if ($activityurl instanceof moodle_url && !$groupedhascontentmatch) {
-                    $activityurl->remove_params('cs_highlight', 'cs_highlight_all', 'cs_occurrence', 'cs_prefix', 'cs_suffix');
-                }
-
-                if ($highlightenabled && $groupedhascontentmatch && $activityurl instanceof moodle_url && !empty($query)) {
-                    $cleanquery = clean_param($query, PARAM_TEXT);
-                    // Highlight-all mode targets every occurrence, so per-occurrence params are dropped.
-                    $activityurl->remove_params('cs_occurrence', 'cs_prefix', 'cs_suffix');
-                    $activityurl->param('cs_highlight', $cleanquery);
-                    $activityurl->param('cs_highlight_all', '1');
-                }
-
-                $activityicon = $result['activityicon'] ?? $iconurl;
-                $activitymodname = $result['modname'] ?? 'unknown';
-
-                // Get section info from the result array (preserved from grouping function).
-                $groupsectionnumber = $result['section_number'] ?? $sectionnumber;
-                $groupsectionname = isset($result['section_name']) && !empty($result['section_name'])
-                    ? coursesearch_process_multilang($result['section_name'])
-                    : $sectionname;
-                $groupissubsection = $result['is_subsection'] ?? $issubsection;
-                $groupparentsectionnumber = $result['parent_section_number'] ?? $parentsectionnumber;
-                $groupparentsectionname = isset($result['parent_section_name']) && !empty($result['parent_section_name'])
-                    ? coursesearch_process_multilang($result['parent_section_name'])
-                    : $parentsectionname;
-
-                $resultobjects[] = new \mod_coursesearch\output\search_result(
-                    $activityname,
-                    $activityurl,
-                    $activitymodname,
-                    $activityicon,
-                    '',
-                    '',
-                    $forumname,
-                    $groupsectionnumber,
-                    $groupsectionname,
-                    $groupissubsection,
-                    $groupparentsectionnumber,
-                    $groupparentsectionname,
-                    true, // Is grouped.
-                    count($matches), // Match count.
-                    $activityname, // Activity name.
-                    $activityurl, // Activity URL.
-                    $activityicon, // Activity icon.
-                    $matches // Matches.
-                );
-            } else {
-                // Regular individual result.
-                $resultobjects[] = new \mod_coursesearch\output\search_result(
-                    $resultname,
-                    $resulturl,
-                    $result['modname'],
-                    $iconurl,
-                    $snippet,
-                    $matchtype,
-                    $forumname,
-                    $sectionnumber,
-                    $sectionname,
-                    $issubsection,
-                    $parentsectionnumber,
-                    $parentsectionname
-                );
+        // For sections, remove 'Section: ' prefix from the displayed name to avoid duplication.
+        if ($result['modname'] === 'section') {
+            $sectionprefix = get_string('section') . ': ';
+            if (strpos($resultname, $sectionprefix) === 0) {
+                $resultname = substr($resultname, strlen($sectionprefix));
             }
         }
 
+        // Get the URL - use the original URL from search if valid, only fall back if missing.
+        $resulturl = null;
+        if (isset($result['url']) && $result['url'] instanceof moodle_url) {
+            // Use a cloned URL to avoid mutating shared moodle_url instances.
+            $resulturl = new moodle_url($result['url']->out(false));
+        } else if (isset($result['url']) && !empty($result['url'])) {
+            // URL exists but isn't a moodle_url object.
+            $resulturl = new moodle_url($result['url']);
+        } else {
+            // No URL - fall back to processing.
+            $resulturl = coursesearch_process_result_url($result, $course);
+        }
+
+        // Only add highlight parameter for content/description matches, NOT for title matches.
+        // Highlighting titles on the page makes no sense - the title is already visible.
+        $matchtype = isset($result['match']) ? $result['match'] : '';
+        $istitlematch = ($matchtype === $titlematchlabel);
+
+        if ($istitlematch && $resulturl instanceof moodle_url) {
+            $resulturl->remove_params('cs_highlight', 'cs_highlight_all', 'cs_occurrence', 'cs_prefix', 'cs_suffix');
+        }
+
+        if ($highlightenabled && !$istitlematch && $resulturl instanceof moodle_url && !empty($query)) {
+            $params = $resulturl->params();
+            if (!isset($params['cs_highlight'])) {
+                $cleanquery = clean_param($query, PARAM_TEXT);
+                $resulturl->param('cs_highlight', $cleanquery);
+            }
+            // For section/subsection description matches, highlight all occurrences.
+            if (in_array($result['modname'], ['section', 'subsection'], true)) {
+                $resulturl->param('cs_highlight_all', '1');
+            }
+        }
+
+        // Process snippet.
+        $snippet = '';
+        if (isset($result['snippet']) && !empty($result['snippet'])) {
+            $snippet = format_text($result['snippet'], FORMAT_HTML, ['noclean' => false, 'para' => false]);
+        }
+
+        // Get match type string.
+        $matchtype = isset($result['match']) ? s($result['match']) : '';
+
+        // Get forum name if applicable.
+        $forumname = null;
+        if ($result['modname'] === 'forum' && isset($result['forum_name'])) {
+            $forumname = s(coursesearch_process_multilang($result['forum_name']));
+        }
+
+        // Get icon URL.
+        $iconurl = $result['icon'] ?? '';
+
+        // Get section info.
+        $sectionnumber = $result['section_number'] ?? 0;
+        $sectionname = isset($result['section_name']) && !empty($result['section_name'])
+            ? coursesearch_process_multilang($result['section_name'])
+            : '';
+
+        // Get subsection info.
+        $issubsection = $result['is_subsection'] ?? false;
+        $parentsectionnumber = $result['parent_section_number'] ?? null;
+        $parentsectionname = isset($result['parent_section_name']) && !empty($result['parent_section_name'])
+            ? coursesearch_process_multilang($result['parent_section_name'])
+            : null;
+
+        // Check if this is a grouped result (has 'matches' key).
+        if (isset($result['matches']) && is_array($result['matches']) && count($result['matches']) >= 2) {
+            // This is a grouped result - create grouped search_result object.
+            $matches = [];
+            foreach ($result['matches'] as $matchdata) {
+                // Process each match in the group.
+                $matchresultname = isset($matchdata['name']) ? coursesearch_process_multilang($matchdata['name']) : '';
+                $matchresultname = strip_tags($matchresultname);
+
+                // Get URL for match.
+                $matchurl = null;
+                if (isset($matchdata['url']) && $matchdata['url'] instanceof moodle_url) {
+                    $matchurl = new moodle_url($matchdata['url']->out(false));
+                } else if (isset($matchdata['url']) && !empty($matchdata['url'])) {
+                    $matchurl = new moodle_url($matchdata['url']);
+                } else {
+                    $matchurl = coursesearch_process_result_url($matchdata, $course);
+                }
+
+                // Add highlight if needed.
+                $matchmatchtype = isset($matchdata['match']) ? $matchdata['match'] : '';
+                $matchistitlematch = ($matchmatchtype === $titlematchlabel);
+                if ($matchistitlematch && $matchurl instanceof moodle_url) {
+                    $matchurl->remove_params('cs_highlight', 'cs_highlight_all', 'cs_occurrence', 'cs_prefix', 'cs_suffix');
+                }
+
+                if ($highlightenabled && !$matchistitlematch && $matchurl instanceof moodle_url && !empty($query)) {
+                    $params = $matchurl->params();
+                    if (!isset($params['cs_highlight'])) {
+                        $cleanquery = clean_param($query, PARAM_TEXT);
+                        $matchurl->param('cs_highlight', $cleanquery);
+                    }
+                    // The per-occurrence params (cs_occurrence/cs_prefix/cs_suffix) set by the
+                    // search functions in locallib.php are preserved as-is: they identify the
+                    // exact occurrence within the target content field.
+                }
+
+                // Process snippet.
+                $matchsnippet = '';
+                if (isset($matchdata['snippet']) && !empty($matchdata['snippet'])) {
+                    $matchsnippet = format_text($matchdata['snippet'], FORMAT_HTML, ['noclean' => false, 'para' => false]);
+                }
+
+                $matchmatchtype = isset($matchdata['match']) ? s($matchdata['match']) : '';
+                $matchforumname = null;
+                if (isset($matchdata['modname']) && $matchdata['modname'] === 'forum' && isset($matchdata['forum_name'])) {
+                    $matchforumname = s(coursesearch_process_multilang($matchdata['forum_name']));
+                }
+                $matchiconurl = $matchdata['icon'] ?? '';
+                $matchsectionnumber = $matchdata['section_number'] ?? 0;
+                $matchsectionname = isset($matchdata['section_name']) && !empty($matchdata['section_name'])
+                    ? coursesearch_process_multilang($matchdata['section_name'])
+                    : '';
+                $matchissubsection = $matchdata['is_subsection'] ?? false;
+                $matchparentsectionnumber = $matchdata['parent_section_number'] ?? null;
+                $matchparentsectionname = isset($matchdata['parent_section_name']) && !empty($matchdata['parent_section_name'])
+                    ? coursesearch_process_multilang($matchdata['parent_section_name'])
+                    : null;
+
+                $matches[] = new \mod_coursesearch\output\search_result(
+                    $matchresultname,
+                    $matchurl,
+                    $matchdata['modname'],
+                    $matchiconurl,
+                    $matchsnippet,
+                    $matchmatchtype,
+                    $matchforumname,
+                    $matchsectionnumber,
+                    $matchsectionname,
+                    $matchissubsection,
+                    $matchparentsectionnumber,
+                    $matchparentsectionname
+                );
+            }
+
+            // Create grouped result.
+            // Use section info from the result array (from first match), not from processed variables.
+            $activityname = $result['activityname'] ?? $resultname;
+            $activityurl = isset($result['activityurl']) && $result['activityurl'] instanceof moodle_url
+                ? new moodle_url($result['activityurl']->out(false))
+                : ($resulturl ?: new moodle_url('/course/view.php', ['id' => $course->id]));
+
+            // Add highlight and highlight_all parameters to activity URL for accordion header click.
+            // This enables highlighting ALL occurrences when clicking the grouped result header.
+            $groupedhascontentmatch = false;
+            foreach ($result['matches'] as $matchdata) {
+                $groupmatchtype = isset($matchdata['match']) ? $matchdata['match'] : '';
+                if ($groupmatchtype !== $titlematchlabel) {
+                    $groupedhascontentmatch = true;
+                    break;
+                }
+            }
+
+            if ($activityurl instanceof moodle_url && !$groupedhascontentmatch) {
+                $activityurl->remove_params('cs_highlight', 'cs_highlight_all', 'cs_occurrence', 'cs_prefix', 'cs_suffix');
+            }
+
+            if ($highlightenabled && $groupedhascontentmatch && $activityurl instanceof moodle_url && !empty($query)) {
+                $cleanquery = clean_param($query, PARAM_TEXT);
+                // Highlight-all mode targets every occurrence, so per-occurrence params are dropped.
+                $activityurl->remove_params('cs_occurrence', 'cs_prefix', 'cs_suffix');
+                $activityurl->param('cs_highlight', $cleanquery);
+                $activityurl->param('cs_highlight_all', '1');
+            }
+
+            $activityicon = $result['activityicon'] ?? $iconurl;
+            $activitymodname = $result['modname'] ?? 'unknown';
+
+            // Get section info from the result array (preserved from grouping function).
+            $groupsectionnumber = $result['section_number'] ?? $sectionnumber;
+            $groupsectionname = isset($result['section_name']) && !empty($result['section_name'])
+                ? coursesearch_process_multilang($result['section_name'])
+                : $sectionname;
+            $groupissubsection = $result['is_subsection'] ?? $issubsection;
+            $groupparentsectionnumber = $result['parent_section_number'] ?? $parentsectionnumber;
+            $groupparentsectionname = isset($result['parent_section_name']) && !empty($result['parent_section_name'])
+                ? coursesearch_process_multilang($result['parent_section_name'])
+                : $parentsectionname;
+
+            $resultobjects[] = new \mod_coursesearch\output\search_result(
+                $activityname,
+                $activityurl,
+                $activitymodname,
+                $activityicon,
+                '',
+                '',
+                $forumname,
+                $groupsectionnumber,
+                $groupsectionname,
+                $groupissubsection,
+                $groupparentsectionnumber,
+                $groupparentsectionname,
+                true, // Is grouped.
+                count($matches), // Match count.
+                $activityname, // Activity name.
+                $activityurl, // Activity URL.
+                $activityicon, // Activity icon.
+                $matches // Matches.
+            );
+        } else {
+            // Regular individual result.
+            $resultobjects[] = new \mod_coursesearch\output\search_result(
+                $resultname,
+                $resulturl,
+                $result['modname'],
+                $iconurl,
+                $snippet,
+                $matchtype,
+                $forumname,
+                $sectionnumber,
+                $sectionname,
+                $issubsection,
+                $parentsectionnumber,
+                $parentsectionname
+            );
+        }
+    }
 
     return $resultobjects;
 }

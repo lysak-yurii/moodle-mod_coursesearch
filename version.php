@@ -24,11 +24,11 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version   = 2026090302;       // The current module version (Date: YYYYMMDDXX).
+$plugin->version   = 2026090303;       // The current module version (Date: YYYYMMDDXX).
 $plugin->requires  = 2024042200;       // Requires this Moodle version (Moodle 4.4+).
 $plugin->component = 'mod_coursesearch'; // Full name of the plugin (used for diagnostics).
 $plugin->cron      = 0;
 $plugin->maturity  = MATURITY_STABLE;
-// Version 1.4.12 - Contrast-safe highlight colors on dark backgrounds.
+// Version 1.5.0 - Site-wide quick-access widget and course-level search.
 
-$plugin->release   = '1.4.12';
+$plugin->release   = '1.5.0';

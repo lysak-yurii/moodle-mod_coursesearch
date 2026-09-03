@@ -184,5 +184,3 @@ if (!empty($query)) {
 
 // Finish the page.
 echo $OUTPUT->footer();
-
-

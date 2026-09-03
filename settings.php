@@ -125,12 +125,25 @@ if ($ADMIN->fulltree) {
 
     // Widget sub-options only apply when the widget itself is on, and the grouping default
     // only applies in 'all courses' mode.
-    $settings->hide_if('mod_coursesearch/floatingwidgetscope',
-        'mod_coursesearch/enablefloatingwidget', 'notchecked');
-    $settings->hide_if('mod_coursesearch/floatingwidgetverticaloffset',
-        'mod_coursesearch/enablefloatingwidget', 'notchecked');
-    $settings->hide_if('mod_coursesearch/defaultgrouped',
-        'mod_coursesearch/enablefloatingwidget', 'notchecked');
-    $settings->hide_if('mod_coursesearch/defaultgrouped',
-        'mod_coursesearch/floatingwidgetscope', 'neq', 'allcourses');
+    $settings->hide_if(
+        'mod_coursesearch/floatingwidgetscope',
+        'mod_coursesearch/enablefloatingwidget',
+        'notchecked'
+    );
+    $settings->hide_if(
+        'mod_coursesearch/floatingwidgetverticaloffset',
+        'mod_coursesearch/enablefloatingwidget',
+        'notchecked'
+    );
+    $settings->hide_if(
+        'mod_coursesearch/defaultgrouped',
+        'mod_coursesearch/enablefloatingwidget',
+        'notchecked'
+    );
+    $settings->hide_if(
+        'mod_coursesearch/defaultgrouped',
+        'mod_coursesearch/floatingwidgetscope',
+        'neq',
+        'allcourses'
+    );
 }

@@ -1,5 +1,12 @@
 # Changelog
 
+## Changes in version 1.5.0 (Build: 2026090303)
+
+- **New Feature**: The floating quick-access widget can now be shown in every course, whether or not a teacher has added a Course Search activity to it. Set *Site administration > Plugins > Activity modules > Course Search > Show the widget in* to "All courses"
+- **New Feature**: Added "Group results by section by default", which controls the result layout in those courses and seeds the setting for newly created activities. An activity's own "Group results by section" setting always takes precedence
+- **Updated**: Grouped the admin settings under headings (Results display, Highlighting, Quick-access widget)
+- **Fixed**: Removed a redundant database query per forum on every search, which reduces query count on forum-heavy courses
+
 ## Changes in version 1.4.12 (Build: 2026070710)
 
 - **Fixed**: Highlighted text is now always readable on dark backgrounds - the highlight forces a dark text color together with the yellow background instead of inheriting the theme's (possibly light) text color
