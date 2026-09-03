@@ -21,7 +21,8 @@
 
     Context variables required for this template:
     * formurl - The form action URL
-    * cmid - The course module ID
+    * cmid - The course module ID, or the course ID for the course-level search page
+    * idparam - Name of the hidden identity parameter ("id" or "courseid")
     * placeholder - The placeholder text for the search input
     * query - The current search query (optional)
     * embedded - Whether the form is embedded in the course page
@@ -34,6 +35,7 @@
     {
         "formurl": "/mod/coursesearch/view.php?id=123",
         "cmid": 123,
+        "idparam": "id",
         "placeholder": "Search this course...",
         "query": "",
         "embedded": false,
@@ -58,7 +60,7 @@
 
 <div class="coursesearch-container{{#embedded}} coursesearch-embedded{{/embedded}}">
     <form action="{{formurl}}" method="get" class="coursesearch-form">
-        <input type="hidden" name="id" value="{{cmid}}">
+        <input type="hidden" name="{{idparam}}" value="{{cmid}}">
 
         {{#hasmodtypes}}
         {{^embedded}}

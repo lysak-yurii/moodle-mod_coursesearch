@@ -29,12 +29,11 @@ require_once($CFG->dirroot . '/mod/coursesearch/classes/admin_setting/maxoccurre
 require_once($CFG->dirroot . '/mod/coursesearch/classes/admin_setting/floatingwidgetoffset.php');
 
 if ($ADMIN->fulltree) {
-    // Enable/disable scrolling and highlighting feature.
-    $settings->add(new admin_setting_configcheckbox(
-        'mod_coursesearch/enablehighlight',
-        get_string('enablehighlight', 'coursesearch'),
-        get_string('enablehighlight_desc', 'coursesearch'),
-        1
+    // Results display.
+    $settings->add(new admin_setting_heading(
+        'mod_coursesearch/settingsdisplay',
+        get_string('settingsdisplay', 'coursesearch'),
+        ''
     ));
 
     // Results per page setting.
@@ -46,14 +45,6 @@ if ($ADMIN->fulltree) {
         PARAM_INT
     ));
 
-    // Excluded placeholder patterns setting.
-    $settings->add(new admin_setting_configtextarea(
-        'mod_coursesearch/excludedplaceholders',
-        get_string('excludedplaceholders', 'coursesearch'),
-        get_string('excludedplaceholders_desc', 'coursesearch'),
-        '@@[A-Z_]+@@[^\s]*'
-    ));
-
     // Maximum occurrences per content item setting.
     $settings->add(new admin_setting_configtext_maxoccurrences(
         'mod_coursesearch/maxoccurrences',
@@ -63,11 +54,63 @@ if ($ADMIN->fulltree) {
         PARAM_INT
     ));
 
+    // Excluded placeholder patterns setting.
+    $settings->add(new admin_setting_configtextarea(
+        'mod_coursesearch/excludedplaceholders',
+        get_string('excludedplaceholders', 'coursesearch'),
+        get_string('excludedplaceholders_desc', 'coursesearch'),
+        '@@[A-Z_]+@@[^\s]*'
+    ));
+
+    // Highlighting.
+    $settings->add(new admin_setting_heading(
+        'mod_coursesearch/settingshighlighting',
+        get_string('settingshighlighting', 'coursesearch'),
+        ''
+    ));
+
+    // Enable/disable scrolling and highlighting feature.
+    $settings->add(new admin_setting_configcheckbox(
+        'mod_coursesearch/enablehighlight',
+        get_string('enablehighlight', 'coursesearch'),
+        get_string('enablehighlight_desc', 'coursesearch'),
+        1
+    ));
+
+    // Quick-access widget.
+    $settings->add(new admin_setting_heading(
+        'mod_coursesearch/settingswidget',
+        get_string('settingswidget', 'coursesearch'),
+        ''
+    ));
+
     // Enable/disable floating quick-access widget.
     $settings->add(new admin_setting_configcheckbox(
         'mod_coursesearch/enablefloatingwidget',
         get_string('enablefloatingwidget', 'coursesearch'),
         get_string('enablefloatingwidget_desc', 'coursesearch'),
+        1
+    ));
+
+    // Where the widget appears. 'withactivity' preserves the historical behaviour, so an
+    // upgraded site sees no change until an admin opts in to 'allcourses'.
+    $settings->add(new admin_setting_configselect(
+        'mod_coursesearch/floatingwidgetscope',
+        get_string('floatingwidgetscope', 'coursesearch'),
+        get_string('floatingwidgetscope_desc', 'coursesearch'),
+        'withactivity',
+        [
+            'withactivity' => get_string('floatingwidgetscope:withactivity', 'coursesearch'),
+            'allcourses' => get_string('floatingwidgetscope:allcourses', 'coursesearch'),
+        ]
+    ));
+
+    // Result layout for courses reached through the widget with no Course Search activity.
+    // Only meaningful in 'allcourses' mode; an activity's own setting always wins over it.
+    $settings->add(new admin_setting_configcheckbox(
+        'mod_coursesearch/defaultgrouped',
+        get_string('defaultgrouped', 'coursesearch'),
+        get_string('defaultgrouped_desc', 'coursesearch'),
         1
     ));
 
@@ -79,4 +122,15 @@ if ($ADMIN->fulltree) {
         80,
         PARAM_INT
     ));
+
+    // Widget sub-options only apply when the widget itself is on, and the grouping default
+    // only applies in 'all courses' mode.
+    $settings->hide_if('mod_coursesearch/floatingwidgetscope',
+        'mod_coursesearch/enablefloatingwidget', 'notchecked');
+    $settings->hide_if('mod_coursesearch/floatingwidgetverticaloffset',
+        'mod_coursesearch/enablefloatingwidget', 'notchecked');
+    $settings->hide_if('mod_coursesearch/defaultgrouped',
+        'mod_coursesearch/enablefloatingwidget', 'notchecked');
+    $settings->hide_if('mod_coursesearch/defaultgrouped',
+        'mod_coursesearch/floatingwidgetscope', 'neq', 'allcourses');
 }

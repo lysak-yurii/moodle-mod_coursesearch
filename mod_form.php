@@ -72,7 +72,8 @@ class mod_coursesearch_mod_form extends moodleform_mod {
         $groupedlabel = get_string('grouped', 'coursesearch');
         $groupedinfo = get_string('groupedinfo', 'coursesearch');
         $mform->addElement('advcheckbox', 'grouped', $groupedlabel, $groupedinfo);
-        $mform->setDefault('grouped', 1);
+        // New instances start from the site default; existing instances keep their stored value.
+        $mform->setDefault('grouped', \mod_coursesearch\local\defaults::grouped() ? 1 : 0);
         $mform->addHelpButton('grouped', 'grouped', 'coursesearch');
 
         // Add standard elements.

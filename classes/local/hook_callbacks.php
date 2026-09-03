@@ -227,22 +227,47 @@ class hook_callbacks {
                  LIMIT 1";
         $coursesearch = $DB->get_record_sql($sql, ['courseid' => $courseid]);
 
-        if (!$coursesearch) {
+        // Where the widget is allowed to appear. Defaults to the historical behaviour of
+        // only showing up in courses that contain a Course Search activity.
+        $scope = get_config('mod_coursesearch', 'floatingwidgetscope');
+        if ($scope === false || $scope === null) {
+            $scope = 'withactivity';
+        }
+
+        if (!$coursesearch && $scope !== 'allcourses') {
             return;
         }
 
-        // Check if user has capability to view the course search activity.
-        // Note: We directly create the context without using get_fast_modinfo() to avoid
-        // triggering theme re-initialization during footer generation (which causes errors
-        // for non-admin users).
-        $context = \context_module::instance($coursesearch->cmid);
-        if (!has_capability('mod/coursesearch:view', $context)) {
-            return;
-        }
+        if ($coursesearch) {
+            // Check if user has capability to view the course search activity.
+            // Note: We directly create the context without using get_fast_modinfo() to avoid
+            // triggering theme re-initialization during footer generation (which causes errors
+            // for non-admin users).
+            $context = \context_module::instance($coursesearch->cmid);
+            if (!has_capability('mod/coursesearch:view', $context)) {
+                return;
+            }
 
-        // Get placeholder text.
-        $defaultplaceholder = get_string('defaultplaceholder', 'coursesearch');
-        $placeholder = !empty($coursesearch->placeholder) ? $coursesearch->placeholder : $defaultplaceholder;
+            // Get placeholder text: the instance value wins, otherwise the site default.
+            $placeholder = !empty($coursesearch->placeholder)
+                ? $coursesearch->placeholder
+                : get_string('defaultplaceholder', 'coursesearch');
+            $formurl = new \moodle_url('/mod/coursesearch/view.php', ['id' => $coursesearch->cmid]);
+            $idparam = 'id';
+            $idvalue = $coursesearch->cmid;
+        } else {
+            // No activity in this course: the widget searches the course directly. The
+            // capability is declared at module level but resolves cleanly at course level.
+            $context = \context_course::instance($courseid);
+            if (!has_capability('mod/coursesearch:view', $context)) {
+                return;
+            }
+
+            $placeholder = get_string('defaultplaceholder', 'coursesearch');
+            $formurl = new \moodle_url('/mod/coursesearch/search.php', ['courseid' => $courseid]);
+            $idparam = 'courseid';
+            $idvalue = $courseid;
+        }
 
         // Get vertical offset setting (default to 80px if not set).
         $verticaloffset = get_config('mod_coursesearch', 'floatingwidgetverticaloffset');
@@ -256,16 +281,14 @@ class hook_callbacks {
             }
         }
 
-        // Create the form URL.
-        $formurl = new \moodle_url('/mod/coursesearch/view.php', ['id' => $coursesearch->cmid]);
-
         // Get renderer.
         $renderer = $PAGE->get_renderer('mod_coursesearch');
 
         // Render the floating widget template.
         $templatecontext = [
             'formurl' => $formurl->out(false),
-            'cmid' => $coursesearch->cmid,
+            'cmid' => $idvalue,
+            'idparam' => $idparam,
             'placeholder' => $placeholder,
             'searchlabel' => get_string('search', 'coursesearch'),
             'verticaloffset' => $verticaloffset,

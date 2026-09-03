@@ -166,7 +166,7 @@ supported, and try alternative search terms.
 
 ## Version
 
-Current version: **1.4.12** (Build: 2026090301, Stable)
+Current version: **1.4.12** (Build: 2026090302, Stable)
 
 For detailed version history, see [CHANGES.md](CHANGES.md).
 

@@ -59,6 +59,9 @@ class search_form implements renderable, templatable {
     /** @var string The intro/description HTML content */
     protected $intro;
 
+    /** @var string Name of the hidden parameter identifying the search target */
+    protected $idparam;
+
     /**
      * Constructor
      *
@@ -72,6 +75,8 @@ class search_form implements renderable, templatable {
      * @param array $modtypeoptions The module type options (value => label)
      * @param array $selectedmodtypes The selected module types
      * @param string $intro The intro/description HTML content
+     * @param string $idparam Name of the hidden identity parameter ('id' for an activity,
+     *                        'courseid' for the course-level search page)
      */
     public function __construct(
         moodle_url $formurl,
@@ -83,7 +88,8 @@ class search_form implements renderable, templatable {
         array $filteroptions = [],
         array $modtypeoptions = [],
         array $selectedmodtypes = [],
-        string $intro = ''
+        string $intro = '',
+        string $idparam = 'id'
     ) {
         $this->formurl = $formurl;
         $this->cmid = $cmid;
@@ -95,6 +101,7 @@ class search_form implements renderable, templatable {
         $this->modtypeoptions = $modtypeoptions;
         $this->selectedmodtypes = $selectedmodtypes;
         $this->intro = $intro;
+        $this->idparam = $idparam;
     }
 
     /**
@@ -128,6 +135,7 @@ class search_form implements renderable, templatable {
         return [
             'formurl' => $this->formurl->out(false),
             'cmid' => $this->cmid,
+            'idparam' => $this->idparam,
             'placeholder' => $this->placeholder,
             'query' => $this->query,
             'embedded' => $this->embedded,
