@@ -1,11 +1,11 @@
 # Course Search Module for Moodle
 
 ![Moodle](https://img.shields.io/badge/Moodle-4.4+-orange?logo=moodle)
-![PHP](https://img.shields.io/badge/PHP-7.4+-777BB4?logo=php&logoColor=white)
+![PHP](https://img.shields.io/badge/PHP-8.0+-777BB4?logo=php&logoColor=white)
 ![License](https://img.shields.io/badge/License-GPL%20v3-green?logo=gnu)
 ![Version](https://img.shields.io/badge/Version-1.5.1-blue)
 
-A comprehensive Moodle activity module that enables teachers to add a search bar to courses, allowing students to search through course content with automatic highlighting of search terms.
+A Moodle activity module that lets students search the content of a course and jump straight to a match, which is highlighted on the target page. Teachers add a search bar to a course as an activity; administrators can additionally enable a floating quick-access widget across every course on the site, so a course is searchable even without the activity.
 
 ## Features
 
@@ -14,8 +14,9 @@ A comprehensive Moodle activity module that enables teachers to add a search bar
 - **Module type filter** — narrow results to specific activity or resource types via a
   chip-based panel.
 - **Embedded mode** — show the search bar inline on the course page.
-- **Floating widget** — a quick-access search box on every course page, with a configurable
+- **Floating widget** — a quick-access search box on course pages, with a configurable
   vertical offset and automatic theme colors.
+- **Site-wide search** — administrators can enable the widget in every course (course-scope search).
 - **Result grouping** — group results by course section or show a flat list (per activity);
   multiple matches in one activity collapse into a single expandable entry.
 - **Pagination** for large result sets, in both grouped and flat views.
@@ -28,8 +29,12 @@ A comprehensive Moodle activity module that enables teachers to add a search bar
 
 **Configuration** *(Site administration → Plugins → Activity modules → Course Search)*
 - Toggle highlighting and the floating widget on or off; set the widget's vertical offset.
+- Choose where the widget appears: only in courses that contain a Course Search activity
+  (default), or in every course on the site.
 - Hide the widget in chosen activity types (e.g. quizzes, where a course-wide search during
   an attempt is undesirable). New installations start with quizzes and Course Search itself.
+- Set the default result layout (grouped by section or flat) for courses searched without an
+  activity; new activities also start from this value.
 - Set results per page and the maximum occurrences matched per content item (`0` = unlimited).
 - Define regex patterns to exclude internal placeholders (e.g. `@@PLUGINFILE@@`) from results.
 
@@ -38,7 +43,7 @@ A comprehensive Moodle activity module that enables teachers to add a search bar
 ### Embedded Search and Floating Widget
 ![Embedded View and Quick Access Widget](screenshots/interface_embedded_view_and_quick_access_widget.png)
 
-The search bar can be embedded directly on the course page. The floating quick-access widget provides instant search access from any course page.
+The search bar can be embedded directly on the course page. The floating quick-access widget provides instant search access from any page of a course it is enabled in.
 
 ### Search Results (Grouped Mode)
 ![Search Results Grouped](screenshots/search_interface_grouped_mode.png)
@@ -109,7 +114,7 @@ Per-activity coverage:
 ## Requirements
 
 - **Moodle**: 4.4 or higher
-- **PHP**: 7.4 or higher
+- **PHP**: 8.0 or higher (as required by Moodle 4.4)
 - **Browser**: Modern browser with JavaScript enabled
 
 ## Installation
@@ -135,12 +140,24 @@ Per-activity coverage:
    - **Group results by section**: Enable to organize results by course sections, or disable for a flat list view
 6. Save and display
 
+### Enabling the widget site-wide (administrators)
+
+The floating widget is on by default and appears in courses that contain a Course Search
+activity. To make every course searchable without teachers adding anything:
+
+1. Go to *Site administration → Plugins → Activity modules → Course Search*
+2. Set **Show the widget in** to "All courses"
+3. Optionally set up **Hide the widget in these activities** to keep the widget off pages where it is unwanted
+
+In a course without the activity the widget opens a course-level search page instead of an
+activity page.
+
 ### Searching
 
 Open the activity (or use the embedded/floating search bar), optionally click **Filter** to
 limit results to specific activity types, enter your terms, and search. Results appear grouped
-by section or as a flat list (per the activity setting) and are paginated. Click any result to
-jump to the content.
+by section or as a flat list (per the activity's setting, or the site default in courses
+without an activity) and are paginated. Click any result to jump to the content.
 
 ### Highlighting
 
@@ -151,7 +168,8 @@ occurrences (until you click away); opening an individual match highlights just 
 
 ## Performance
 
-- JavaScript only loads when needed (when `cs_highlight` parameter is present)
+- JavaScript only loads when needed (highlighting only when the `cs_highlight` parameter is
+  present, widget code only on pages that actually render the widget)
 - AMD modules are lazy-loaded by Moodle
 - Client-side highlighting only
 - Minimal impact on page load
@@ -163,12 +181,18 @@ admin settings, then clear your browser cache and purge Moodle caches
 (*Site administration → Development → Purge all caches*). Note that highlighting is not
 supported on H5P (iframe) or Folder (file download) activities.
 
+**The floating widget doesn't appear** — check that it is enabled in the admin settings, that
+**Show the widget in** matches the course (courses with the activity only, or all courses), and
+that the current activity type is not listed under **Hide the widget in these activities**. The
+widget is never shown on the site front page, nor on SCORM player, H5P player or content bank
+pages.
+
 **No search results** — confirm the content is visible to the user, the content type is
 supported, and try alternative search terms.
 
 ## Version
 
-Current version: **1.5.1** (Build: 2026090403, Stable)
+Current version: **1.5.1** (Build: 2026090404, Stable)
 
 For detailed version history, see [CHANGES.md](CHANGES.md).
 
