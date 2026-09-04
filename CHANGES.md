@@ -1,5 +1,10 @@
 # Changelog
 
+## Changes in version 1.5.1 (Build: 2026090403)
+
+- **New Feature**: The floating quick-access widget can now be hidden in chosen activity types. Set *Site administration > Plugins > Activity modules > Course Search > Hide the widget in these activities* - selecting "Quiz", for example, keeps the widget off quiz attempt pages, where a course-wide search during an attempt may be undesirable
+- **Updated**: New installations start with the widget hidden in quizzes and in the Course Search activity itself. Existing sites start with nothing selected, so the widget keeps appearing exactly where it does today until an admin changes the setting
+
 ## Changes in version 1.5.0 (Build: 2026090303)
 
 - **New Feature**: The floating quick-access widget can now be shown in every course, whether or not a teacher has added a Course Search activity to it. Set *Site administration > Plugins > Activity modules > Course Search > Show the widget in* to "All courses"

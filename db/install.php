@@ -15,20 +15,23 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Course Search module version information
+ * Install time actions for the coursesearch module.
  *
  * @package    mod_coursesearch
  * @copyright  2025 Yurii Lysak
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-defined('MOODLE_INTERNAL') || die();
-
-$plugin->version   = 2026090403;       // The current module version (Date: YYYYMMDDXX).
-$plugin->requires  = 2024042200;       // Requires this Moodle version (Moodle 4.4+).
-$plugin->component = 'mod_coursesearch'; // Full name of the plugin (used for diagnostics).
-$plugin->cron      = 0;
-$plugin->maturity  = MATURITY_STABLE;
-// Version 1.5.1 - Hide the quick-access widget in selected activity types.
-
-$plugin->release   = '1.5.1';
+/**
+ * Post installation procedure.
+ *
+ * Seeds the activity types the quick-access widget stays out of on a new site: quiz, where the
+ * widget would offer a course-wide search during an attempt, and coursesearch itself, where the
+ * full search form is already on the page. Only new sites get these - the setting's own default
+ * is empty, so upgrading a site never changes where its widget already appears.
+ *
+ * @return void
+ */
+function xmldb_coursesearch_install() {
+    set_config('disabledmodules', 'quiz,coursesearch', 'mod_coursesearch');
+}

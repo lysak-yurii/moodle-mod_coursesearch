@@ -29,6 +29,8 @@ require_once($CFG->dirroot . '/mod/coursesearch/classes/admin_setting/maxoccurre
 require_once($CFG->dirroot . '/mod/coursesearch/classes/admin_setting/floatingwidgetoffset.php');
 
 if ($ADMIN->fulltree) {
+    global $DB;
+
     // Results display.
     $settings->add(new admin_setting_heading(
         'mod_coursesearch/settingsdisplay',
@@ -105,6 +107,22 @@ if ($ADMIN->fulltree) {
         ]
     ));
 
+    // Activity types the widget stays out of. Module names are stored rather than
+    // {modules} ids, so the value stays readable and survives a config export to another site.
+    $modulechoices = [];
+    foreach ($DB->get_records('modules', ['visible' => 1], '', 'id, name') as $module) {
+        $modulechoices[$module->name] = get_string('pluginname', 'mod_' . $module->name);
+    }
+    core_collator::asort($modulechoices);
+
+    $settings->add(new admin_setting_configmultiselect(
+        'mod_coursesearch/disabledmodules',
+        get_string('disabledmodules', 'coursesearch'),
+        get_string('disabledmodules_desc', 'coursesearch'),
+        [],
+        $modulechoices
+    ));
+
     // Result layout for courses reached through the widget with no Course Search activity.
     // Only meaningful in 'allcourses' mode; an activity's own setting always wins over it.
     $settings->add(new admin_setting_configcheckbox(
@@ -127,6 +145,11 @@ if ($ADMIN->fulltree) {
     // only applies in 'all courses' mode.
     $settings->hide_if(
         'mod_coursesearch/floatingwidgetscope',
+        'mod_coursesearch/enablefloatingwidget',
+        'notchecked'
+    );
+    $settings->hide_if(
+        'mod_coursesearch/disabledmodules',
         'mod_coursesearch/enablefloatingwidget',
         'notchecked'
     );

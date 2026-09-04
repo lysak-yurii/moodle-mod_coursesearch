@@ -87,7 +87,8 @@ class hook_callbacks {
      *
      * Injects floating quick-access search widget on course pages where a coursesearch activity exists.
      * Appears on any page within a course context (course view, module pages, etc.) as long as
-     * the feature is enabled and a coursesearch activity exists in the course.
+     * the feature is enabled, the activity type is not on the admin's hidden list, and a
+     * coursesearch activity exists in the course (or the widget is set to run in all courses).
      *
      * @param \core\hook\output\before_footer_html_generation $hook The hook instance.
      * @return void
@@ -101,6 +102,15 @@ class hook_callbacks {
         // Treat null as enabled (default), and treat any 0-ish value as disabled.
         if ($enablefloatingwidget !== null && (int)$enablefloatingwidget === 0) {
             return;
+        }
+
+        // Activity types the admin has switched the widget off in. Only module pages carry a
+        // modname, so course pages and site pages are never affected by this list.
+        $disabledmodules = get_config('mod_coursesearch', 'disabledmodules');
+        if (!empty($disabledmodules) && !empty($PAGE->cm->modname)) {
+            if (in_array($PAGE->cm->modname, explode(',', $disabledmodules), true)) {
+                return;
+            }
         }
 
         // Exclude H5P content files and embedded content, but allow H5P activity view pages.

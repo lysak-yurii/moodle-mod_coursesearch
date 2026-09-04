@@ -3,7 +3,7 @@
 ![Moodle](https://img.shields.io/badge/Moodle-4.4+-orange?logo=moodle)
 ![PHP](https://img.shields.io/badge/PHP-7.4+-777BB4?logo=php&logoColor=white)
 ![License](https://img.shields.io/badge/License-GPL%20v3-green?logo=gnu)
-![Version](https://img.shields.io/badge/Version-1.5.0-blue)
+![Version](https://img.shields.io/badge/Version-1.5.1-blue)
 
 A comprehensive Moodle activity module that enables teachers to add a search bar to courses, allowing students to search through course content with automatic highlighting of search terms.
 
@@ -28,6 +28,8 @@ A comprehensive Moodle activity module that enables teachers to add a search bar
 
 **Configuration** *(Site administration → Plugins → Activity modules → Course Search)*
 - Toggle highlighting and the floating widget on or off; set the widget's vertical offset.
+- Hide the widget in chosen activity types (e.g. quizzes, where a course-wide search during
+  an attempt is undesirable). New installations start with quizzes and Course Search itself.
 - Set results per page and the maximum occurrences matched per content item (`0` = unlimited).
 - Define regex patterns to exclude internal placeholders (e.g. `@@PLUGINFILE@@`) from results.
 
@@ -166,7 +168,7 @@ supported, and try alternative search terms.
 
 ## Version
 
-Current version: **1.5.0** (Build: 2026090303, Stable)
+Current version: **1.5.1** (Build: 2026090403, Stable)
 
 For detailed version history, see [CHANGES.md](CHANGES.md).
 
