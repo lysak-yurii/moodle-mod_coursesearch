@@ -1,5 +1,9 @@
 # Changelog
 
+## Changes in version 1.5.2 (Build: 2026091000)
+
+- **Updated**: The floating quick-access widget button now shows a "Quick search" tooltip on hover and on keyboard focus.
+
 ## Changes in version 1.5.1 (Build: 2026090404)
 
 - **New Feature**: The floating quick-access widget can now be hidden in chosen activity types. Set *Site administration > Plugins > Activity modules > Course Search > Hide the widget in these activities* - selecting "Quiz", for example, keeps the widget off quiz attempt pages, where a course-wide search during an attempt may be undesirable

@@ -24,11 +24,11 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version   = 2026090404;       // The current module version (Date: YYYYMMDDXX).
+$plugin->version   = 2026091001;       // The current module version (Date: YYYYMMDDXX).
 $plugin->requires  = 2024042200;       // Requires this Moodle version (Moodle 4.4+).
 $plugin->component = 'mod_coursesearch'; // Full name of the plugin (used for diagnostics).
 $plugin->cron      = 0;
 $plugin->maturity  = MATURITY_STABLE;
-// Version 1.5.1 - Hide the quick-access widget in selected activity types.
+// Version 1.5.2 - Tooltip on the quick-access widget button.
 
-$plugin->release   = '1.5.1';
+$plugin->release   = '1.5.2';
