@@ -1488,8 +1488,10 @@ function coursesearch_search_database($mod, $query) {
 
     // Single JOIN query to fetch all records with their content at once.
     // This replaces N+1 queries (one per record for content).
-    $sql = "SELECT r.id as recordid,
-                   c.id as contentid, c.fieldid, c.content, c.content1, c.content2, c.content3, c.content4
+    // The first column must be unique (content id): get_records_sql() keys rows by it, so using
+    // the record id would collapse all fields of a record into a single row.
+    $sql = "SELECT c.id as contentid, r.id as recordid,
+                   c.fieldid, c.content, c.content1, c.content2, c.content3, c.content4
             FROM {data_records} r
             JOIN {data_content} c ON c.recordid = r.id
             WHERE r.dataid = :dataid" . $approvedsql . "
