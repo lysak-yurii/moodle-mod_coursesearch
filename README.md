@@ -3,7 +3,7 @@
 ![Moodle](https://img.shields.io/badge/Moodle-4.4+-orange?logo=moodle)
 ![PHP](https://img.shields.io/badge/PHP-8.0+-777BB4?logo=php&logoColor=white)
 ![License](https://img.shields.io/badge/License-GPL%20v3-green?logo=gnu)
-![Version](https://img.shields.io/badge/Version-1.5.1-blue)
+![Version](https://img.shields.io/badge/Version-1.5.2-blue)
 
 A Moodle activity module that lets students search the content of a course and jump straight to a match, which is highlighted on the target page. Teachers add a search bar to a course as an activity; administrators can additionally enable a floating quick-access widget across every course on the site, so a course is searchable even without the activity.
 
@@ -192,7 +192,7 @@ supported, and try alternative search terms.
 
 ## Version
 
-Current version: **1.5.1** (Build: 2026090404, Stable)
+Current version: **1.5.2** (Build: 2026092302, Stable)
 
 For detailed version history, see [CHANGES.md](CHANGES.md).
 

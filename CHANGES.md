@@ -1,7 +1,9 @@
 # Changelog
 
-## Changes in version 1.5.2 (Build: 2026091000)
+## Changes in version 1.5.2 (Build: 2026092302)
 
+- **New Feature**: The quick-access widget can now be hidden on the course page as well. The setting is renamed to *Hide the widget on these pages*, and "Course page" is the first option in its list
+- **Fixed**: Database activity entries are now searched across all their fields - previously only the last field of each entry was matched
 - **Updated**: The floating quick-access widget button now shows a "Quick search" tooltip on hover and on keyboard focus.
 
 ## Changes in version 1.5.1 (Build: 2026090404)
