@@ -31,8 +31,8 @@ A Moodle activity module that lets students search the content of a course and j
 - Toggle highlighting and the floating widget on or off; set the widget's vertical offset.
 - Choose where the widget appears: only in courses that contain a Course Search activity
   (default), or in every course on the site.
-- Hide the widget in chosen activity types (e.g. quizzes, where a course-wide search during
-  an attempt is undesirable). New installations start with quizzes and Course Search itself.
+- Hide the widget on the course page or in chosen activity types (e.g. quizzes, where a
+  course-wide search during an attempt is undesirable). New installations start with quizzes and Course Search itself.
 - Set the default result layout (grouped by section or flat) for courses searched without an
   activity; new activities also start from this value.
 - Set results per page and the maximum occurrences matched per content item (`0` = unlimited).
@@ -147,7 +147,7 @@ activity. To make every course searchable without teachers adding anything:
 
 1. Go to *Site administration → Plugins → Activity modules → Course Search*
 2. Set **Show the widget in** to "All courses"
-3. Optionally set up **Hide the widget in these activities** to keep the widget off pages where it is unwanted
+3. Optionally set up **Hide the widget on these pages** to keep the widget off pages where it is unwanted
 
 In a course without the activity the widget opens a course-level search page instead of an
 activity page.
@@ -183,8 +183,8 @@ supported on H5P (iframe) or Folder (file download) activities.
 
 **The floating widget doesn't appear** — check that it is enabled in the admin settings, that
 **Show the widget in** matches the course (courses with the activity only, or all courses), and
-that the current activity type is not listed under **Hide the widget in these activities**. The
-widget is never shown on the site front page, nor on SCORM player, H5P player or content bank
+that the current page (the course page or the activity type) is not listed under **Hide the widget
+on these pages**. The widget is never shown on the site front page, nor on SCORM player, H5P player or content bank
 pages.
 
 **No search results** — confirm the content is visible to the user, the content type is

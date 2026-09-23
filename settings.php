@@ -107,13 +107,15 @@ if ($ADMIN->fulltree) {
         ]
     ));
 
-    // Activity types the widget stays out of. Module names are stored rather than
-    // {modules} ids, so the value stays readable and survives a config export to another site.
+    // Pages the widget stays out of: the course page, then activity types. Module names are stored
+    // rather than {modules} ids, so the value stays readable and survives a config export to another
+    // site. The course page key has an underscore, which activity module names cannot contain.
     $modulechoices = [];
     foreach ($DB->get_records('modules', ['visible' => 1], '', 'id, name') as $module) {
         $modulechoices[$module->name] = get_string('pluginname', 'mod_' . $module->name);
     }
     core_collator::asort($modulechoices);
+    $modulechoices = ['_coursepage' => get_string('disabledmodules:coursepage', 'coursesearch')] + $modulechoices;
 
     $settings->add(new admin_setting_configmultiselect(
         'mod_coursesearch/disabledmodules',

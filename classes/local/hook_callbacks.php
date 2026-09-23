@@ -104,11 +104,15 @@ class hook_callbacks {
             return;
         }
 
-        // Activity types the admin has switched the widget off in. Only module pages carry a
-        // modname, so course pages and site pages are never affected by this list.
+        // Pages the admin has switched the widget off in: the course page ('_coursepage') and
+        // activity types. Only module pages carry a modname.
         $disabledmodules = get_config('mod_coursesearch', 'disabledmodules');
-        if (!empty($disabledmodules) && !empty($PAGE->cm->modname)) {
-            if (in_array($PAGE->cm->modname, explode(',', $disabledmodules), true)) {
+        if (!empty($disabledmodules)) {
+            $disabledmodules = explode(',', $disabledmodules);
+            if (in_array('_coursepage', $disabledmodules, true) && strpos($PAGE->pagetype, 'course-view') === 0) {
+                return;
+            }
+            if (!empty($PAGE->cm->modname) && in_array($PAGE->cm->modname, $disabledmodules, true)) {
                 return;
             }
         }
